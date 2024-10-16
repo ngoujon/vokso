@@ -51,38 +51,39 @@ Le fichier `requirements.txt` contient toutes les bibliothèques nécessaires po
 
 1. Clonez le dépôt Git :
 
-   ```bash
-   git clone https://github.com/votre-utilisateur/flask-ai-multimedia.git
-   cd flask-ai-multimedia
-   ```
+    ```bash
+    git clone https://github.com/votre-utilisateur/flask-ai-multimedia.git
+    cd flask-ai-multimedia
+    ```
 
 2. Installez les dépendances :
 
-```bash
-pip install -r requirements.txt
-```
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 3. Créez un fichier .env à la racine du projet et ajoutez votre clé OpenAI :
 
-```
-bash
-OPENAI_API_KEY=your-openai-api-key
-```
+    ```
+    bash
+    OPENAI_API_KEY=your-openai-api-key
+    ```
 
 4. Créez un répertoire output dans le projet pour stocker les fichiers générés :
 
-```bash
-mkdir output
-```
+    ```bash
+    mkdir output
+    ```
 5. Lancez l'application Flask :
 
-```bash
-python app.py
-```
+    ```bash
+    python app.py
+    ```
 6. Accédez à l'application dans votre navigateur :
 
-bash
-http://127.0.0.1:5000
+    ```bash
+    http://127.0.0.1:5000
+    ```
 
 ## Utilisation
 
