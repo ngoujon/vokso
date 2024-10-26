@@ -11,11 +11,11 @@
 
 <body>
     <div id="input-form">
-        <h1>Génerer un podcast</h1>
+        <h1>Générer un podcast</h1>
         <form id="form" method="POST" action="index.php"> <!-- Mise à jour de l'action -->
             <input type="text" name="user_input" placeholder="Saisir un sujet / thème" required>
-            <button type="submit" id="submit-button">Génerer</button>
-            </form>
+            <button type="submit" id="submit-button">Générer</button>
+        </form>
         <div id="response" class="response"></div>
         <div id="completed-message" class="completed-message"></div>
         <div class="loader" id="loader" style="display: none;"></div> <!-- Animation de chargement -->
@@ -41,8 +41,9 @@
                         $('#loader').hide(); // Cacher l'animation de chargement
                         $('#submit-button').show(); // Afficher le bouton Envoyer
 
-                        // Afficher le nombre de tokens utilisés pour texte, image et audio
-                        $('#completed-message').text(`Tokens utilisés : Texte - ${data.text_tokens}, Image - ${data.image_tokens}, Audio - ${data.audio_tokens}`);
+                        // Afficher le temps total de génération
+                        $('#completed-message').text(`Temps total de génération : ${data.total_time} secondes`);
+
                     },
                     error: function() {
                         $('#loader').hide(); // Cacher l'animation de chargement

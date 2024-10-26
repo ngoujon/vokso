@@ -58,7 +58,6 @@ class ApiController {
 
         $description = "Créer une image minimaliste représentant le sujet suivant";
         $prompt = "$description $subject";
-        // $size = "1024x1024";
         $size = "256x256";
 
         $response = $client->post('https://api.openai.com/v1/images/generations', [
@@ -67,7 +66,6 @@ class ApiController {
                 'Content-Type' => 'application/json',
             ],
             'json' => [
-                // "model" => "dall-e-3",
                 "model" => "dall-e-2",
                 "prompt" => $prompt,
                 "n" => 1,
@@ -116,35 +114,43 @@ class ApiController {
 
     public function handleRequest() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Démarrer le chronomètre
+            $startTime = microtime(true);
+            
             $user_input = $_POST['user_input'];
             $timestamp = date('Ymd_His');
 
             $description = "La génération du texte doit être suffisamment longue et détaillée. L'exposé sera composé de la structure suivante: 
-    Introduction - Définir clairement le sujet, expliquer son importance et donner un aperçu des principaux points qui seront abordés. 
-    Historique - Résumer l'origine du sujet, son évolution et les événements marquants qui l'ont façonné. 
-    Personnalités clés - Identifier les figures influentes, passées ou actuelles, et détailler leurs contributions majeures. 
-    Concepts et théories - Présenter les idées fondamentales et les théories clés associées au sujet, avec des exemples concrets. 
-    Applications et impact actuel - Décrire comment le sujet est appliqué dans le monde contemporain et son influence sur différents secteurs ou technologies. 
-    Défis et perspectives - Mettre en lumière les controverses, les défis actuels et les enjeux futurs liés au sujet, tout en suggérant des pistes d'évolution possibles.";
+            Introduction - Définir clairement le sujet, expliquer son importance et donner un aperçu des principaux points qui seront abordés. 
+            Historique - Résumer l'origine du sujet, son évolution et les événements marquants qui l'ont façonné. 
+            Personnalités clés - Identifier les figures influentes, passées ou actuelles, et détailler leurs contributions majeures. 
+            Concepts et théories - Présenter les idées fondamentales et les théories clés associées au sujet, avec des exemples concrets. 
+            Applications et impact actuel - Décrire comment le sujet est appliqué dans le monde contemporain et son influence sur différents secteurs ou technologies. 
+            Défis et perspectives - Mettre en lumière les controverses, les défis actuels et les enjeux futurs liés au sujet, tout en suggérant des pistes d'évolution possibles.";
             
+            // Générer la réponse du bot
             $responseData = $this->generateResponse($user_input, $description);
             $bot_response = $responseData['choices'][0]['message']['content'] ?? 'Aucune réponse disponible.';
 
+            // Enregistrer la réponse dans un fichier
             $text_filename = $this->saveTextToFile($bot_response, 'response', $timestamp);
-            $text_tokens = $responseData['usage']['total_tokens'] ?? 0;
 
+            // Générer l'image
             $image_filename = $this->generateImage($user_input, $timestamp);
-            $image_tokens = 0;
 
+            // Générer l'audio
             $audio_filename = $this->generateAudioResponse($bot_response, $timestamp);
+
+            // Calculer le temps total de génération
+            $endTime = microtime(true);
+            $totalTime = $endTime - $startTime;
 
             header('Content-Type: application/json');
             echo json_encode([
                 'bot_response' => $bot_response,
                 'image_file' => $image_filename,
                 'audio_file' => $audio_filename,
-                'text_tokens' => $text_tokens,
-                'image_tokens' => $image_tokens,
+                'total_time' => round($totalTime, 2)  // Temps total en secondes, arrondi à 2 décimales
             ]);
             exit;
         }
