@@ -10,13 +10,21 @@ use GuzzleHttp\Client;
 
 class ApiController {
     private $api_key;
+    private $temp_dir;
 
     public function __construct($api_key) {
         $this->api_key = $api_key;
+        $this->temp_dir = __DIR__ . '/../output/temp';
+
+        // Créer le dossier temporaire si nécessaire et lui donner les permissions adéquates
+        if (!is_dir($this->temp_dir)) {
+            mkdir($this->temp_dir, 0777, true);
+        }
     }
 
     public function generateResponse($user_input, $description) {
         $client = new Client();
+
         $response = $client->post('https://api.openai.com/v1/chat/completions', [
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->api_key,
@@ -28,16 +36,17 @@ class ApiController {
                     ["role" => "system", "content" => $description],
                     ["role" => "user", "content" => $user_input]
                 ]
-            ]
+            ],
+            'sink' => $this->temp_dir . '/response_' . uniqid() . '.tmp'  // Utiliser un fichier temporaire pour stocker la réponse
         ]);
 
-        return json_decode($response->getBody(), true);
+        return json_decode(file_get_contents($response->getBody()->getMetadata('uri')), true);
     }
 
     public function saveTextToFile($text, $prefix, $timestamp) {
         $output_dir = __DIR__ . '/../output';
         if (!is_dir($output_dir)) {
-            mkdir($output_dir);
+            mkdir($output_dir, 0777, true);
         }
         $filename = "$output_dir/{$prefix}_{$timestamp}.txt";
         file_put_contents($filename, $text);
@@ -46,6 +55,7 @@ class ApiController {
 
     public function generateImage($subject, $timestamp) {
         $client = new Client();
+
         $description = "Créer une image minimaliste représentant le sujet suivant";
         $prompt = "$description $subject";
         $size = "256x256";
@@ -60,10 +70,11 @@ class ApiController {
                 "prompt" => $prompt,
                 "n" => 1,
                 "size" => $size
-            ]
+            ],
+            'sink' => $this->temp_dir . '/image_' . uniqid() . '.tmp'
         ]);
 
-        $responseData = json_decode($response->getBody(), true);
+        $responseData = json_decode(file_get_contents($response->getBody()->getMetadata('uri')), true);
         if (isset($responseData['data'][0]['url'])) {
             $image_url = $responseData['data'][0]['url'];
             $image_response = $client->get($image_url);
@@ -76,28 +87,28 @@ class ApiController {
 
     public function generateAudioResponse($text, $timestamp) {
         $client = new Client();
+
         $response = $client->post('https://api.openai.com/v1/audio/speech', [
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->api_key,
                 'Content-Type' => 'application/json',
             ],
             'json' => [
-                "model" => "tts-1",  // Ajustez selon l'API
-                "voice" => "alloy",               // Ajustez selon le modèle de voix disponible
+                "model" => "tts-1",
+                "voice" => "alloy",
                 "input" => $text
-            ]
+            ],
+            'sink' => $this->temp_dir . '/audio_' . uniqid() . '.tmp'
         ]);
 
-        // Crée le répertoire de sortie s'il n'existe pas
         $output_dir = __DIR__ . '/../output';
         if (!is_dir($output_dir)) {
-            mkdir($output_dir);
+            mkdir($output_dir, 0777, true);
         }
 
-        // Nom du fichier audio
         $audio_filename = "$output_dir/audio_{$timestamp}.mp3";
-        file_put_contents($audio_filename, $response->getBody());
-        
+        file_put_contents($audio_filename, file_get_contents($response->getBody()->getMetadata('uri')));
+
         return $audio_filename;
     }
 
@@ -120,18 +131,16 @@ class ApiController {
             $text_filename = $this->saveTextToFile($bot_response, 'response', $timestamp);
             $text_tokens = $responseData['usage']['total_tokens'] ?? 0;
 
-            // Génération d'image
             $image_filename = $this->generateImage($user_input, $timestamp);
             $image_tokens = 0;
 
-            // Génération de la réponse audio
             $audio_filename = $this->generateAudioResponse($bot_response, $timestamp);
 
             header('Content-Type: application/json');
             echo json_encode([
                 'bot_response' => $bot_response,
                 'image_file' => $image_filename,
-                'audio_file' => $audio_filename,  // Ajout du fichier audio à la réponse
+                'audio_file' => $audio_filename,
                 'text_tokens' => $text_tokens,
                 'image_tokens' => $image_tokens,
             ]);

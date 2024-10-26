@@ -37,11 +37,8 @@
                     success: function(data) {
                         $('#loader').hide(); // Cacher l'animation de chargement
 
-                        // Afficher uniquement le message de complétion et l'image générée
-                        $('#completed-message').text(`Tokens utilisés : Texte - ${data.text_tokens}, Image - ${data.image_tokens}`);
-                        // if (data.image_file) {
-                        //     $('#response').append(`<img src="${data.image_file}" alt="Image générée">`);
-                        // }
+                        // Afficher le nombre de tokens utilisés pour texte, image et audio
+                        $('#completed-message').text(`Tokens utilisés : Texte - ${data.text_tokens}, Image - ${data.image_tokens}, Audio - ${data.audio_tokens}`);
                     },
                     error: function() {
                         $('#loader').hide(); // Cacher l'animation de chargement
