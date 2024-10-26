@@ -58,6 +58,7 @@ class ApiController {
 
         $description = "Créer une image minimaliste représentant le sujet suivant";
         $prompt = "$description $subject";
+        // $size = "1024x1024";
         $size = "256x256";
 
         $response = $client->post('https://api.openai.com/v1/images/generations', [
@@ -66,6 +67,7 @@ class ApiController {
                 'Content-Type' => 'application/json',
             ],
             'json' => [
+                // "model" => "dall-e-3",
                 "model" => "dall-e-2",
                 "prompt" => $prompt,
                 "n" => 1,
