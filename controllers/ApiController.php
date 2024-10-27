@@ -7,18 +7,38 @@ error_reporting(E_ALL);
 require '../vendor/autoload.php';
 
 use GuzzleHttp\Client;
+use PDO;
+use Dotenv\Dotenv;
 
 class ApiController {
     private $api_key;
     private $temp_dir;
+    private $pdo;
 
-    public function __construct($api_key) {
-        $this->api_key = $api_key;
+    public function __construct() {
+        // Charger les variables d'environnement
+        $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+        $dotenv->load();
+
+        // Récupérer la clé API depuis le fichier .env
+        $this->api_key = $_ENV['API_KEY'];
         $this->temp_dir = __DIR__ . '/../output/temp';
 
         // Créer le dossier temporaire si nécessaire et lui donner les permissions adéquates
         if (!is_dir($this->temp_dir)) {
             mkdir($this->temp_dir, 0777, true);
+        }
+
+        // Connexion à la base de données avec les informations du fichier .env
+        try {
+            $this->pdo = new PDO(
+                "mysql:host={$_ENV['DB_HOST']};dbname={$_ENV['DB_NAME']};charset=utf8",
+                $_ENV['DB_USER'],
+                $_ENV['DB_PASS']
+            );
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        } catch (PDOException $e) {
+            die("Erreur de connexion à la base de données : " . $e->getMessage());
         }
     }
 
@@ -37,7 +57,7 @@ class ApiController {
                     ["role" => "user", "content" => $user_input]
                 ]
             ],
-            'sink' => $this->temp_dir . '/response_' . uniqid() . '.tmp'  // Utiliser un fichier temporaire pour stocker la réponse
+            'sink' => $this->temp_dir . '/response_' . uniqid() . '.tmp'
         ]);
 
         return json_decode(file_get_contents($response->getBody()->getMetadata('uri')), true);
@@ -112,45 +132,50 @@ class ApiController {
         return $audio_filename;
     }
 
+    public function insertGenerationData($generation_id, $title, $description, $image_url, $audio_url) {
+        $stmt = $this->pdo->prepare("INSERT INTO generations (generation_id, title, description, image_url, audio_url) 
+                                     VALUES (:generation_id, :title, :description, :image_url, :audio_url)");
+        $stmt->execute([
+            ':generation_id' => $generation_id,
+            ':title' => $title,
+            ':description' => $description,
+            ':image_url' => $image_url,
+            ':audio_url' => $audio_url
+        ]);
+    }
+
     public function handleRequest() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Démarrer le chronomètre
             $startTime = microtime(true);
             
             $user_input = $_POST['user_input'];
             $timestamp = date('Ymd_His');
+            $generation_id = 'gen_' . uniqid();
 
-            $description = "La génération du texte doit être suffisamment longue et détaillée. L'exposé sera composé de la structure suivante: 
-            Introduction - Définir clairement le sujet, expliquer son importance et donner un aperçu des principaux points qui seront abordés. 
-            Historique - Résumer l'origine du sujet, son évolution et les événements marquants qui l'ont façonné. 
-            Personnalités clés - Identifier les figures influentes, passées ou actuelles, et détailler leurs contributions majeures. 
-            Concepts et théories - Présenter les idées fondamentales et les théories clés associées au sujet, avec des exemples concrets. 
-            Applications et impact actuel - Décrire comment le sujet est appliqué dans le monde contemporain et son influence sur différents secteurs ou technologies. 
-            Défis et perspectives - Mettre en lumière les controverses, les défis actuels et les enjeux futurs liés au sujet, tout en suggérant des pistes d'évolution possibles.";
-            
-            // Générer la réponse du bot
+            $description = "La génération du texte doit être suffisamment longue et détaillée..."; // (texte de description)
+
             $responseData = $this->generateResponse($user_input, $description);
             $bot_response = $responseData['choices'][0]['message']['content'] ?? 'Aucune réponse disponible.';
 
-            // Enregistrer la réponse dans un fichier
             $text_filename = $this->saveTextToFile($bot_response, 'response', $timestamp);
 
-            // Générer l'image
             $image_filename = $this->generateImage($user_input, $timestamp);
+            $image_url = $image_filename ? "https://example.com/{$image_filename}" : null;
 
-            // Générer l'audio
             $audio_filename = $this->generateAudioResponse($bot_response, $timestamp);
+            $audio_url = $audio_filename ? "https://example.com/{$audio_filename}" : null;
 
-            // Calculer le temps total de génération
+            $this->insertGenerationData($generation_id, $user_input, $bot_response, $image_url, $audio_url);
+
             $endTime = microtime(true);
             $totalTime = $endTime - $startTime;
 
             header('Content-Type: application/json');
             echo json_encode([
                 'bot_response' => $bot_response,
-                'image_file' => $image_filename,
-                'audio_file' => $audio_filename,
-                'total_time' => round($totalTime, 2)  // Temps total en secondes, arrondi à 2 décimales
+                'image_file' => $image_url,
+                'audio_file' => $audio_url,
+                'total_time' => round($totalTime, 2)
             ]);
             exit;
         }
