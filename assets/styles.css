@@ -37,6 +37,18 @@ input[type="text"] {
     margin-bottom: 10px; /* Espacement en bas de l'input */
 }
 
+.button-loader-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50px; /* La hauteur du conteneur doit correspondre à celle du loader */
+}
+
+#submit-button {
+    display: inline-block; /* Pour pouvoir le masquer correctement */
+}
+
 button {
     padding: 10px 20px;
     background-color: #4caf50; /* Couleur du bouton */
@@ -61,6 +73,8 @@ button:hover {
     width: 50px; /* Largeur du loader */
     height: 50px; /* Hauteur du loader */
     animation: spin 1s linear infinite; /* Animation de rotation */
+    position: absolute; /* Position absolue pour qu'il se centre dans le conteneur */
+    margin-top:50px; /* Espacement au-dessus du loader */
 }
 
 /* Animation de rotation */

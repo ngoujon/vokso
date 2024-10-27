@@ -14,11 +14,13 @@
         <h1>Générer un podcast</h1>
         <form id="form" method="POST" action="index.php"> <!-- Mise à jour de l'action -->
             <input type="text" name="user_input" placeholder="Saisir un sujet / thème" required>
-            <button type="submit" id="submit-button">Générer</button>
+            <div class="button-loader-container">
+                <button type="submit" id="submit-button">Générer</button>
+                <div class="loader" id="loader" style="display: none;"></div> <!-- Animation de chargement -->
+            </div>
         </form>
         <div id="response" class="response"></div>
         <div id="completed-message" class="completed-message"></div>
-        <div class="loader" id="loader" style="display: none;"></div> <!-- Animation de chargement -->
     </div>
 
     <script>
