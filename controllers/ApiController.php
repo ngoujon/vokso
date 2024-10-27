@@ -76,7 +76,8 @@ class ApiController {
     public function generateImage($subject, $timestamp) {
         $client = new Client();
 
-        $description = "Créer une image minimaliste représentant le sujet suivant";
+        // Récupérer la description pour la génération d'image
+        $description = $this->getDescription('image');  // Utilisation de getDescription pour l'image
         $prompt = "$description $subject";
         $size = "256x256";
 
@@ -144,6 +145,13 @@ class ApiController {
         ]);
     }
 
+    public function getDescription($type) {
+        $stmt = $this->pdo->prepare("SELECT description FROM prompts WHERE type = :type LIMIT 1");
+        $stmt->execute([':type' => $type]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result['description'] : null;
+    }
+
     public function handleRequest() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $startTime = microtime(true);
@@ -152,19 +160,24 @@ class ApiController {
             $timestamp = date('Ymd_His');
             $generation_id = 'gen_' . uniqid();
 
-            $description = "La génération du texte doit être suffisamment longue et détaillée..."; // (texte de description)
+            // Récupérer la description pour la génération de texte
+            $text_description = $this->getDescription('texte');  // Description pour le texte
+            $text_response = $this->generateResponse($user_input, $text_description);
+            $bot_response = $text_response['choices'][0]['message']['content'] ?? 'Aucune réponse disponible.';
 
-            $responseData = $this->generateResponse($user_input, $description);
-            $bot_response = $responseData['choices'][0]['message']['content'] ?? 'Aucune réponse disponible.';
-
+            // Sauvegarder la réponse textuelle
             $text_filename = $this->saveTextToFile($bot_response, 'response', $timestamp);
 
+            // Récupérer la description pour la génération d'image
+            $image_description = $this->getDescription('image');  // Description pour l'image
             $image_filename = $this->generateImage($user_input, $timestamp);
-            $image_url = $image_filename ? "https://example.com/{$image_filename}" : null;
+            $image_url = $image_filename ? "{$image_filename}" : null;
 
+            // Générer la réponse audio
             $audio_filename = $this->generateAudioResponse($bot_response, $timestamp);
-            $audio_url = $audio_filename ? "https://example.com/{$audio_filename}" : null;
+            $audio_url = $audio_filename ? "{$audio_filename}" : null;
 
+            // Insérer les données générées dans la base de données
             $this->insertGenerationData($generation_id, $user_input, $bot_response, $image_url, $audio_url);
 
             $endTime = microtime(true);
