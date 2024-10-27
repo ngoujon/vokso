@@ -99,9 +99,10 @@ class ApiController {
         if (isset($responseData['data'][0]['url'])) {
             $image_url = $responseData['data'][0]['url'];
             $image_response = $client->get($image_url);
-            $file_path = __DIR__ . "/../output/image_{$timestamp}.png";
+            $file_name = "image_{$timestamp}.png"; // Juste le nom de fichier
+            $file_path = __DIR__ . "/../output/{$file_name}";
             file_put_contents($file_path, $image_response->getBody());
-            return $file_path;
+            return $file_name; // Retourne uniquement le nom de fichier
         }
         return null;
     }
@@ -127,10 +128,10 @@ class ApiController {
             mkdir($output_dir, 0777, true);
         }
 
-        $audio_filename = "$output_dir/audio_{$timestamp}.mp3";
-        file_put_contents($audio_filename, file_get_contents($response->getBody()->getMetadata('uri')));
+        $file_name = "audio_{$timestamp}.mp3"; // Juste le nom de fichier
+        file_put_contents("$output_dir/$file_name", file_get_contents($response->getBody()->getMetadata('uri')));
 
-        return $audio_filename;
+        return $file_name; // Retourne uniquement le nom de fichier
     }
 
     public function insertGenerationData($generation_id, $title, $description, $image_url, $audio_url) {
@@ -140,8 +141,8 @@ class ApiController {
             ':generation_id' => $generation_id,
             ':title' => $title,
             ':description' => $description,
-            ':image_url' => $image_url,
-            ':audio_url' => $audio_url
+            ':image_url' => $image_url, // Utilisation du nom de fichier uniquement
+            ':audio_url' => $audio_url  // Utilisation du nom de fichier uniquement
         ]);
     }
 
@@ -169,16 +170,15 @@ class ApiController {
             $text_filename = $this->saveTextToFile($bot_response, 'response', $timestamp);
 
             // Récupérer la description pour la génération d'image
-            $image_description = $this->getDescription('image');  // Description pour l'image
-            $image_filename = $this->generateImage($user_input, $timestamp);
-            $image_url = $image_filename ? "{$image_filename}" : null;
+            $image_filename = $this->generateImage($user_input, $timestamp); // Récupère juste le nom de fichier
+            $image_url = $image_filename ? "https://example.com/{$image_filename}" : null;
 
             // Générer la réponse audio
-            $audio_filename = $this->generateAudioResponse($bot_response, $timestamp);
-            $audio_url = $audio_filename ? "{$audio_filename}" : null;
+            $audio_filename = $this->generateAudioResponse($bot_response, $timestamp); // Récupère juste le nom de fichier
+            $audio_url = $audio_filename ? "https://example.com/{$audio_filename}" : null;
 
             // Insérer les données générées dans la base de données
-            $this->insertGenerationData($generation_id, $user_input, $bot_response, $image_url, $audio_url);
+            $this->insertGenerationData($generation_id, $user_input, $bot_response, $image_filename, $audio_filename); // Enregistrement des noms de fichiers
 
             $endTime = microtime(true);
             $totalTime = $endTime - $startTime;
