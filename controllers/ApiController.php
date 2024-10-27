@@ -16,20 +16,16 @@ class ApiController {
     private $pdo;
 
     public function __construct() {
-        // Charger les variables d'environnement
         $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
         $dotenv->load();
 
-        // Récupérer la clé API depuis le fichier .env
         $this->api_key = $_ENV['API_KEY'];
         $this->temp_dir = __DIR__ . '/../output/temp';
 
-        // Créer le dossier temporaire si nécessaire et lui donner les permissions adéquates
         if (!is_dir($this->temp_dir)) {
             mkdir($this->temp_dir, 0777, true);
         }
 
-        // Connexion à la base de données avec les informations du fichier .env
         try {
             $this->pdo = new PDO(
                 "mysql:host={$_ENV['DB_HOST']};dbname={$_ENV['DB_NAME']};charset=utf8",
@@ -75,9 +71,7 @@ class ApiController {
 
     public function generateImage($subject, $timestamp) {
         $client = new Client();
-
-        // Récupérer la description pour la génération d'image
-        $description = $this->getDescription('image');  // Utilisation de getDescription pour l'image
+        $description = $this->getDescription('image');
         $prompt = "$description $subject";
         $size = "256x256";
 
@@ -99,10 +93,10 @@ class ApiController {
         if (isset($responseData['data'][0]['url'])) {
             $image_url = $responseData['data'][0]['url'];
             $image_response = $client->get($image_url);
-            $file_name = "image_{$timestamp}.png"; // Juste le nom de fichier
+            $file_name = "image_{$timestamp}.png";
             $file_path = __DIR__ . "/../output/{$file_name}";
             file_put_contents($file_path, $image_response->getBody());
-            return $file_name; // Retourne uniquement le nom de fichier
+            return $file_name;
         }
         return null;
     }
@@ -118,7 +112,8 @@ class ApiController {
             'json' => [
                 "model" => "tts-1",
                 "voice" => "alloy",
-                "input" => $text
+                "input" => $text,
+                "speed" => 1.1 
             ],
             'sink' => $this->temp_dir . '/audio_' . uniqid() . '.tmp'
         ]);
@@ -128,10 +123,10 @@ class ApiController {
             mkdir($output_dir, 0777, true);
         }
 
-        $file_name = "audio_{$timestamp}.mp3"; // Juste le nom de fichier
+        $file_name = "audio_{$timestamp}.mp3";
         file_put_contents("$output_dir/$file_name", file_get_contents($response->getBody()->getMetadata('uri')));
 
-        return $file_name; // Retourne uniquement le nom de fichier
+        return $file_name;
     }
 
     public function insertGenerationData($generation_id, $title, $description, $image_url, $audio_url) {
@@ -141,9 +136,24 @@ class ApiController {
             ':generation_id' => $generation_id,
             ':title' => $title,
             ':description' => $description,
-            ':image_url' => $image_url, // Utilisation du nom de fichier uniquement
-            ':audio_url' => $audio_url  // Utilisation du nom de fichier uniquement
+            ':image_url' => $image_url,
+            ':audio_url' => $audio_url
         ]);
+    }
+
+    public function insertCategories($generation_id, $keywords_text) {
+        $keywords = explode(',', $keywords_text);
+
+        foreach ($keywords as $keyword) {
+            $keyword = trim($keyword);
+            if (!empty($keyword)) {
+                $stmt = $this->pdo->prepare("INSERT INTO categorie (generation_id, keyword) VALUES (:generation_id, :keyword)");
+                $stmt->execute([
+                    ':generation_id' => $generation_id,
+                    ':keyword' => $keyword
+                ]);
+            }
+        }
     }
 
     public function getDescription($type) {
@@ -151,6 +161,25 @@ class ApiController {
         $stmt->execute([':type' => $type]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result ? $result['description'] : null;
+    }
+
+    public function getKeywordsFromApi($user_input) {
+        $client = new Client();
+        $response = $client->post('https://api.openai.com/v1/chat/completions', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->api_key,
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                "model" => "gpt-3.5-turbo",
+                "messages" => [
+                    ["role" => "user", "content" => "Quels serait le mot qui permettrait de ranger dans une catégorie par thème le sujet: $user_input ? "]
+                ]
+            ]
+        ]);
+
+        $responseData = json_decode($response->getBody(), true);
+        return $responseData['choices'][0]['message']['content'] ?? '';
     }
 
     public function handleRequest() {
@@ -161,24 +190,22 @@ class ApiController {
             $timestamp = date('Ymd_His');
             $generation_id = 'gen_' . uniqid();
 
-            // Récupérer la description pour la génération de texte
-            $text_description = $this->getDescription('texte');  // Description pour le texte
+            $text_description = $this->getDescription('texte');
             $text_response = $this->generateResponse($user_input, $text_description);
             $bot_response = $text_response['choices'][0]['message']['content'] ?? 'Aucune réponse disponible.';
 
-            // Sauvegarder la réponse textuelle
             $text_filename = $this->saveTextToFile($bot_response, 'response', $timestamp);
 
-            // Récupérer la description pour la génération d'image
-            $image_filename = $this->generateImage($user_input, $timestamp); // Récupère juste le nom de fichier
+            $image_filename = $this->generateImage($user_input, $timestamp);
             $image_url = $image_filename ? "https://example.com/{$image_filename}" : null;
 
-            // Générer la réponse audio
-            $audio_filename = $this->generateAudioResponse($bot_response, $timestamp); // Récupère juste le nom de fichier
+            $audio_filename = $this->generateAudioResponse($bot_response, $timestamp);
             $audio_url = $audio_filename ? "https://example.com/{$audio_filename}" : null;
 
-            // Insérer les données générées dans la base de données
-            $this->insertGenerationData($generation_id, $user_input, $bot_response, $image_filename, $audio_filename); // Enregistrement des noms de fichiers
+            $keywords_text = $this->getKeywordsFromApi($user_input);
+            $this->insertCategories($generation_id, $keywords_text);
+
+            $this->insertGenerationData($generation_id, $user_input, $bot_response, $image_filename, $audio_filename);
 
             $endTime = microtime(true);
             $totalTime = $endTime - $startTime;
