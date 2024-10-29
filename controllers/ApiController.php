@@ -12,7 +12,6 @@ use Dotenv\Dotenv;
 
 class ApiController {
     private $api_key;
-    private $temp_dir;
     private $pdo;
 
     public function __construct() {
@@ -20,11 +19,6 @@ class ApiController {
         $dotenv->load();
 
         $this->api_key = $_ENV['API_KEY'];
-        $this->temp_dir = __DIR__ . '/../output/temp';
-
-        if (!is_dir($this->temp_dir)) {
-            mkdir($this->temp_dir, 0777, true);
-        }
 
         try {
             $this->pdo = new PDO(
@@ -52,11 +46,10 @@ class ApiController {
                     ["role" => "system", "content" => $description],
                     ["role" => "user", "content" => $user_input]
                 ]
-            ],
-            'sink' => $this->temp_dir . '/response_' . uniqid() . '.tmp'
+            ]
         ]);
 
-        return json_decode(file_get_contents($response->getBody()->getMetadata('uri')), true);
+        return json_decode($response->getBody(), true);
     }
 
     public function saveTextToFile($text, $prefix, $timestamp) {
@@ -85,17 +78,22 @@ class ApiController {
                 "prompt" => $prompt,
                 "n" => 1,
                 "size" => $size
-            ],
-            'sink' => $this->temp_dir . '/image_' . uniqid() . '.tmp'
+            ]
         ]);
 
-        $responseData = json_decode(file_get_contents($response->getBody()->getMetadata('uri')), true);
+        $responseData = json_decode($response->getBody(), true);
         if (isset($responseData['data'][0]['url'])) {
             $image_url = $responseData['data'][0]['url'];
             $image_response = $client->get($image_url);
+
+            $output_dir = __DIR__ . '/../output';
+            if (!is_dir($output_dir)) {
+                mkdir($output_dir, 0777, true);
+            }
+
             $file_name = "image_{$timestamp}.png";
-            $file_path = __DIR__ . "/../output/{$file_name}";
-            file_put_contents($file_path, $image_response->getBody());
+            file_put_contents("$output_dir/$file_name", $image_response->getBody());
+
             return $file_name;
         }
         return null;
@@ -113,18 +111,17 @@ class ApiController {
                 "model" => "tts-1",
                 "voice" => "alloy",
                 "input" => $text,
-                "speed" => 1.1 
+                "speed" => 1.1
             ],
-            'sink' => $this->temp_dir . '/audio_' . uniqid() . '.tmp'
+            'sink' => fopen('php://memory', 'w')  // Garde la réponse en mémoire
         ]);
-
         $output_dir = __DIR__ . '/../output';
         if (!is_dir($output_dir)) {
             mkdir($output_dir, 0777, true);
         }
 
         $file_name = "audio_{$timestamp}.mp3";
-        file_put_contents("$output_dir/$file_name", file_get_contents($response->getBody()->getMetadata('uri')));
+        file_put_contents("$output_dir/$file_name", $response->getBody());
 
         return $file_name;
     }
