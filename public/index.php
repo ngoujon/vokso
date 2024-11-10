@@ -7,7 +7,10 @@ error_reporting(E_ALL);
 require '../vendor/autoload.php';
 
 use App\Controllers\ApiController;
+use App\Models\DatabaseModel;
+use App\Models\FileModel;
 
+// Récupérer la clé API et la configuration de la base de données
 $api_key = "***CLE-API-SUPPRIMEE***";  // Remplacer par votre clé API OpenAI
 
 $db_config = [
@@ -21,4 +24,18 @@ $db_config = [
 $controller = new ApiController($api_key, $db_config);
 $controller->handleRequest();
 
-require '../app/views/index.php';
+// Récupérer les 3 dernières générations
+$databaseModel = new DatabaseModel($db_config);
+$fileModel = new FileModel();
+
+$last_generations = $databaseModel->getLastGenerations();
+$generations_with_files = [];
+
+foreach ($last_generations as $generation) {
+    $generations_with_files[] = [
+        'generation' => $generation,
+        'files' => $fileModel->getGenerationFiles($generation)
+    ];
+}
+
+require '../app/views/index.php';  // Charge la vue

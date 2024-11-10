@@ -4,7 +4,7 @@ namespace App\Models;
 
 class FileModel {
     public function saveTextToFile($text, $prefix, $timestamp) {
-        $output_dir = __DIR__ . '/../../output/responses';
+        $output_dir = __DIR__ . '/../../public/output/responses';
         if (!is_dir($output_dir)) {
             mkdir($output_dir, 0777, true);
         }
@@ -15,7 +15,7 @@ class FileModel {
 
     public function saveImageToFile($image_url, $timestamp) {
         $image_response = file_get_contents($image_url);
-        $output_dir = __DIR__ . '/../../output/images';
+        $output_dir = __DIR__ . '/../../public/output/images';
         if (!is_dir($output_dir)) {
             mkdir($output_dir, 0777, true);
         }
@@ -27,7 +27,7 @@ class FileModel {
     }
 
     public function saveAudioToFile($audio_data, $timestamp) {
-        $output_dir = __DIR__ . '/../../output/audios';
+        $output_dir = __DIR__ . '/../../public/output/audios';
         if (!is_dir($output_dir)) {
             mkdir($output_dir, 0777, true);
         }
@@ -37,5 +37,27 @@ class FileModel {
 
         return $file_name;
     }
-}
+
+    public function getGenerationFiles($generation) {
+        $files = [];
     
+        // Vérifiez si l'URL de l'image est définie
+        if ($generation['image_url']) {
+            $files['image'] = "images/" . basename($generation['image_url']);
+        }
+    
+        // Vérifiez si l'URL de l'audio est définie
+        if ($generation['audio_url']) {
+            $files['audio'] = "audios/" . basename($generation['audio_url']);
+        }
+    
+        // Vérifiez si le fichier texte existe avant d'y accéder
+        if (isset($generation['text_file']) && !empty($generation['text_file'])) {
+            $files['text'] = "responses/" . basename($generation['text_file']);
+        }
+    
+        return $files;
+    }
+    
+    
+}

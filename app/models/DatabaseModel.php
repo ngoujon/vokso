@@ -91,4 +91,11 @@ class DatabaseModel {
         $responseData = json_decode($response->getBody(), true);
         return $responseData['choices'][0]['message']['content'] ?? '';
     }
+
+    // Méthode pour récupérer les 3 dernières générations
+    public function getLastGenerations() {
+        $stmt = $this->pdo->prepare("SELECT * FROM generations ORDER BY created_at DESC LIMIT 3");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

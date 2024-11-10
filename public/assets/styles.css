@@ -1,103 +1,72 @@
 body {
-    background-color: #121212; /* Couleur de fond sombre */
-    color: #ffffff; /* Couleur du texte */
+    background-color: #121212;
+    color: #ffffff;
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
     display: flex;
-    justify-content: center; /* Centre le contenu horizontalement */
-    align-items: center; /* Centre le contenu verticalement */
-    height: 100vh; /* Prend toute la hauteur de la fenêtre */
-    flex-direction: column; /* Aligne le contenu en colonne */
-}
-
-h1, h2 {
-    color: #ffffff; /* Couleur des titres */
-    margin: 10px 0;
+    flex-direction: column; /* Alignement en colonne */
+    align-items: center; /* Centrage horizontal */
+    height: 100vh;
 }
 
 #input-form {
-    background-color: #1e1e1e; /* Fond du formulaire */
+    background-color: #1e1e1e;
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); /* Ombre pour donner de la profondeur */
-    max-width: 400px; /* Largeur maximum du formulaire */
-    width: 100%; /* Prend 100% de la largeur disponible */
-    text-align: center; /* Centre le texte du formulaire */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    max-width: 400px;
+    width: 100%; /* Utilise toute la largeur disponible */
+    text-align: center;
+    margin-bottom: 40px; /* Espacement sous le formulaire */
 }
 
-input[type="text"] {
-    width: calc(100% - 20px); /* Largeur de l'input */
-    padding: 10px;
-    border: none; /* Pas de bordure */
-    border-radius: 5px;
-    background-color: #3a3a3a; /* Fond de l'input */
-    color: #ffffff; /* Couleur du texte de l'input */
-    font-size: 16px; /* Taille de police */
-    margin-bottom: 10px; /* Espacement en bas de l'input */
+#last-generations {
+    width: 100%;
+    max-width: 800px; /* Limite la largeur du conteneur des générations */
+    text-align: center;
+    margin-top: 40px; /* Marge au-dessus */
 }
 
-.button-loader-container {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 50px; /* La hauteur du conteneur doit correspondre à celle du loader */
+.generation-item {
+    background-color: #1e1e1e;
+    padding: 20px;
+    margin: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    width: 280px;
+    color: #fff;
+    text-align: left;
+    margin-bottom: 20px; /* Marge entre les éléments */
 }
 
-#submit-button {
-    display: inline-block; /* Pour pouvoir le masquer correctement */
+.generation-item h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
 }
 
-button {
-    padding: 10px 20px;
-    background-color: #4caf50; /* Couleur du bouton */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s; /* Transition pour l'effet hover */
-    font-size: 16px; /* Taille de police */
+.generation-item p {
+    font-size: 14px;
+    margin-bottom: 15px;
 }
 
-button:hover {
-    background-color: #45a049; /* Couleur du bouton au survol */
+.generation-item img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-bottom: 10px;
 }
 
-/* Styles pour l'animation de chargement */
-.loader {
-    display: none; /* Caché par défaut */
-    border: 8px solid #f3f3f3; /* Couleur claire de la bordure */
-    border-top: 8px solid #4caf50; /* Couleur de la bordure supérieure correspondant au bouton */
-    border-radius: 50%; /* Forme circulaire */
-    width: 50px; /* Largeur du loader */
-    height: 50px; /* Hauteur du loader */
-    animation: spin 1s linear infinite; /* Animation de rotation */
-    position: absolute; /* Position absolue pour qu'il se centre dans le conteneur */
-    margin-top:50px; /* Espacement au-dessus du loader */
+.generation-item audio {
+    width: 100%;
+    margin-top: 10px;
 }
 
-/* Animation de rotation */
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.generation-item a {
+    color: #4caf50;
+    text-decoration: none;
+    font-weight: bold;
 }
 
-/* Styles pour les réponses */
-.response {
-    max-width: 400px; /* Largeur maximale pour les réponses */
-    margin-top: 20px; /* Espacement au-dessus des réponses */
-    text-align: left; /* Alignement du texte à gauche */
-    word-wrap: break-word; /* Gère le débordement de mots longs */
-}
-
-img {
-    max-width: 100%; /* S'assure que l'image ne dépasse pas la largeur du conteneur */
-    height: auto; /* Maintient les proportions de l'image */
-}
-
-.completed-message {
-    color: #4caf50; /* Couleur du message de succès */
-    font-size: 18px; /* Taille de police */
-    margin-top: 20px; /* Espacement au-dessus du message */
+.generation-item a:hover {
+    text-decoration: underline;
 }
