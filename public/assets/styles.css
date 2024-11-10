@@ -60,7 +60,6 @@ button:hover {
     width: 100%;
     max-width: 900px; /* Limiter la largeur du conteneur */
     text-align: center; /* Centrer le texte */
-    margin-top: 40px; /* Marge au-dessus */
 }
 
 /* Titre des dernières générations */
@@ -94,9 +93,9 @@ button:hover {
 /* Centrer et mettre le titre en majuscules */
 .generation-item h3 {
     font-size: 18px; /* Taille de la police */
-    margin-bottom: 10px; /* Espace sous le titre */
     text-align: center; /* Centrer le titre */
     text-transform: uppercase; /* Mettre le texte en majuscules */
+    margin-top: 0px;
 }
 
 /* Paragraphe dans chaque génération */
@@ -109,7 +108,6 @@ button:hover {
 .generation-item img {
     max-width: 100%; /* Ne pas dépasser la largeur du conteneur */
     border-radius: 8px; /* Coins arrondis */
-    margin-bottom: 10px; /* Espace sous l'image */
     display: block; /* Transformation en élément de type bloc */
     margin-left: auto; /* Centrer l'image horizontalement */
     margin-right: auto; /* Centrer l'image horizontalement */
@@ -156,4 +154,65 @@ button:hover {
     color: #b0b0b0; /* Gris clair */
     text-align: center; /* Centrer le texte */
     margin-top: 20px; /* Espacement au-dessus du texte */
+}
+
+/* Personnalisation du lecteur audio */
+.custom-audio-player {
+    width: 200px;
+    background-color: #1e1e1e;
+    padding: 5px 20px;
+    border-radius: 10px;
+    color: white;
+    text-align: center;
+}
+
+/* Conteneur des contrôles */
+.controls {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Boutons de reculer et avancer */
+button.skipBtn {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0 10px;
+}
+
+button.skipBtn:hover {
+    background-color: #555;
+}
+
+/* Bouton Play/Pause */
+button.playPauseBtn {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button.playPauseBtn:hover {
+    background-color: #45a049;
+}
+
+/* Affichage du temps */
+.time-display {
+    margin-top: 10px;
+    font-size: 16px;
+    color: #b0b0b0;
+    
+}
+
+.time-display span {
+    font-weight: bold;
 }

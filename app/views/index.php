@@ -24,32 +24,48 @@
         <div id="completed-message" class="completed-message"></div>
     </div>
 
-<!-- Deuxième bloc : Dernières générations -->
-<div id="last-generations">
-    <h2>Dernières générations :</h2> <!-- Nouveau titre ajouté -->
-    <div class="last-generations-container"> <!-- Conteneur Flexbox pour les générations -->
-        <?php foreach ($generations_with_files as $item): ?>
-            <div class="generation-item">
-                <h3><?php echo htmlspecialchars($item['generation']['title']); ?></h3>
+    <!-- Deuxième bloc : Dernières générations -->
+    <div id="last-generations">
+        <h2>Dernières générations :</h2> <!-- Nouveau titre ajouté -->
+        <div class="last-generations-container"> <!-- Conteneur Flexbox pour les générations -->
+            <?php foreach ($generations_with_files as $item): ?>
+                <div class="generation-item">
+                    <h3><?php echo htmlspecialchars($item['generation']['title']); ?></h3>
 
-                <?php if (isset($item['files']['image'])): ?>
-                    <img src="/output/<?php echo htmlspecialchars($item['files']['image']); ?>" alt="Image de la génération">
-                <?php else: ?>
-                    <p>Aucune image disponible pour cette génération.</p>
-                <?php endif; ?>
+                    <?php if (isset($item['files']['image'])): ?>
+                        <img src="/output/<?php echo htmlspecialchars($item['files']['image']); ?>" alt="Image de la génération">
+                    <?php else: ?>
+                        <p>Aucune image disponible pour cette génération.</p>
+                    <?php endif; ?>
 
-                <?php if (isset($item['files']['audio'])): ?>
-                    <audio controls>
-                        <source src="/output/<?php echo htmlspecialchars($item['files']['audio']); ?>" type="audio/mp3">
-                        Votre navigateur ne prend pas en charge la lecture audio.
-                    </audio>
-                <?php else: ?>
-                    <p>Aucun fichier audio disponible pour cette génération.</p>
-                <?php endif; ?>
-            </div>
-        <?php endforeach; ?>
+                    <?php if (isset($item['files']['audio'])): ?>
+                        <div class="custom-audio-player">
+                            <audio id="audio-<?php echo $item['generation']['id']; ?>" src="/output/<?php echo htmlspecialchars($item['files']['audio']); ?>" preload="auto"></audio>
+                            <div class="controls">
+                                <!-- Bouton Reculer 10 secondes -->
+                                <button class="skipBtn" id="skipBack-<?php echo $item['generation']['id']; ?>">-10s</button>
+
+                                <!-- Bouton Play/Pause -->
+                                <button class="playPauseBtn" id="playPauseBtn-<?php echo $item['generation']['id']; ?>">Play</button>
+
+                                <!-- Bouton Avancer 10 secondes -->
+                                <button class="skipBtn" id="skipForward-<?php echo $item['generation']['id']; ?>">+10s</button>
+                            </div>
+                            <div class="time-display">
+                                    <span id="currentTime-<?php echo $item['generation']['id']; ?>">00:00</span> /
+                                    <span id="duration-<?php echo $item['generation']['id']; ?>">00:00</span>
+                                </div>
+                        </div>
+                    <?php else: ?>
+                        <p>Aucun fichier audio disponible pour cette génération.</p>
+                    <?php endif; ?>
+
+
+
+                </div>
+            <?php endforeach; ?>
+        </div>
     </div>
-</div>
 
     <script>
         $(document).ready(function() {
@@ -68,7 +84,7 @@
                     success: function(data) {
                         $('#loader').hide(); // Masquer le cercle de chargement
                         $('#submit-button').show(); // Afficher le bouton
-                        $('#completed-message').text(`Temps total de génération : ${data.total_time} secondes`);
+                        $('#completed-message').text(`Temps total de génération : ${data.total_time} s`);
                     },
                     error: function() {
                         $('#loader').hide(); // Masquer le cercle de chargement
@@ -79,6 +95,60 @@
             });
         });
     </script>
+    <script>
+        $(document).ready(function() {
+            // Gérer les boutons Play/Pause et afficher les temps
+            $('[id^="playPauseBtn-"]').each(function() {
+                const btn = $(this);
+                const audioId = btn.attr('id').replace('playPauseBtn-', '');
+                const audio = document.getElementById('audio-' + audioId);
+                const currentTimeDisplay = $('#currentTime-' + audioId);
+                const durationDisplay = $('#duration-' + audioId);
+
+                // Afficher la durée totale de l'audio au chargement
+                audio.addEventListener('loadedmetadata', function() {
+                    const duration = audio.duration;
+                    durationDisplay.text(formatTime(duration));
+                });
+
+                // Play/Pause
+                btn.on('click', function() {
+                    if (audio.paused) {
+                        audio.play();
+                        btn.text('Pause');
+                    } else {
+                        audio.pause();
+                        btn.text('Play');
+                    }
+                });
+
+                // Mettre à jour le temps de lecture
+                audio.addEventListener('timeupdate', function() {
+                    currentTimeDisplay.text(formatTime(audio.currentTime));
+                });
+
+                // Fonction pour formater le temps en minutes:secondes
+                function formatTime(seconds) {
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = Math.floor(seconds % 60);
+                    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+                }
+
+                // Gérer le bouton reculer de 10 secondes
+                $('#skipBack-' + audioId).on('click', function() {
+                    audio.currentTime = Math.max(0, audio.currentTime - 10); // Reculer de 10 secondes, ne pas aller en dessous de 0
+                });
+
+                // Gérer le bouton avancer de 10 secondes
+                $('#skipForward-' + audioId).on('click', function() {
+                    audio.currentTime = Math.min(audio.duration, audio.currentTime + 10); // Avancer de 10 secondes, ne pas dépasser la durée
+                });
+            });
+        });
+    </script>
+
+
+
 
 </body>
 
