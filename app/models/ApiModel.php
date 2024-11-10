@@ -6,11 +6,15 @@ use GuzzleHttp\Client;
 
 class ApiModel {
     private $api_key;
+    private $db_model;
 
-    public function __construct($api_key) {
+    // Passer l'instance de DatabaseModel au constructeur
+    public function __construct($api_key, DatabaseModel $db_model) {
         $this->api_key = $api_key;
+        $this->db_model = $db_model; // stocker l'instance de DatabaseModel
     }
 
+    // Génération de la réponse texte
     public function generateResponse($user_input, $description) {
         $client = new Client();
 
@@ -20,7 +24,7 @@ class ApiModel {
                 'Content-Type' => 'application/json',
             ],
             'json' => [
-                "model" => "gpt-3.5-turbo",
+                "model" => "gpt-4-turbo",
                 "messages" => [
                     ["role" => "system", "content" => $description],
                     ["role" => "user", "content" => $user_input]
@@ -31,11 +35,19 @@ class ApiModel {
         return json_decode($response->getBody(), true);
     }
 
+    // Génération d'une image en utilisant la description depuis la base de données
     public function generateImage($subject, $timestamp) {
         $client = new Client();
-        $description = $this->getDescription('image');
+
+        // Récupérer la description depuis la base de données
+        $description = $this->db_model->getDescription('image'); // Appeler la méthode getDescription de DatabaseModel
+        
+        if (!$description) {
+            throw new \RuntimeException("Description for image not found in the database.");
+        }
+
         $prompt = "$description $subject";
-        $size = "256x256";
+        $size = "1024x1024";
 
         $response = $client->post('https://api.openai.com/v1/images/generations', [
             'headers' => [
@@ -43,7 +55,7 @@ class ApiModel {
                 'Content-Type' => 'application/json',
             ],
             'json' => [
-                "model" => "dall-e-2",
+                "model" => "dall-e-3",
                 "prompt" => $prompt,
                 "n" => 1,
                 "size" => $size
@@ -57,6 +69,7 @@ class ApiModel {
         return null;
     }
 
+    // Génération de la réponse audio (inchangée)
     public function generateAudioResponse($text, $timestamp) {
         $client = new Client();
 
@@ -75,11 +88,5 @@ class ApiModel {
         ]);
 
         return $response->getBody();
-    }
-
-    private function getDescription($type) {
-        // Utilise la logique pour obtenir une description pour générer l'image, par exemple
-        // Vous pouvez récupérer la description dans une base de données ou configurer des descriptions statiques
-        return "A description for the type $type";
     }
 }

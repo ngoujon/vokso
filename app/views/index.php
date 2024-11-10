@@ -26,130 +26,158 @@
 
     <!-- Deuxième bloc : Dernières générations -->
     <div id="last-generations">
-        <h2>Dernières générations :</h2> <!-- Nouveau titre ajouté -->
-        <div class="last-generations-container"> <!-- Conteneur Flexbox pour les générations -->
+        <h2>Dernières générations :</h2>
+        <div class="last-generations-container">
             <?php foreach ($generations_with_files as $item): ?>
+                <?php $title = htmlspecialchars($item['generation']['title']); ?>
                 <div class="generation-item">
-                    <h3><?php echo htmlspecialchars($item['generation']['title']); ?></h3>
-
+                    <h3><?= $title ?></h3>
                     <?php if (isset($item['files']['image'])): ?>
-                        <img src="/output/<?php echo htmlspecialchars($item['files']['image']); ?>" alt="Image de la génération">
+                        <img src="/output/<?= htmlspecialchars($item['files']['image']) ?>" alt="Image de la génération">
                     <?php else: ?>
                         <p>Aucune image disponible pour cette génération.</p>
                     <?php endif; ?>
 
                     <?php if (isset($item['files']['audio'])): ?>
                         <div class="custom-audio-player">
-                            <audio id="audio-<?php echo $item['generation']['id']; ?>" src="/output/<?php echo htmlspecialchars($item['files']['audio']); ?>" preload="auto"></audio>
+                            <audio id="audio-<?= $item['generation']['id'] ?>" src="/output/<?= htmlspecialchars($item['files']['audio']) ?>" preload="auto"></audio>
                             <div class="controls">
-                                <!-- Bouton Reculer 10 secondes -->
-                                <button class="skipBtn" id="skipBack-<?php echo $item['generation']['id']; ?>">-10s</button>
-
-                                <!-- Bouton Play/Pause -->
-                                <button class="playPauseBtn" id="playPauseBtn-<?php echo $item['generation']['id']; ?>">Play</button>
-
-                                <!-- Bouton Avancer 10 secondes -->
-                                <button class="skipBtn" id="skipForward-<?php echo $item['generation']['id']; ?>">+10s</button>
+                                <button class="skipBtn" data-id="<?= $item['generation']['id'] ?>" data-skip="-10">-10s</button>
+                                <button class="playPauseBtn" data-id="<?= $item['generation']['id'] ?>">Play</button>
+                                <button class="skipBtn" data-id="<?= $item['generation']['id'] ?>" data-skip="10">+10s</button>
                             </div>
                             <div class="time-display">
-                                    <span id="currentTime-<?php echo $item['generation']['id']; ?>">00:00</span> /
-                                    <span id="duration-<?php echo $item['generation']['id']; ?>">00:00</span>
-                                </div>
+                                <span id="currentTime-<?= $item['generation']['id'] ?>">00:00</span> /
+                                <span id="duration-<?= $item['generation']['id'] ?>">Chargement...</span>
+                            </div>
                         </div>
                     <?php else: ?>
                         <p>Aucun fichier audio disponible pour cette génération.</p>
                     <?php endif; ?>
-
-
-
                 </div>
             <?php endforeach; ?>
         </div>
     </div>
 
     <script>
-        $(document).ready(function() {
-            $('#form').on('submit', function(event) {
+        $(function() {
+            const $form = $('#form');
+            const $loader = $('#loader').hide();
+            const $submitButton = $('#submit-button');
+            const $response = $('#response');
+            const $completedMessage = $('#completed-message');
+
+            $form.on('submit', function(event) {
                 event.preventDefault();
-                $('#loader').show(); // Afficher le cercle de chargement
-                $('#submit-button').hide(); // Masquer le bouton
-                $('#response').empty();
-                $('#completed-message').empty();
+                $loader.show();
+                $submitButton.hide();
+                $response.empty();
+                $completedMessage.empty();
 
                 $.ajax({
                     url: '/index.php',
                     type: 'POST',
-                    data: $(this).serialize(),
+                    data: $form.serialize(),
                     dataType: 'json',
-                    success: function(data) {
-                        $('#loader').hide(); // Masquer le cercle de chargement
-                        $('#submit-button').show(); // Afficher le bouton
-                        $('#completed-message').text(`Temps total de génération : ${data.total_time} s`);
-                    },
-                    error: function() {
-                        $('#loader').hide(); // Masquer le cercle de chargement
-                        $('#submit-button').show(); // Afficher le bouton
-                        $('#response').text('Une erreur est survenue. Veuillez réessayer.');
-                    }
+                    success: (data) => handleResponse(data.total_time),
+                    error: () => handleResponse(null, 'Une erreur est survenue. Veuillez réessayer.')
                 });
             });
-        });
-    </script>
-    <script>
-        $(document).ready(function() {
-            // Gérer les boutons Play/Pause et afficher les temps
-            $('[id^="playPauseBtn-"]').each(function() {
-                const btn = $(this);
-                const audioId = btn.attr('id').replace('playPauseBtn-', '');
-                const audio = document.getElementById('audio-' + audioId);
-                const currentTimeDisplay = $('#currentTime-' + audioId);
-                const durationDisplay = $('#duration-' + audioId);
 
-                // Afficher la durée totale de l'audio au chargement
-                audio.addEventListener('loadedmetadata', function() {
-                    const duration = audio.duration;
-                    durationDisplay.text(formatTime(duration));
-                });
-
-                // Play/Pause
-                btn.on('click', function() {
-                    if (audio.paused) {
-                        audio.play();
-                        btn.text('Pause');
-                    } else {
-                        audio.pause();
-                        btn.text('Play');
-                    }
-                });
-
-                // Mettre à jour le temps de lecture
-                audio.addEventListener('timeupdate', function() {
-                    currentTimeDisplay.text(formatTime(audio.currentTime));
-                });
-
-                // Fonction pour formater le temps en minutes:secondes
-                function formatTime(seconds) {
-                    const minutes = Math.floor(seconds / 60);
-                    const remainingSeconds = Math.floor(seconds % 60);
-                    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+            function handleResponse(totalTime, errorMessage = null) {
+                $loader.hide();
+                $submitButton.show();
+                if (errorMessage) {
+                    $response.text(errorMessage);
+                } else {
+                    $completedMessage.text(`Temps total de génération : ${totalTime} s`);
                 }
+            }
 
-                // Gérer le bouton reculer de 10 secondes
-                $('#skipBack-' + audioId).on('click', function() {
-                    audio.currentTime = Math.max(0, audio.currentTime - 10); // Reculer de 10 secondes, ne pas aller en dessous de 0
+            // Event delegation for play/pause and skip buttons
+            $('.last-generations-container').on('click', '.playPauseBtn', function() {
+                const audioId = $(this).data('id');
+                togglePlayPause(audioId, $(this));
+            }).on('click', '.skipBtn', function() {
+                const audioId = $(this).data('id');
+                const skipTime = $(this).data('skip');
+                skipAudio(audioId, skipTime);
+            });
+
+            function togglePlayPause(id, $btn) {
+                const audio = document.getElementById(`audio-${id}`);
+                if (audio.paused) {
+                    audio.play();
+                    $btn.text('Pause');
+                } else {
+                    audio.pause();
+                    $btn.text('Play');
+                }
+                updateTimeDisplay(audio, id);
+            }
+
+            function skipAudio(id, time) {
+                const audio = document.getElementById(`audio-${id}`);
+                audio.currentTime = Math.min(Math.max(0, audio.currentTime + time), audio.duration);
+            }
+
+            function updateTimeDisplay(audio, id) {
+                const $currentTimeDisplay = $(`#currentTime-${id}`);
+                const $durationDisplay = $(`#duration-${id}`);
+
+                // Vérifier si l'audio existe et récupérer la durée dès que possible
+                if (audio) {
+                    console.log("Audio Loaded: ", audio);
+
+                    // Ajouter l'événement loadedmetadata pour récupérer la durée
+                    audio.addEventListener('loadedmetadata', function() {
+                        console.log("Durée de l'audio : ", audio.duration);
+
+                        if (!isNaN(audio.duration)) {
+                            $durationDisplay.text(formatTime(audio.duration)); // Afficher la durée formatée
+                        } else {
+                            $durationDisplay.text("Indisponible");
+                        }
+                    });
+
+                    // Si le fichier audio est déjà prêt (peut être le cas lors du préchargement)
+                    if (audio.duration && !isNaN(audio.duration)) {
+                        $durationDisplay.text(formatTime(audio.duration)); // Afficher la durée immédiatement
+                    }
+
+                    // Mise à jour des informations de temps pendant la lecture
+                    audio.addEventListener('timeupdate', function() {
+                        $currentTimeDisplay.text(formatTime(audio.currentTime));
+                    });
+                } else {
+                    console.error("Élément audio non trouvé !");
+                }
+            }
+
+            function formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const remainingSeconds = Math.floor(seconds % 60).toString().padStart(2, '0');
+                return `${minutes}:${remainingSeconds}`;
+            }
+
+            // Récupérer la durée de l'audio pour tous les éléments audio immédiatement au chargement de la page
+            $('audio').each(function() {
+                const audio = this;
+                const audioId = $(audio).attr('id').replace('audio-', '');
+                const $durationDisplay = $(`#duration-${audioId}`);
+                audio.addEventListener('loadedmetadata', function() {
+                    if (!isNaN(audio.duration)) {
+                        $durationDisplay.text(formatTime(audio.duration)); // Afficher la durée dès que l'audio est prêt
+                    }
                 });
 
-                // Gérer le bouton avancer de 10 secondes
-                $('#skipForward-' + audioId).on('click', function() {
-                    audio.currentTime = Math.min(audio.duration, audio.currentTime + 10); // Avancer de 10 secondes, ne pas dépasser la durée
-                });
+                // Si l'audio est déjà prêt (par exemple, préchargé), afficher directement la durée
+                if (audio.duration && !isNaN(audio.duration)) {
+                    $durationDisplay.text(formatTime(audio.duration));
+                }
             });
         });
     </script>
-
-
-
-
 </body>
 
 </html>

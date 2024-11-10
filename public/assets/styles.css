@@ -1,145 +1,149 @@
+/* Définition des variables */
+:root {
+    --bg-dark: #121212;
+    --bg-light-dark: #1e1e1e;
+    --text-white: #ffffff;
+    --text-light-gray: #b0b0b0;
+    --green: #4caf50;
+    --green-dark: #45a049;
+    --input-bg: #333333;
+    --input-border: #4caf50;
+}
+
 /* Styles généraux */
 body {
-    background-color: #121212; /* Fond sombre */
-    color: #ffffff; /* Texte blanc */
-    font-family: Arial, sans-serif; /* Police simple */
+    background-color: var(--bg-dark);
+    color: var(--text-white);
+    font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
     display: flex;
-    flex-direction: column; /* Alignement en colonne */
-    align-items: center; /* Centrage horizontal */
-    height: 100vh; /* Hauteur pleine de la fenêtre */
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
 }
 
 /* Bloc du formulaire de génération */
 #input-form {
-    background-color: #1e1e1e; /* Fond gris sombre */
-    border-radius: 8px; /* Coins arrondis */
-    padding: 20px; /* Espacement interne */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); /* Ombre portée */
-    max-width: 400px; /* Largeur maximale du formulaire */
-    width: 100%; /* Utilise toute la largeur disponible */
-    text-align: center; /* Centrer le texte */
-    margin-bottom: 40px; /* Marge sous le formulaire */
+    background-color: var(--bg-light-dark);
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 10px;
 }
 
-/* Personnalisation de la barre de saisie et du bouton */
+/* Personnalisation des inputs et boutons */
+input[type="text"], button {
+    border-radius: 5px;
+    font-size: 16px;
+    padding: 10px;
+}
+
 input[type="text"] {
-    background-color: #333333; /* Fond sombre pour l'input */
-    color: #ffffff; /* Texte blanc */
-    border: 1px solid #4caf50; /* Bordure verte */
-    border-radius: 5px; /* Coins arrondis */
-    padding: 10px; /* Espacement interne */
-    width: calc(100% - 22px); /* Largeur ajustée */
-    margin-bottom: 20px; /* Espace sous le champ de saisie */
-    font-size: 16px; /* Taille de la police */
+    background-color: var(--input-bg);
+    color: var(--text-white);
+    border: 1px solid var(--input-border);
+    width: calc(100% - 22px);
+    margin-bottom: 20px;
 }
 
 input[type="text"]:focus {
-    outline: none; /* Supprimer le contour bleu par défaut */
-    border-color: #4caf50; /* Bordure verte au focus */
+    outline: none;
+    border-color: var(--input-border);
 }
 
 button {
-    background-color: #4caf50; /* Fond vert pour le bouton */
-    color: #ffffff; /* Texte blanc */
-    border: none; /* Pas de bordure */
-    padding: 10px 20px; /* Espacement interne */
-    border-radius: 5px; /* Coins arrondis */
-    font-size: 16px; /* Taille de la police */
-    cursor: pointer; /* Curseur pointeur */
-    transition: background-color 0.3s; /* Transition douce */
+    background-color: var(--green);
+    color: var(--text-white);
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
 
 button:hover {
-    background-color: #45a049; /* Couleur plus foncée au survol */
+    background-color: var(--green-dark);
 }
 
 /* Bloc des dernières générations */
 #last-generations {
     width: 100%;
-    max-width: 900px; /* Limiter la largeur du conteneur */
-    text-align: center; /* Centrer le texte */
+    max-width: 900px;
+    text-align: center;
 }
 
-/* Titre des dernières générations */
 #last-generations h2 {
-    font-size: 20px; /* Taille de la police */
-    color: #ffffff; /* Texte en blanc */
-    margin-bottom: 20px; /* Marge sous le titre */
+    font-size: 20px;
+    margin-bottom: 20px;
 }
 
-/* Conteneur des éléments des dernières générations */
+/* Conteneur et éléments des dernières générations */
 .last-generations-container {
-    display: flex; /* Utilisation de Flexbox pour aligner les éléments */
-    flex-wrap: wrap; /* Permet à la ligne de se casser sur mobile */
-    justify-content: center; /* Centrer les éléments sur la ligne */
-    gap: 20px; /* Espace entre les éléments */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
 }
 
-/* Éléments des générations */
 .generation-item {
-    background-color: #1e1e1e; /* Fond gris sombre pour chaque élément */
-    padding: 20px; /* Espacement interne */
-    border-radius: 8px; /* Coins arrondis */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Ombre portée */
-    width: 280px; /* Largeur fixe pour chaque élément */
-    color: #fff; /* Texte blanc */
-    text-align: left; /* Alignement à gauche du texte */
-    margin-bottom: 20px; /* Espace sous chaque élément */
-    box-sizing: border-box; /* Assurer que la largeur inclut padding et bordure */
+    background-color: var(--bg-light-dark);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    width: 280px;
+    color: var(--text-white);
+    text-align: left;
+    margin-bottom: 20px;
+    box-sizing: border-box;
 }
 
-/* Centrer et mettre le titre en majuscules */
 .generation-item h3 {
-    font-size: 18px; /* Taille de la police */
-    text-align: center; /* Centrer le titre */
-    text-transform: uppercase; /* Mettre le texte en majuscules */
+    font-size: 18px;
+    text-align: center;
+    text-transform: uppercase;
     margin-top: 0px;
 }
 
-/* Paragraphe dans chaque génération */
 .generation-item p {
-    font-size: 14px; /* Taille de la police */
-    margin-bottom: 15px; /* Espace sous chaque paragraphe */
+    font-size: 14px;
+    margin-bottom: 15px;
 }
 
-/* Centrer l'image dans chaque génération */
 .generation-item img {
-    max-width: 100%; /* Ne pas dépasser la largeur du conteneur */
-    border-radius: 8px; /* Coins arrondis */
-    display: block; /* Transformation en élément de type bloc */
-    margin-left: auto; /* Centrer l'image horizontalement */
-    margin-right: auto; /* Centrer l'image horizontalement */
+    max-width: 100%;
+    border-radius: 8px;
+    display: block;
+    margin: 0 auto;
 }
 
-/* Lecteur audio dans chaque génération */
 .generation-item audio {
-    width: 100%; /* Prendre toute la largeur disponible */
-    margin-top: 10px; /* Espace au-dessus du lecteur audio */
+    width: 100%;
+    margin-top: 10px;
 }
 
-/* Liens dans les éléments de génération */
 .generation-item a {
-    color: #4caf50; /* Couleur verte pour les liens */
-    text-decoration: none; /* Pas de soulignement par défaut */
-    font-weight: bold; /* Texte en gras */
+    color: var(--green);
+    text-decoration: none;
+    font-weight: bold;
 }
 
 .generation-item a:hover {
-    text-decoration: underline; /* Soulignement au survol */
+    text-decoration: underline;
 }
 
 /* Cercle de chargement */
 .loader {
-    border: 4px solid rgba(255, 255, 255, 0.3); /* Bordure extérieure semi-transparente */
-    border-top: 4px solid #4caf50; /* Bordure supérieure verte */
-    border-radius: 50%; /* Forme circulaire */
-    width: 40px; /* Taille du cercle */
-    height: 40px; /* Taille du cercle */
-    animation: spin 1s linear infinite; /* Animation de rotation */
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid var(--green);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
     display: inline-block;
-    margin-top: 10px; /* Espace au-dessus du cercle */
+    margin-top: 10px;
 }
 
 /* Animation de rotation pour le cercle */
@@ -148,41 +152,43 @@ button:hover {
     100% { transform: rotate(360deg); }
 }
 
-/* Texte du temps de génération en gris clair */
+/* Texte du temps de génération */
 #completed-message {
-    font-size: 16px; /* Taille de la police */
-    color: #b0b0b0; /* Gris clair */
-    text-align: center; /* Centrer le texte */
-    margin-top: 20px; /* Espacement au-dessus du texte */
+    font-size: 16px;
+    color: var(--text-light-gray);
+    text-align: center;
+    margin-top: 20px;
 }
 
 /* Personnalisation du lecteur audio */
 .custom-audio-player {
     width: 200px;
-    background-color: #1e1e1e;
+    background-color: var(--bg-light-dark);
     padding: 5px 20px;
     border-radius: 10px;
-    color: white;
+    color: var(--text-white);
     text-align: center;
 }
 
 /* Conteneur des contrôles */
 .controls {
-    margin-top: 20px;
+    margin-top: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 /* Boutons de reculer et avancer */
-button.skipBtn {
-    background-color: #333;
-    color: white;
-    border: none;
-    padding: 10px;
+button.skipBtn, button.playPauseBtn {
     border-radius: 5px;
-    cursor: pointer;
     font-size: 16px;
+    padding: 10px;
+    cursor: pointer;
+}
+
+button.skipBtn {
+    background-color: var(--input-bg);
+    color: var(--text-white);
     margin: 0 10px;
 }
 
@@ -190,27 +196,20 @@ button.skipBtn:hover {
     background-color: #555;
 }
 
-/* Bouton Play/Pause */
 button.playPauseBtn {
-    background-color: #4caf50;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
+    background-color: var(--green);
+    color: var(--text-white);
 }
 
 button.playPauseBtn:hover {
-    background-color: #45a049;
+    background-color: var(--green-dark);
 }
 
 /* Affichage du temps */
 .time-display {
     margin-top: 10px;
     font-size: 16px;
-    color: #b0b0b0;
-    
+    color: var(--text-light-gray);
 }
 
 .time-display span {
