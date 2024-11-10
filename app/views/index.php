@@ -92,6 +92,8 @@
                 } else {
                     $completedMessage.text(`Temps total de génération : ${totalTime} s`);
                 }
+                // Recharger la page pour afficher les dernières générations
+                location.reload();
             }
 
             // Event delegation for play/pause and skip buttons
