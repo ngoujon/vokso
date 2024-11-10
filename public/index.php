@@ -7,7 +7,6 @@ error_reporting(E_ALL);
 require '../vendor/autoload.php';
 
 use App\Controllers\ApiController;
-use App\Models\DatabaseModel;
 
 $api_key = "***CLE-API-SUPPRIMEE***";  // Remplacer par votre clé API OpenAI
 
@@ -21,3 +20,5 @@ $db_config = [
 // Initialiser le contrôleur avec la clé API et les paramètres de base de données
 $controller = new ApiController($api_key, $db_config);
 $controller->handleRequest();
+
+require '../app/views/index.php';

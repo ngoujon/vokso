@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QWAI POD</title>
-    <link rel="stylesheet" href="../assets/styles.css"> <!-- Lien vers le fichier CSS -->
+    <link rel="stylesheet" href="../assets/styles.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 
@@ -35,7 +35,7 @@
 
                 // Appel AJAX pour soumettre le formulaire
                 $.ajax({
-                    url: '../public/index.php', // Mise à jour du chemin
+                    url: '/index.php', // Mise à jour du chemin
                     type: 'POST',
                     data: $(this).serialize(),
                     dataType: 'json',

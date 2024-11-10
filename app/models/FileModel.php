@@ -4,7 +4,7 @@ namespace App\Models;
 
 class FileModel {
     public function saveTextToFile($text, $prefix, $timestamp) {
-        $output_dir = __DIR__ . '/../../output';
+        $output_dir = __DIR__ . '/../../output/responses';
         if (!is_dir($output_dir)) {
             mkdir($output_dir, 0777, true);
         }
@@ -15,7 +15,7 @@ class FileModel {
 
     public function saveImageToFile($image_url, $timestamp) {
         $image_response = file_get_contents($image_url);
-        $output_dir = __DIR__ . '/../../output';
+        $output_dir = __DIR__ . '/../../output/images';
         if (!is_dir($output_dir)) {
             mkdir($output_dir, 0777, true);
         }
@@ -27,7 +27,7 @@ class FileModel {
     }
 
     public function saveAudioToFile($audio_data, $timestamp) {
-        $output_dir = __DIR__ . '/../../output';
+        $output_dir = __DIR__ . '/../../output/audios';
         if (!is_dir($output_dir)) {
             mkdir($output_dir, 0777, true);
         }
