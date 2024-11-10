@@ -24,8 +24,10 @@
         <div id="completed-message" class="completed-message"></div>
     </div>
 
-    <!-- Deuxième bloc : Dernières générations -->
-    <div id="last-generations">
+<!-- Deuxième bloc : Dernières générations -->
+<div id="last-generations">
+    <h2>Dernières générations :</h2> <!-- Nouveau titre ajouté -->
+    <div class="last-generations-container"> <!-- Conteneur Flexbox pour les générations -->
         <?php foreach ($generations_with_files as $item): ?>
             <div class="generation-item">
                 <h3><?php echo htmlspecialchars($item['generation']['title']); ?></h3>
@@ -47,13 +49,14 @@
             </div>
         <?php endforeach; ?>
     </div>
+</div>
 
     <script>
         $(document).ready(function() {
             $('#form').on('submit', function(event) {
                 event.preventDefault();
-                $('#loader').show();
-                $('#submit-button').hide();
+                $('#loader').show(); // Afficher le cercle de chargement
+                $('#submit-button').hide(); // Masquer le bouton
                 $('#response').empty();
                 $('#completed-message').empty();
 
@@ -63,13 +66,13 @@
                     data: $(this).serialize(),
                     dataType: 'json',
                     success: function(data) {
-                        $('#loader').hide();
-                        $('#submit-button').show();
+                        $('#loader').hide(); // Masquer le cercle de chargement
+                        $('#submit-button').show(); // Afficher le bouton
                         $('#completed-message').text(`Temps total de génération : ${data.total_time} secondes`);
                     },
                     error: function() {
-                        $('#loader').hide();
-                        $('#submit-button').show();
+                        $('#loader').hide(); // Masquer le cercle de chargement
+                        $('#submit-button').show(); // Afficher le bouton
                         $('#response').text('Une erreur est survenue. Veuillez réessayer.');
                     }
                 });
