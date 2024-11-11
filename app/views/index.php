@@ -102,9 +102,6 @@
                                     initializeAudioPlayer(item.id);
                                 });
                             }
-                            //  else {
-                            //     resultsList.append('<li>Aucun résultat trouvé.</li>');
-                            // }
                         }
                     });
                 } else {
@@ -119,7 +116,6 @@
                 const $currentTimeDisplay = $('#currentTime-' + id);
                 const $playPauseBtn = $('[data-id="' + id + '"].playPauseBtn');
 
-                // Attendre que le fichier audio soit prêt
                 audio.addEventListener('loadedmetadata', function() {
                     if (!isNaN(audio.duration)) {
                         $durationDisplay.text(formatTime(audio.duration)); // Afficher la durée dès que possible
@@ -128,17 +124,14 @@
                     }
                 });
 
-                // Vérification de la durée immédiatement si déjà disponible
                 if (audio.duration && !isNaN(audio.duration)) {
                     $durationDisplay.text(formatTime(audio.duration));
                 }
 
-                // Gestion de la lecture / pause
                 $playPauseBtn.on('click', function() {
                     if (audio.paused) {
                         audio.play();
                         $(this).html('<i class="bi custom-icons bi-pause"></i>');
-                        // 
                     } else {
                         audio.pause();
                         $(this).html('<i class="bi custom-icons bi-play"></i>');
@@ -146,32 +139,27 @@
                     updateCurrentTime(audio, id);
                 });
 
-                // Gestion des sauts de temps (+10s, -10s)
                 $('.skipBtn[data-id="' + id + '"]').on('click', function() {
                     const skipTime = $(this).data('skip');
                     audio.currentTime = Math.min(Math.max(0, audio.currentTime + skipTime), audio.duration);
                     updateCurrentTime(audio, id);
                 });
 
-                // Mise à jour de l'affichage du temps actuel
                 audio.addEventListener('timeupdate', function() {
                     updateCurrentTime(audio, id);
                 });
 
-                // Fonction pour formater le temps
                 function formatTime(seconds) {
                     const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
                     const remainingSeconds = Math.floor(seconds % 60).toString().padStart(2, '0');
                     return `${minutes}:${remainingSeconds}`;
                 }
 
-                // Mise à jour du temps actuel
                 function updateCurrentTime(audio, id) {
                     $currentTimeDisplay.text(formatTime(audio.currentTime));
                 }
             }
 
-            // Initialisation de la lecture et de l'affichage des durées pour les éléments audio existants
             $('.custom-audio-player audio').each(function() {
                 const audioId = $(this).attr('id').replace('audio-', '');
                 initializeAudioPlayer(audioId);
@@ -179,41 +167,40 @@
 
             // Soumission du formulaire : Masquer le bouton et afficher le cercle de chargement
             $('#form').on('submit', function(event) {
-                event.preventDefault(); // Empêche le formulaire de se soumettre normalement
+                event.preventDefault();
 
-                if (isGenerating) return; // Empêche l'envoi du formulaire si une génération est en cours
+                if (isGenerating) return;
 
-                isGenerating = true; // Marque qu'une génération est en cours
+                isGenerating = true;
+                $('#submit-button').hide();
+                $('#loader').show();
+                $('#completed-message').hide();
 
-                $('#submit-button').hide(); // Masque le bouton de soumission
-                $('#loader').show(); // Affiche le cercle de chargement
-                $('#completed-message').hide(); // Masque le message de complétion précédent
+                const startTime = Date.now(); // Commence à mesurer le temps de génération
 
-                // Affiche le message de génération en cours
                 $('#completed-message').text("Temps de génération : Chargement...").show();
 
-                // Envoi du formulaire par AJAX
                 $.ajax({
                     url: $(this).attr('action'),
                     method: $(this).attr('method'),
                     data: $(this).serialize(),
                     success: function(response) {
-                        $('#submit-button').show(); // Affiche à nouveau le bouton
-                        $('#loader').hide(); // Masque le cercle de chargement
+                        const endTime = Date.now(); // Fin de la mesure du temps de génération
+                        const generationTime = ((endTime - startTime) / 1000).toFixed(2); // Calcul du temps en secondes
+                        
+                        $('#submit-button').show();
+                        $('#loader').hide();
 
-                        // Mettez à jour uniquement le contenu de #last-generations
                         $('#last-generations').html($(response).find('#last-generations').html());
                         
-                        // Affiche le message de temps de génération
-                        $('#completed-message').text("Temps de génération : terminé !").show();
+                        $('#completed-message').text("Temps de génération : " + generationTime + " secondes").show();
 
-                        isGenerating = false; // Marque la fin de la génération
+                        isGenerating = false;
                     },
                     error: function() {
-                        // En cas d'erreur
-                        $('#submit-button').show(); // Affiche le bouton
-                        $('#loader').hide(); // Masque le cercle de chargement
-                        $('#completed-message').text("Erreur de génération. Essayez à nouveau.").show();
+                        $('#submit-button').show();
+                        $('#loader').hide();
+                        $('#completed-message').text("Une erreur s'est produite.").show();
                         isGenerating = false;
                     }
                 });
