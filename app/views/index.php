@@ -7,6 +7,7 @@
     <title>QWAI POD</title>
     <link rel="stylesheet" href="../assets/styles.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 
 <body>
@@ -14,14 +15,14 @@
     <div id="input-form">
         <h1>Générer un podcast</h1>
         <form id="form" method="POST" action="index.php">
-            <input type="text" name="user_input" id="user_input" placeholder="Saisir un sujet / thème" required>
+            <input type="text" name="user_input" id="user_input" placeholder="Saisir un sujet / thème" required autocomplete="off">
             <div class="button-loader-container">
-                <button type="submit" id="submit-button">Générer</button>
+                <button type="submit" id="submit-button"><i class="bi custom-icons bi-plus-square"></i></button>
                 <div class="loader" id="loader" style="display: none;"></div>
             </div>
         </form>
         <div id="response" class="response"></div>
-        <div id="completed-message" class="completed-message"></div>
+        <div id="completed-message" class="completed-message" style="display: none;"></div>
     </div>
 
     <!-- Section pour les résultats de la recherche en temps réel -->
@@ -47,9 +48,9 @@
                         <div class="custom-audio-player">
                             <audio id="audio-<?= $item['generation']['id'] ?>" src="/output/<?= htmlspecialchars($item['files']['audio']) ?>" preload="auto"></audio>
                             <div class="controls">
-                                <button class="skipBtn" data-id="<?= $item['generation']['id'] ?>" data-skip="-10">-10s</button>
-                                <button class="playPauseBtn" data-id="<?= $item['generation']['id'] ?>">Play</button>
-                                <button class="skipBtn" data-id="<?= $item['generation']['id'] ?>" data-skip="10">+10s</button>
+                                <button class="skipBtn" data-id="<?= $item['generation']['id'] ?>" data-skip="-10"><i class="bi custom-icons bi-skip-backward"></i></button>
+                                <button class="playPauseBtn" data-id="<?= $item['generation']['id'] ?>"><i class="bi custom-icons bi-play"></i></button>
+                                <button class="skipBtn" data-id="<?= $item['generation']['id'] ?>" data-skip="10"><i class="bi custom-icons bi-skip-forward"></i></button>
                             </div>
                             <div class="time-display">
                                 <span id="currentTime-<?= $item['generation']['id'] ?>">00:00</span> /
@@ -66,6 +67,8 @@
 
     <script>
         $(function() {
+            let isGenerating = false; // Variable pour vérifier si une génération est en cours
+
             // Fonction de recherche en temps réel
             $('#user_input').on('input', function() {
                 let query = $(this).val();
@@ -86,9 +89,9 @@
                                     listItem.append('<div class="custom-audio-player">' +
                                         '<audio id="audio-' + item.id + '" src="/output/audios/' + item.audio_url + '" preload="auto"></audio>' +
                                         '<div class="controls">' +
-                                        '<button class="skipBtn" data-id="' + item.id + '" data-skip="-10">-10s</button>' +
-                                        '<button class="playPauseBtn" data-id="' + item.id + '">Play</button>' +
-                                        '<button class="skipBtn" data-id="' + item.id + '" data-skip="10">+10s</button>' +
+                                        '<button class="skipBtn" data-id="' + item.id + '" data-skip="-10"><i class="bi custom-icons bi-skip-backward"></i></button>' +
+                                        '<button class="playPauseBtn" data-id="' + item.id + '"><i class="bi custom-icons bi-play"></i></button>' +
+                                        '<button class="skipBtn" data-id="' + item.id + '" data-skip="10"><i class="bi custom-icons bi-skip-forward"></i></button>' +
                                         '</div>' +
                                         '<div class="time-display">' +
                                         '<span id="currentTime-' + item.id + '">00:00</span> / ' +
@@ -98,9 +101,10 @@
                                     resultsList.append(listItem);
                                     initializeAudioPlayer(item.id);
                                 });
-                            } else {
-                                resultsList.append('<li>Aucun résultat trouvé.</li>');
                             }
+                            //  else {
+                            //     resultsList.append('<li>Aucun résultat trouvé.</li>');
+                            // }
                         }
                     });
                 } else {
@@ -133,10 +137,11 @@
                 $playPauseBtn.on('click', function() {
                     if (audio.paused) {
                         audio.play();
-                        $(this).text('Pause');
+                        $(this).html('<i class="bi custom-icons bi-pause"></i>');
+                        // 
                     } else {
                         audio.pause();
-                        $(this).text('Play');
+                        $(this).html('<i class="bi custom-icons bi-play"></i>');
                     }
                     updateCurrentTime(audio, id);
                 });
@@ -170,6 +175,48 @@
             $('.custom-audio-player audio').each(function() {
                 const audioId = $(this).attr('id').replace('audio-', '');
                 initializeAudioPlayer(audioId);
+            });
+
+            // Soumission du formulaire : Masquer le bouton et afficher le cercle de chargement
+            $('#form').on('submit', function(event) {
+                event.preventDefault(); // Empêche le formulaire de se soumettre normalement
+
+                if (isGenerating) return; // Empêche l'envoi du formulaire si une génération est en cours
+
+                isGenerating = true; // Marque qu'une génération est en cours
+
+                $('#submit-button').hide(); // Masque le bouton de soumission
+                $('#loader').show(); // Affiche le cercle de chargement
+                $('#completed-message').hide(); // Masque le message de complétion précédent
+
+                // Affiche le message de génération en cours
+                $('#completed-message').text("Temps de génération : Chargement...").show();
+
+                // Envoi du formulaire par AJAX
+                $.ajax({
+                    url: $(this).attr('action'),
+                    method: $(this).attr('method'),
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        $('#submit-button').show(); // Affiche à nouveau le bouton
+                        $('#loader').hide(); // Masque le cercle de chargement
+
+                        // Mettez à jour uniquement le contenu de #last-generations
+                        $('#last-generations').html($(response).find('#last-generations').html());
+                        
+                        // Affiche le message de temps de génération
+                        $('#completed-message').text("Temps de génération : terminé !").show();
+
+                        isGenerating = false; // Marque la fin de la génération
+                    },
+                    error: function() {
+                        // En cas d'erreur
+                        $('#submit-button').show(); // Affiche le bouton
+                        $('#loader').hide(); // Masque le cercle de chargement
+                        $('#completed-message').text("Erreur de génération. Essayez à nouveau.").show();
+                        isGenerating = false;
+                    }
+                });
             });
         });
     </script>

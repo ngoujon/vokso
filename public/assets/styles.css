@@ -4,10 +4,10 @@
     --bg-light-dark: #1e1e1e;
     --text-white: #ffffff;
     --text-light-gray: #b0b0b0;
-    --green: #4caf50;
-    --green-dark: #45a049;
+    --green: #4ea2fc;
+    --green-dark: #4e83fc;
     --input-bg: #333333;
-    --input-border: #4caf50;
+    --input-border: #4e83fc;
 }
 
 /* Styles généraux */
@@ -101,10 +101,11 @@ button:hover {
 }
 
 .generation-item h3 {
-    font-size: 18px;
+    font-size: 14px;
     text-align: center;
     text-transform: uppercase;
     margin-top: 0px;
+
 }
 
 .generation-item p {
@@ -181,8 +182,6 @@ button:hover {
 /* Boutons de reculer et avancer */
 button.skipBtn, button.playPauseBtn {
     border-radius: 5px;
-    font-size: 16px;
-    padding: 10px;
     cursor: pointer;
 }
 
@@ -230,7 +229,7 @@ button.playPauseBtn:hover {
 }
 
 .search-result-item h4 {
-    font-size: 18px;
+    font-size: 14px;
     text-align: center;
     text-transform: uppercase;
     margin-top: 0px;
@@ -280,4 +279,11 @@ button.playPauseBtn:hover {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     color: var(--text-white);
     text-align: left;
+}
+#user_input {
+    text-align: center;
+}
+
+.custom-icons {
+    font-size: 20px;
 }

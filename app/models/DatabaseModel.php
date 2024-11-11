@@ -81,7 +81,7 @@ class DatabaseModel {
     }
 
     public function getLastGenerations(): array {
-        $stmt = $this->pdo->query("SELECT * FROM generations ORDER BY created_at DESC LIMIT 3");
+        $stmt = $this->pdo->query("SELECT * FROM generations ORDER BY created_at DESC LIMIT 6");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
