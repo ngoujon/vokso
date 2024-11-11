@@ -23,11 +23,12 @@
         <div id="response" class="response"></div>
         <div id="completed-message" class="completed-message"></div>
     </div>
- <!-- Section pour les résultats de la recherche en temps réel -->
- <div id="live-search-results">
-        <h3>Résultats de recherche en temps réel :</h3>
+
+    <!-- Section pour les résultats de la recherche en temps réel -->
+    <div id="live-search-results">
         <ul id="search-results-list"></ul>
     </div>
+
     <!-- Deuxième bloc : Dernières générations -->
     <div id="last-generations">
         <h2>Dernières générations :</h2>
@@ -62,26 +63,40 @@
             <?php endforeach; ?>
         </div>
     </div>
+
     <script>
-     // Fonction de recherche en temps réel
-     $(document).ready(function () {
-            $('#user_input').on('input', function () {
+        $(function() {
+            // Fonction de recherche en temps réel
+            $('#user_input').on('input', function() {
                 let query = $(this).val();
-                
-                if (query.length > 2) {  // Lance la recherche si la longueur de la saisie est supérieure à 2 caractères
+
+                if (query.length > 2) {
                     $.ajax({
                         url: 'index.php?action=search&query=' + encodeURIComponent(query),
                         method: 'GET',
-                        success: function (response) {
+                        success: function(response) {
                             let resultsList = $('#search-results-list');
                             resultsList.empty();
 
                             if (response.results.length > 0) {
-                                response.results.forEach(function (item) {
-                                    let listItem = $('<li></li>');
+                                response.results.forEach(function(item) {
+                                    let listItem = $('<div class="search-result-item"></div>');
                                     listItem.append('<h4>' + item.title + '</h4>');
-                                    listItem.append('<p>' + item.description + '</p>');
+                                    listItem.append('<img src="/output/images/' + item.image_url + '" alt="Image de la génération">');
+                                    listItem.append('<div class="custom-audio-player">' +
+                                        '<audio id="audio-' + item.id + '" src="/output/audios/' + item.audio_url + '" preload="auto"></audio>' +
+                                        '<div class="controls">' +
+                                        '<button class="skipBtn" data-id="' + item.id + '" data-skip="-10">-10s</button>' +
+                                        '<button class="playPauseBtn" data-id="' + item.id + '">Play</button>' +
+                                        '<button class="skipBtn" data-id="' + item.id + '" data-skip="10">+10s</button>' +
+                                        '</div>' +
+                                        '<div class="time-display">' +
+                                        '<span id="currentTime-' + item.id + '">00:00</span> / ' +
+                                        '<span id="duration-' + item.id + '">Chargement...</span>' +
+                                        '</div>' +
+                                        '</div>');
                                     resultsList.append(listItem);
+                                    initializeAudioPlayer(item.id);
                                 });
                             } else {
                                 resultsList.append('<li>Aucun résultat trouvé.</li>');
@@ -92,126 +107,69 @@
                     $('#search-results-list').empty();
                 }
             });
-        });
-    </script>
-    <script>
-        $(function() {
-            const $form = $('#form');
-            const $loader = $('#loader').hide();
-            const $submitButton = $('#submit-button');
-            const $response = $('#response');
-            const $completedMessage = $('#completed-message');
 
-            $form.on('submit', function(event) {
-                event.preventDefault();
-                $loader.show();
-                $submitButton.hide();
-                $response.empty();
-                $completedMessage.empty();
+            // Initialisation des éléments audio dans la recherche en temps réel
+            function initializeAudioPlayer(id) {
+                const audio = document.getElementById('audio-' + id);
+                const $durationDisplay = $('#duration-' + id);
+                const $currentTimeDisplay = $('#currentTime-' + id);
+                const $playPauseBtn = $('[data-id="' + id + '"].playPauseBtn');
 
-                $.ajax({
-                    url: '/index.php',
-                    type: 'POST',
-                    data: $form.serialize(),
-                    dataType: 'json',
-                    success: (data) => handleResponse(data.total_time),
-                    error: () => handleResponse(null, 'Une erreur est survenue. Veuillez réessayer.')
-                });
-            });
-
-            function handleResponse(totalTime, errorMessage = null) {
-                $loader.hide();
-                $submitButton.show();
-                if (errorMessage) {
-                    $response.text(errorMessage);
-                } else {
-                    $completedMessage.text(`Temps total de génération : ${totalTime} s`);
-                }
-                // Recharger la page pour afficher les dernières générations
-                location.reload();
-            }
-
-            // Event delegation for play/pause and skip buttons
-            $('.last-generations-container').on('click', '.playPauseBtn', function() {
-                const audioId = $(this).data('id');
-                togglePlayPause(audioId, $(this));
-            }).on('click', '.skipBtn', function() {
-                const audioId = $(this).data('id');
-                const skipTime = $(this).data('skip');
-                skipAudio(audioId, skipTime);
-            });
-
-            function togglePlayPause(id, $btn) {
-                const audio = document.getElementById(`audio-${id}`);
-                if (audio.paused) {
-                    audio.play();
-                    $btn.text('Pause');
-                } else {
-                    audio.pause();
-                    $btn.text('Play');
-                }
-                updateTimeDisplay(audio, id);
-            }
-
-            function skipAudio(id, time) {
-                const audio = document.getElementById(`audio-${id}`);
-                audio.currentTime = Math.min(Math.max(0, audio.currentTime + time), audio.duration);
-            }
-
-            function updateTimeDisplay(audio, id) {
-                const $currentTimeDisplay = $(`#currentTime-${id}`);
-                const $durationDisplay = $(`#duration-${id}`);
-
-                // Vérifier si l'audio existe et récupérer la durée dès que possible
-                if (audio) {
-                    console.log("Audio Loaded: ", audio);
-
-                    // Ajouter l'événement loadedmetadata pour récupérer la durée
-                    audio.addEventListener('loadedmetadata', function() {
-                        console.log("Durée de l'audio : ", audio.duration);
-
-                        if (!isNaN(audio.duration)) {
-                            $durationDisplay.text(formatTime(audio.duration)); // Afficher la durée formatée
-                        } else {
-                            $durationDisplay.text("Indisponible");
-                        }
-                    });
-
-                    // Si le fichier audio est déjà prêt (peut être le cas lors du préchargement)
-                    if (audio.duration && !isNaN(audio.duration)) {
-                        $durationDisplay.text(formatTime(audio.duration)); // Afficher la durée immédiatement
-                    }
-
-                    // Mise à jour des informations de temps pendant la lecture
-                    audio.addEventListener('timeupdate', function() {
-                        $currentTimeDisplay.text(formatTime(audio.currentTime));
-                    });
-                } else {
-                    console.error("Élément audio non trouvé !");
-                }
-            }
-
-            function formatTime(seconds) {
-                const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
-                const remainingSeconds = Math.floor(seconds % 60).toString().padStart(2, '0');
-                return `${minutes}:${remainingSeconds}`;
-            }
-
-            // Récupérer la durée de l'audio pour tous les éléments audio immédiatement au chargement de la page
-            $('audio').each(function() {
-                const audio = this;
-                const audioId = $(audio).attr('id').replace('audio-', '');
-                const $durationDisplay = $(`#duration-${audioId}`);
+                // Attendre que le fichier audio soit prêt
                 audio.addEventListener('loadedmetadata', function() {
                     if (!isNaN(audio.duration)) {
-                        $durationDisplay.text(formatTime(audio.duration)); // Afficher la durée dès que l'audio est prêt
+                        $durationDisplay.text(formatTime(audio.duration)); // Afficher la durée dès que possible
+                    } else {
+                        $durationDisplay.text('Durée Indisponible');
                     }
                 });
 
-                // Si l'audio est déjà prêt (par exemple, préchargé), afficher directement la durée
+                // Vérification de la durée immédiatement si déjà disponible
                 if (audio.duration && !isNaN(audio.duration)) {
                     $durationDisplay.text(formatTime(audio.duration));
                 }
+
+                // Gestion de la lecture / pause
+                $playPauseBtn.on('click', function() {
+                    if (audio.paused) {
+                        audio.play();
+                        $(this).text('Pause');
+                    } else {
+                        audio.pause();
+                        $(this).text('Play');
+                    }
+                    updateCurrentTime(audio, id);
+                });
+
+                // Gestion des sauts de temps (+10s, -10s)
+                $('.skipBtn[data-id="' + id + '"]').on('click', function() {
+                    const skipTime = $(this).data('skip');
+                    audio.currentTime = Math.min(Math.max(0, audio.currentTime + skipTime), audio.duration);
+                    updateCurrentTime(audio, id);
+                });
+
+                // Mise à jour de l'affichage du temps actuel
+                audio.addEventListener('timeupdate', function() {
+                    updateCurrentTime(audio, id);
+                });
+
+                // Fonction pour formater le temps
+                function formatTime(seconds) {
+                    const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
+                    const remainingSeconds = Math.floor(seconds % 60).toString().padStart(2, '0');
+                    return `${minutes}:${remainingSeconds}`;
+                }
+
+                // Mise à jour du temps actuel
+                function updateCurrentTime(audio, id) {
+                    $currentTimeDisplay.text(formatTime(audio.currentTime));
+                }
+            }
+
+            // Initialisation de la lecture et de l'affichage des durées pour les éléments audio existants
+            $('.custom-audio-player audio').each(function() {
+                const audioId = $(this).attr('id').replace('audio-', '');
+                initializeAudioPlayer(audioId);
             });
         });
     </script>
