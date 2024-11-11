@@ -84,4 +84,14 @@ class DatabaseModel {
         $stmt = $this->pdo->query("SELECT * FROM generations ORDER BY created_at DESC LIMIT 3");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function searchGenerations($query) {
+        $sql = "SELECT * FROM generations 
+                WHERE title LIKE :query 
+                ORDER BY created_at DESC LIMIT 10";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':query' => '%' . $query . '%']);
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

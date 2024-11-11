@@ -7,12 +7,12 @@ error_reporting(E_ALL);
 require '../vendor/autoload.php';
 
 use App\Controllers\ApiController;
+use App\Controllers\SearchController;
 use App\Models\DatabaseModel;
 use App\Models\FileModel;
 
 // Récupérer la clé API et la configuration de la base de données
-$api_key = "***CLE-API-SUPPRIMEE***";  // Remplacer par votre clé API OpenAI
-
+$api_key = "***CLE-API-SUPPRIMEE***"; // Remplacer par votre clé API OpenAI
 $db_config = [
     'DB_HOST' => 'localhost',
     'DB_NAME' => 'generation_db',
@@ -20,11 +20,17 @@ $db_config = [
     'DB_PASS' => '***MOT-DE-PASSE-SUPPRIME***'
 ];
 
-// Initialiser le contrôleur avec la clé API et les paramètres de base de données
+// Route pour la recherche AJAX
+if (isset($_GET['action']) && $_GET['action'] === 'search' && isset($_GET['query'])) {
+    $searchController = new SearchController($db_config);
+    $searchController->search($_GET['query']);
+}
+
+// Contrôleur principal pour les générations
 $controller = new ApiController($api_key, $db_config);
 $controller->handleRequest();
 
-// Récupérer les 3 dernières générations
+// Récupérer les 3 dernières générations pour l'affichage par défaut
 $databaseModel = new DatabaseModel($db_config);
 $fileModel = new FileModel();
 

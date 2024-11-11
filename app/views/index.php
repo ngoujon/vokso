@@ -14,7 +14,7 @@
     <div id="input-form">
         <h1>Générer un podcast</h1>
         <form id="form" method="POST" action="index.php">
-            <input type="text" name="user_input" placeholder="Saisir un sujet / thème" required>
+            <input type="text" name="user_input" id="user_input" placeholder="Saisir un sujet / thème" required>
             <div class="button-loader-container">
                 <button type="submit" id="submit-button">Générer</button>
                 <div class="loader" id="loader" style="display: none;"></div>
@@ -23,7 +23,11 @@
         <div id="response" class="response"></div>
         <div id="completed-message" class="completed-message"></div>
     </div>
-
+ <!-- Section pour les résultats de la recherche en temps réel -->
+ <div id="live-search-results">
+        <h3>Résultats de recherche en temps réel :</h3>
+        <ul id="search-results-list"></ul>
+    </div>
     <!-- Deuxième bloc : Dernières générations -->
     <div id="last-generations">
         <h2>Dernières générations :</h2>
@@ -58,7 +62,38 @@
             <?php endforeach; ?>
         </div>
     </div>
+    <script>
+     // Fonction de recherche en temps réel
+     $(document).ready(function () {
+            $('#user_input').on('input', function () {
+                let query = $(this).val();
+                
+                if (query.length > 2) {  // Lance la recherche si la longueur de la saisie est supérieure à 2 caractères
+                    $.ajax({
+                        url: 'index.php?action=search&query=' + encodeURIComponent(query),
+                        method: 'GET',
+                        success: function (response) {
+                            let resultsList = $('#search-results-list');
+                            resultsList.empty();
 
+                            if (response.results.length > 0) {
+                                response.results.forEach(function (item) {
+                                    let listItem = $('<li></li>');
+                                    listItem.append('<h4>' + item.title + '</h4>');
+                                    listItem.append('<p>' + item.description + '</p>');
+                                    resultsList.append(listItem);
+                                });
+                            } else {
+                                resultsList.append('<li>Aucun résultat trouvé.</li>');
+                            }
+                        }
+                    });
+                } else {
+                    $('#search-results-list').empty();
+                }
+            });
+        });
+    </script>
     <script>
         $(function() {
             const $form = $('#form');
