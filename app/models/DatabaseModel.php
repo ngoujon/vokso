@@ -69,9 +69,9 @@ class DatabaseModel {
                 'Content-Type' => 'application/json',
             ],
             'json' => [
-                "model" => "gpt-3.5-turbo",
+                "model" => "gpt-4-turbo",
                 "messages" => [
-                    ["role" => "user", "content" => "Quels serait le mot qui permettrait de ranger dans une catégorie par thème le sujet: $user_input ?"]
+                    ["role" => "user", "content" => "Quels serait le mot qui permettrait de ranger dans une catégorie d'activité le sujet: $user_input ?"]
                 ]
             ]
         ]);
