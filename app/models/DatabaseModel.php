@@ -57,28 +57,7 @@ class DatabaseModel {
         return $stmt->fetchColumn() ?: null; // fetchColumn is faster for single column
     }
 
-    public function getKeywordsFromApi(string $user_input): string {
-        if (!$this->api_key) {
-            throw new \RuntimeException("API key is missing. Please check your .env file.");
-        }
 
-        $client = new Client(['base_uri' => 'https://api.openai.com']);
-        $response = $client->post('/v1/chat/completions', [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->api_key,
-                'Content-Type' => 'application/json',
-            ],
-            'json' => [
-                "model" => "gpt-4-turbo",
-                "messages" => [
-                    ["role" => "user", "content" => "Quels serait le mot qui permettrait de ranger dans une catégorie d'activité le sujet: $user_input ?"]
-                ]
-            ]
-        ]);
-
-        $responseData = json_decode($response->getBody(), true);
-        return $responseData['choices'][0]['message']['content'] ?? '';
-    }
 
     public function getLastGenerations(): array {
         $stmt = $this->pdo->query("SELECT * FROM generations ORDER BY created_at DESC LIMIT 6");

@@ -96,4 +96,28 @@ class ApiModel
 
         return $response->getBody();
     }
+
+    public function getKeywordsFromApi(string $user_input): string {
+        if (!$this->api_key) {
+            throw new \RuntimeException("API key is missing. Please check your .env file.");
+        }
+    
+        $client = new Client(['base_uri' => 'https://api.openai.com']);
+        $response = $client->post('/v1/chat/completions', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->api_key,
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                "model" => "gpt-4o", // Modèle mis à jour ici
+                "messages" => [
+                    ["role" => "user", "content" => "Quels serait le mot qui permettrait de ranger dans une catégorie d'activité le sujet: $user_input ?"]
+                ]
+            ]
+        ]);
+    
+        $responseData = json_decode($response->getBody(), true);
+        return $responseData['choices'][0]['message']['content'] ?? '';
+    }
+    
 }

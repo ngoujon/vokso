@@ -50,7 +50,7 @@ class ApiController {
             $audio_filename = $this->file_model->saveAudioToFile($audio_data, $timestamp);
 
             // Extraire les mots-clés du texte et insérer dans la base de données
-            $keywords_text = $this->db_model->getKeywordsFromApi($user_input);
+            $keywords_text = $this->api_model->getKeywordsFromApi($user_input);
             $this->db_model->insertCategories($generation_id, $keywords_text);
 
             // Sauvegarder les informations de la génération dans la base de données
