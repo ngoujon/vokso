@@ -68,46 +68,56 @@
     <script>
         $(function() {
             let isGenerating = false; // Variable pour vérifier si une génération est en cours
-
             // Fonction de recherche en temps réel
+            let searchTimeout;
+
             $('#user_input').on('input', function() {
                 let query = $(this).val();
 
-                if (query.length > 2) {
-                    $.ajax({
-                        url: 'index.php?action=search&query=' + encodeURIComponent(query),
-                        method: 'GET',
-                        success: function(response) {
-                            let resultsList = $('#search-results-list');
-                            resultsList.empty();
+                // Réinitialise le timer à chaque frappe
+                clearTimeout(searchTimeout);
 
-                            if (response.results.length > 0) {
-                                response.results.forEach(function(item) {
-                                    let listItem = $('<div class="search-result-item"></div>');
-                                    listItem.append('<h4>' + item.title + '</h4>');
-                                    listItem.append('<img src="/output/images/' + item.image_url + '" alt="Image de la génération">');
-                                    listItem.append('<div class="custom-audio-player">' +
-                                        '<audio id="audio-' + item.id + '" src="/output/audios/' + item.audio_url + '" preload="auto"></audio>' +
-                                        '<div class="controls">' +
-                                        '<button class="skipBtn" data-id="' + item.id + '" data-skip="-10"><i class="bi custom-icons bi-skip-backward"></i></button>' +
-                                        '<button class="playPauseBtn" data-id="' + item.id + '"><i class="bi custom-icons bi-play"></i></button>' +
-                                        '<button class="skipBtn" data-id="' + item.id + '" data-skip="10"><i class="bi custom-icons bi-skip-forward"></i></button>' +
-                                        '</div>' +
-                                        '<div class="time-display">' +
-                                        '<span id="currentTime-' + item.id + '">00:00</span> / ' +
-                                        '<span id="duration-' + item.id + '">Chargement...</span>' +
-                                        '</div>' +
-                                        '</div>');
-                                    resultsList.append(listItem);
-                                    initializeAudioPlayer(item.id);
-                                });
+                if (query.length > 2) {
+                    // Définit un délai de 2 secondes avant de lancer la recherche
+                    searchTimeout = setTimeout(() => {
+                        // Effectue la requête AJAX après 2 secondes d'inactivité
+                        $.ajax({
+                            url: 'index.php?action=search&query=' + encodeURIComponent(query),
+                            method: 'GET',
+                            success: function(response) {
+                                let resultsList = $('#search-results-list');
+                                resultsList.empty();
+
+                                if (response.results.length > 0) {
+                                    response.results.forEach(function(item) {
+                                        let listItem = $('<div class="search-result-item"></div>');
+                                        listItem.append('<h4>' + item.title + '</h4>');
+                                        listItem.append('<img src="/output/images/' + item.image_url + '" alt="Image de la génération">');
+                                        listItem.append('<div class="custom-audio-player">' +
+                                            '<audio id="audio-' + item.id + '" src="/output/audios/' + item.audio_url + '" preload="auto"></audio>' +
+                                            '<div class="controls">' +
+                                            '<button class="skipBtn" data-id="' + item.id + '" data-skip="-10"><i class="bi custom-icons bi-skip-backward"></i></button>' +
+                                            '<button class="playPauseBtn" data-id="' + item.id + '"><i class="bi custom-icons bi-play"></i></button>' +
+                                            '<button class="skipBtn" data-id="' + item.id + '" data-skip="10"><i class="bi custom-icons bi-skip-forward"></i></button>' +
+                                            '</div>' +
+                                            '<div class="time-display">' +
+                                            '<span id="currentTime-' + item.id + '">00:00</span> / ' +
+                                            '<span id="duration-' + item.id + '">Chargement...</span>' +
+                                            '</div>' +
+                                            '</div>');
+                                        resultsList.append(listItem);
+                                        initializeAudioPlayer(item.id);
+                                    });
+                                }
                             }
-                        }
-                    });
+                        });
+                    }, 500); // 2000ms = 2 secondes
                 } else {
+                    // Vide les résultats si la longueur de la saisie est inférieure ou égale à 2
                     $('#search-results-list').empty();
                 }
             });
+
 
             // Initialisation des éléments audio dans la recherche en temps réel
             function initializeAudioPlayer(id) {
@@ -187,12 +197,12 @@
                     success: function(response) {
                         const endTime = Date.now(); // Fin de la mesure du temps de génération
                         const generationTime = ((endTime - startTime) / 1000).toFixed(2); // Calcul du temps en secondes
-                        
+
                         $('#submit-button').show();
                         $('#loader').hide();
 
                         $('#last-generations').html($(response).find('#last-generations').html());
-                        
+
                         $('#completed-message').text("Temps de génération : " + generationTime + " secondes").show();
 
                         isGenerating = false;
