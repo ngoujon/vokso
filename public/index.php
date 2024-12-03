@@ -13,12 +13,23 @@ use App\Models\FileModel;
 
 // Récupérer la clé API et la configuration de la base de données
 $api_key = "***CLE-API-SUPPRIMEE***"; // Remplacer par votre clé API OpenAI
-$db_config = [
-    'DB_HOST' => 'localhost',
-    'DB_NAME' => 'generation_db',
-    'DB_USER' => 'webapp',
-    'DB_PASS' => '***MOT-DE-PASSE-SUPPRIME***'
-];
+
+if ($_SERVER['HTTP_HOST'] === 'qwai-pod.local') {
+    $db_config = [
+        'DB_HOST' => 'localhost',
+        'DB_NAME' => 'generation_db',
+        'DB_USER' => 'webapp',
+        'DB_PASS' => '***MOT-DE-PASSE-SUPPRIME***'
+    ];
+    
+} else if ($_SERVER['HTTP_HOST'] === 'qwebty.io') {
+    $db_config = [
+        'DB_HOST' => 'localhost',
+        'DB_NAME' => 'generation_db',
+        'DB_USER' => 'webapp',
+        'DB_PASS' => '32Y6i3XXr5gvPj'
+    ];
+}
 
 // Route pour la recherche AJAX
 if (isset($_GET['action']) && $_GET['action'] === 'search' && isset($_GET['query'])) {
