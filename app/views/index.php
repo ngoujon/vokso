@@ -111,7 +111,7 @@
                                 }
                             }
                         });
-                    }, 500); // 2000ms = 2 secondes
+                    }, 500); 
                 } else {
                     // Vide les résultats si la longueur de la saisie est inférieure ou égale à 2
                     $('#search-results-list').empty();
