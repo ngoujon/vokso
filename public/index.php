@@ -55,4 +55,4 @@ foreach ($last_generations as $generation) {
     ];
 }
 
-require '../app/views/index.php';  // Charge la vue
+require '../App/Views/index.php';  // Charge la vue
