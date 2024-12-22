@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\ApiModel;
 use App\Models\FileModel;
 use App\Models\DatabaseModel;
+use Exception;
 
 class ApiController {
     private $api_model;
@@ -23,43 +24,56 @@ class ApiController {
     }
 
     public function handleRequest() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+        try {
             $startTime = microtime(true);
 
-            $user_input = $_POST['user_input'];
+            // Validation des entrées utilisateur
+            $user_input = htmlspecialchars(trim($_POST['user_input']));
+
             $timestamp = date('Ymd_His');
             $generation_id = 'gen_' . uniqid();
 
-            // Récupérer la description du texte à partir de la base de données
+            // Récupération de la description depuis la base de données
             $text_description = $this->db_model->getDescription('texte');
-            // Générer la réponse texte
+            if (!$text_description) {
+                throw new Exception('Description de texte introuvable dans la base de données.');
+            }
+
+            // Génération de la réponse texte
             $text_response = $this->api_model->generateResponse($user_input, $text_description);
             $bot_response = $text_response['choices'][0]['message']['content'] ?? 'Aucune réponse disponible.';
 
-            // Sauvegarder la réponse texte dans un fichier
+            // Sauvegarde de la réponse texte
             $text_filename = $this->file_model->saveTextToFile($bot_response, 'response', $timestamp);
 
-            // Générer une image à partir de la description
+            // Génération et sauvegarde de l'image
             $image_url = $this->api_model->generateImage($user_input, $timestamp);
-            // Sauvegarder l'image
             $image_filename = $this->file_model->saveImageToFile($image_url, $timestamp);
 
-            // Générer la réponse audio
+            // Génération et sauvegarde de l'audio
             $audio_data = $this->api_model->generateAudioResponse($bot_response, $timestamp);
-            // Sauvegarder l'audio
             $audio_filename = $this->file_model->saveAudioToFile($audio_data, $timestamp);
 
-            // Extraire les mots-clés du texte et insérer dans la base de données
+            // Extraction et insertion des mots-clés
             $keywords_text = $this->api_model->getKeywordsFromApi($user_input);
-            $this->db_model->insertCategories($generation_id, $keywords_text);
+            if ($keywords_text) {
+                $this->db_model->insertCategories($generation_id, $keywords_text);
+            }
 
-            // Sauvegarder les informations de la génération dans la base de données
-            $this->db_model->insertGenerationData($generation_id, $user_input, $bot_response, $image_filename, $audio_filename);
+            // Sauvegarde des données de génération
+            $this->db_model->insertGenerationData(
+                $generation_id,
+                $user_input,
+                $bot_response,
+                $image_filename,
+                $audio_filename
+            );
 
             $endTime = microtime(true);
             $totalTime = $endTime - $startTime;
 
-            // Répondre en JSON avec les résultats
+            // Réponse en JSON
             header('Content-Type: application/json');
             echo json_encode([
                 'bot_response' => $bot_response,
@@ -67,7 +81,11 @@ class ApiController {
                 'audio_file' => $audio_filename,
                 'total_time' => round($totalTime, 2)
             ]);
-            exit;
+        } catch (Exception $e) {
+            // Log des erreurs
+            error_log($e->getMessage());
+            http_response_code(500);
+            echo json_encode(['error' => 'Une erreur est survenue : ' . $e->getMessage()]);
         }
     }
 }
