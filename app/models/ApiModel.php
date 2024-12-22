@@ -80,6 +80,10 @@ class ApiModel
     {
         $client = new Client();
 
+        // random on voice nova or onyx
+        $voice = rand(0, 1) ? "nova" : "onyx";
+
+
         $response = $client->post('https://api.openai.com/v1/audio/speech', [
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->api_key,
@@ -87,7 +91,7 @@ class ApiModel
             ],
             'json' => [
                 "model" => "tts-1-hd",
-                "voice" => "nova",
+                "voice" => $voice,
                 "input" => $text,
                 "speed" => 1
             ],
