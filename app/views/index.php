@@ -109,6 +109,9 @@
                                         initializeAudioPlayer(item.id);
                                     });
                                 }
+                                else {
+                                    resultsList.append('Aucun résultat trouvé');
+                                }
                             }
                         });
                     }, 500); 
