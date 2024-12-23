@@ -3,3 +3,4 @@ public/output/*
 /logs/*
 */*.DS_Store
 .DS_Store
+.env
