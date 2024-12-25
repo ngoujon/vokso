@@ -1,0 +1,122 @@
+/* Thème Sombre et Moderne avec Dégradé Violet et Bleu */
+body {
+  background: linear-gradient(135deg, #2e0249, #020024);
+  color: #d4d4d4;
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-container {
+  background: linear-gradient(135deg, #3b0269, #1c1c52);
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+h1 {
+  color: #e3e3ff;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.input-field {
+  width: 80%;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #2a2a40;
+  border: 1px solid #565685;
+  border-radius: 4px;
+  color: #e3e3ff;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #7c4dff;
+  box-shadow: 0 0 5px #7c4dff;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(90deg, #7c4dff, #536dfe);
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.submit-btn:hover {
+  background: linear-gradient(90deg, #536dfe, #7c4dff);
+}
+
+.submit-btn:disabled {
+  background: #454545;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #ff5252;
+  margin-top: 1rem;
+}
+
+.success {
+  color: #69f0ae;
+  margin-top: 1rem;
+}
+
+/* Style basique pour la page */
+.container {
+  width: 80%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.form-container {
+  max-width: 600px;
+  margin: 50px auto;
+}
+
+.input-field {
+  width: 80%;
+  padding: 10px;
+  margin: 20px 0;
+  border: 1px solid #ccc;
+}
+
+.submit-btn {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.submit-btn:disabled {
+  background-color: #cccccc;
+}
+
+.success {
+  color: green;
+}
+
+.error {
+  color: red;
+}
