@@ -272,7 +272,6 @@ class GenerationController
     {
         $client = new Client();
         $apiKey = '***CLE-API-SUPPRIMEE***';  // Remplacez par votre propre clé API
-        $description = "Catégorisation de texte";
 
         try {
             $response = $client->post('https://api.openai.com/v1/chat/completions', [
@@ -282,8 +281,9 @@ class GenerationController
                 ],
                 'json' => [
                     "model" => "gpt-4o", // Modèle mis à jour ici
+                    "temperature" => 0.2,
                     "messages" => [
-                        ["role" => "user", "content" => "Quels serait le mot qui permettrait de ranger dans une catégorie d'activité le sujet: $userInput ?"]
+                        ["role" => "user", "content" => "En un mot, Quel serait le mot qui permettrait de ranger dans une catégorie d'activité le sujet: $userInput ?"]
                     ]
                 ]
             ]);
