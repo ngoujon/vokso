@@ -22,9 +22,6 @@ ADD COLUMN statut ENUM('on', 'off') NOT NULL DEFAULT 'on';
 ALTER TABLE categorie
 ADD COLUMN update_date DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
 
-
-------
-
 -- Création de la table histo_prompts
 CREATE TABLE histo_prompts (
     id INT(11) NOT NULL AUTO_INCREMENT,               -- ID unique pour l'historique
