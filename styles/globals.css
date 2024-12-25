@@ -18,7 +18,7 @@ body {
 }
 
 .form-container {
-  background: linear-gradient(135deg, #3b0269, #1c1c52);
+background-color: #121111;
   padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
@@ -90,7 +90,7 @@ h1 {
 }
 
 .form-container {
-  max-width: 600px;
+  width: 600px;
   margin: 50px auto;
 }
 
@@ -110,7 +110,7 @@ h1 {
 }
 
 .submit-btn:disabled {
-  background-color: #cccccc;
+  background-color: #0400000;
 }
 
 .success {
@@ -119,4 +119,20 @@ h1 {
 
 .error {
   color: red;
+}
+
+.loader {
+  border: 8px solid #f3f3f3; /* couleur de fond */
+  border-top: 8px solid #3498db; /* couleur du cercle */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 2s linear infinite;
+  margin-top: 20px; /* Espacement du bouton */
+  margin-left: auto;
+  margin-right: auto;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

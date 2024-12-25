@@ -7,15 +7,15 @@ export default function Home() {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [generatedText, setGeneratedText] = useState('');
-  const [fileName, setFileName] = useState('');
+  const [duration, setDuration] = useState(null); // Variable pour stocker la durée de l'appel
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setGeneratedText('');
-    setFileName('');
+    setDuration(null);
+
+    const startTime = Date.now(); // Temps de départ pour mesurer la durée
 
     try {
       const response = await fetch('http://api-podcast.qwebty.local/generation', {
@@ -32,9 +32,11 @@ export default function Home() {
         throw new Error(data.error || 'Erreur inconnue');
       }
 
-      // Si tout s'est bien passé
-      setGeneratedText(data.generated_text);
-      setFileName(data.file); // Nom du fichier généré
+      // Calcul du temps écoulé en secondes
+      const endTime = Date.now();
+      const durationInSeconds = ((endTime - startTime) / 1000).toFixed(2);
+      setDuration(durationInSeconds); // Mise à jour de la durée
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -45,7 +47,7 @@ export default function Home() {
   return (
     <div className="container">
       <div className="form-container">
-        <h1>Générer du texte avec OpenAI</h1>
+        <h1>Générer un podcast</h1>
         <form onSubmit={handleSubmit}>
           <input
             type="text"
@@ -59,12 +61,14 @@ export default function Home() {
             {loading ? 'Envoi en cours...' : 'Générer'}
           </button>
         </form>
+        
+        {loading && <div className="loader"></div>} {/* Loader circulaire pendant le chargement */}
+
         {error && <p className="error">{error}</p>}
-        {generatedText && (
+
+        {duration && (
           <div>
-            <p className="success">Texte généré :</p>
-            <pre>{generatedText}</pre>
-            <p>Le fichier a été enregistré sous : {fileName}</p>
+            <p className="success">Temps d'appel API : {duration} secondes</p>
           </div>
         )}
       </div>
