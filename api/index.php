@@ -10,13 +10,13 @@ error_reporting(E_ALL);
 // Gérer les pré-requêtes OPTIONS pour CORS (Cross-Origin Resource Sharing)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: POST, OPTIONS");
+    header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type");
     http_response_code(204); // Pas de contenu
     exit(0);
 }
 
-// Obtenir l'URL après le domaine (par exemple : "/generation" ou "/generation/generateText")
+// Obtenir l'URL après le domaine (par exemple : "/generation" ou "/listing")
 $request = trim($_SERVER['REQUEST_URI'], '/');
 
 // Supprimer les éventuels paramètres de requête (ex: ?param=value)
@@ -33,6 +33,11 @@ $methodName = !empty($segments[1]) ? $segments[1] : 'generateText';
 
 // Paramètres supplémentaires (après le nom de la méthode)
 $params = array_slice($segments, 2);
+
+// Si la route est "/listing", on remplace la méthode par "generateListing"
+if ($controllerName === 'ListingController') {
+    $methodName = 'getLastPodcasts'; // Remplace 'generateText' par 'generateListing'
+}
 
 try {
     // Ajouter l'espace de noms avant le contrôleur
