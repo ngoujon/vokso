@@ -14,6 +14,12 @@ class SearchController {
     public function search($query) {
         $results = $this->db_model->searchGenerations($query);
 
+        // Vérifier si aucun résultat n'est trouvé
+        if (empty($results)) {
+            $results = ['message' => 'Aucun résultat'];
+        }
+
+        // Retourner les résultats au format JSON
         header('Content-Type: application/json');
         echo json_encode(['results' => $results]);
         exit;
