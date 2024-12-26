@@ -37,6 +37,9 @@ export default function Home() {
       const durationInSeconds = ((endTime - startTime) / 1000).toFixed(2);
       setDuration(durationInSeconds);
 
+      // Recharger les dernières générations après la création du podcast
+      fetchLastGenerations();
+
     } catch (err) {
       setError(err.message);
     } finally {
