@@ -1,15 +1,25 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import '../styles/globals.css';
+import { useState, useEffect } from "react";
+import "../styles/globals.css";
 
 export default function Home() {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [duration, setDuration] = useState(null);
-  const [generations, setGenerations] = useState([]); // État pour stocker les générations
+  const [generations, setGenerations] = useState([]);
 
+  // Gère quel fichier audio est en cours de lecture (index). null = aucun
+  const [audioPlayingIndex, setAudioPlayingIndex] = useState(null);
+
+  // Tableaux pour stocker le temps courant et la durée totale de chaque audio
+  const [currentTimes, setCurrentTimes] = useState([]);
+  const [totalDurations, setTotalDurations] = useState([]);
+
+  /* -------------------------------------------------------------------------
+   * Soumission du formulaire
+   * ----------------------------------------------------------------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -17,29 +27,25 @@ export default function Home() {
     setDuration(null);
 
     const startTime = Date.now();
-
     try {
-      const response = await fetch('http://api-podcast.qwebty.local/generation', {
-        method: 'POST',
+      const response = await fetch("http://api-podcast.qwebty.local/generation", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ input: inputValue }),
       });
 
       const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur inconnue');
+        throw new Error(data.error || "Erreur inconnue");
       }
 
       const endTime = Date.now();
       const durationInSeconds = ((endTime - startTime) / 1000).toFixed(2);
       setDuration(durationInSeconds);
 
-      // Recharger les dernières générations après la création du podcast
-      fetchLastGenerations();
-
+      await fetchLastGenerations();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -47,21 +53,22 @@ export default function Home() {
     }
   };
 
-  // Fonction pour récupérer les dernières générations
+  /* -------------------------------------------------------------------------
+   * Récupération des dernières générations
+   * ----------------------------------------------------------------------- */
   const fetchLastGenerations = async () => {
     try {
-      const response = await fetch('http://api-podcast.qwebty.local/listing');
+      const response = await fetch("http://api-podcast.qwebty.local/listing");
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur inconnue');
+        throw new Error(data.error || "Erreur inconnue");
       }
 
-      // Vérifier la structure de la réponse et stocker les données correctement
       if (data.success && data.data) {
-        setGenerations(data.data); // Mettre à jour les générations avec la liste des podcasts
+        setGenerations(data.data);
       } else {
-        setError('Aucune génération trouvée');
+        setError("Aucune génération trouvée");
       }
     } catch (err) {
       setError(err.message);
@@ -69,11 +76,88 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchLastGenerations(); // Appeler la fonction au chargement de la page
+    fetchLastGenerations();
   }, []);
+
+  /* -------------------------------------------------------------------------
+   * Gestion de la lecture/pause
+   * ----------------------------------------------------------------------- */
+  const handlePlayPause = (index) => {
+    const currentAudio = document.getElementById(`audio-${index}`);
+
+    // Si on reclique sur le même, on met en pause
+    if (audioPlayingIndex === index) {
+      currentAudio.pause();
+      setAudioPlayingIndex(null);
+    } else {
+      // Mettre en pause le précédent s'il y en a un
+      if (audioPlayingIndex !== null) {
+        document.getElementById(`audio-${audioPlayingIndex}`).pause();
+      }
+      // Lecture du nouveau
+      currentAudio.play();
+      setAudioPlayingIndex(index);
+    }
+  };
+
+  /* -------------------------------------------------------------------------
+   * Réculer & Avancer de 10 secondes
+   * ----------------------------------------------------------------------- */
+  const handleRewind = (index) => {
+    const audio = document.getElementById(`audio-${index}`);
+    audio.currentTime = Math.max(0, audio.currentTime - 10);
+  };
+
+  const handleForward = (index) => {
+    const audio = document.getElementById(`audio-${index}`);
+    audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
+  };
+
+  /* -------------------------------------------------------------------------
+   * Formatage du temps (secondes -> mm:ss)
+   * ----------------------------------------------------------------------- */
+  const formatTime = (seconds) => {
+    if (!seconds || isNaN(seconds)) return "0:00";
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`;
+  };
+
+  /* -------------------------------------------------------------------------
+   * Chargement des métadonnées (durée totale)
+   * ----------------------------------------------------------------------- */
+  const handleLoadedMetadata = (index) => {
+    const audio = document.getElementById(`audio-${index}`);
+    setTotalDurations((prev) => {
+      const updated = [...prev];
+      updated[index] = audio.duration;
+      return updated;
+    });
+  };
+
+  /* -------------------------------------------------------------------------
+   * Mise à jour du temps courant et de la barre de progression
+   * ----------------------------------------------------------------------- */
+  const handleTimeUpdate = (index) => {
+    const audio = document.getElementById(`audio-${index}`);
+    // Met à jour currentTime
+    setCurrentTimes((prev) => {
+      const updated = [...prev];
+      updated[index] = audio.currentTime;
+      return updated;
+    });
+
+    // Met à jour la barre de progression via la variable CSS
+    const progressBar = document.getElementById(`progress-${index}`);
+    if (progressBar && audio.duration > 0) {
+      const progress = (audio.currentTime / audio.duration) * 100;
+      progressBar.style.setProperty("--progress-width", `${progress}%`);
+    }
+  };
 
   return (
     <div className="container">
+      {/* FORMULAIRE */}
       <div className="form-container">
         <h1>Générer un podcast</h1>
         <form onSubmit={handleSubmit}>
@@ -86,37 +170,92 @@ export default function Home() {
             required
           />
           <button type="submit" disabled={loading} className="submit-btn">
-            {loading ? 'Envoi en cours...' : 'Générer'}
+            {loading ? "Envoi en cours..." : "Générer"}
           </button>
         </form>
 
         {loading && <div className="loader"></div>}
         {error && <p className="error">{error}</p>}
-        {duration && <p className="success">Temps d'appel API : {duration} secondes</p>}
+        {duration && (
+          <p className="success">Temps d'appel API : {duration} secondes</p>
+        )}
       </div>
 
-      {/* Section des dernières générations */}
+      {/* LISTE DES GÉNÉRATIONS */}
       <div className="last-generations">
         <h2>Les 3 dernières générations</h2>
         {generations.length > 0 ? (
           <div className="generations-list">
             {generations.map((gen, index) => (
               <div key={index} className="generation-item">
-                {/* Affichage de l'image si l'URL est disponible */}
+                <h3 className="generation-title">{gen.title}</h3>
+
+                {/* Image du podcast */}
                 {gen.image_url && (
                   <img
-                    src={'http://static-podcast.qwebty.local/images/'+gen.image_url}
+                    src={
+                      "http://static-podcast.qwebty.local/images/" + gen.image_url
+                    }
                     alt={gen.title}
                     className="generation-image"
                   />
                 )}
-                <h3>{gen.title}</h3>
-                {/* Affichage du lecteur audio si l'URL est disponible */}
+
+                {/* Audio Player */}
                 {gen.audio_url && (
-                  <audio controls>
-                    <source src={'http://static-podcast.qwebty.local/audios/'+gen.audio_url} type="audio/mp3" />
-                    Votre navigateur ne supporte pas l'élément audio.
-                  </audio>
+                  <div className="audio-player">
+                    <audio
+                      id={`audio-${index}`}
+                      src={
+                        "http://static-podcast.qwebty.local/audios/" +
+                        gen.audio_url
+                      }
+                      type="audio/mp3"
+                      onLoadedMetadata={() => handleLoadedMetadata(index)}
+                      onTimeUpdate={() => handleTimeUpdate(index)}
+                    >
+                      Votre navigateur ne supporte pas l'élément audio.
+                    </audio>
+
+                    {/* Temps (écoulé / total) */}
+                    <div className="audio-info">
+                      <span>{formatTime(currentTimes[index])}</span> /{" "}
+                      <span>{formatTime(totalDurations[index])}</span>
+                    </div>
+
+                    {/* Barre de progression (lecture seule) */}
+                    <div
+                      id={`progress-${index}`}
+                      className="progress-bar"
+                      style={{ "--progress-width": "0%" }}
+                    ></div>
+
+                    {/* Contrôles audio */}
+                    <div className="audio-controls">
+                      <button
+                        onClick={() => handleRewind(index)}
+                        className="audio-button"
+                      >
+                        <i className="bi bi-arrow-counterclockwise"></i>
+                      </button>
+                      <button
+                        onClick={() => handlePlayPause(index)}
+                        className="audio-button"
+                      >
+                        {audioPlayingIndex === index ? (
+                          <i className="bi bi-pause"></i>
+                        ) : (
+                          <i className="bi bi-play"></i>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleForward(index)}
+                        className="audio-button"
+                      >
+                        <i className="bi bi-arrow-clockwise"></i>
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             ))}
