@@ -17,6 +17,9 @@ export default function Home() {
   const [currentTimes, setCurrentTimes] = useState([]);
   const [totalDurations, setTotalDurations] = useState([]);
 
+  // Gère la visibilité des tooltips
+  const [tooltipVisible, setTooltipVisible] = useState(null);
+
   /* -------------------------------------------------------------------------
    * Soumission du formulaire
    * ----------------------------------------------------------------------- */
@@ -85,16 +88,13 @@ export default function Home() {
   const handlePlayPause = (index) => {
     const currentAudio = document.getElementById(`audio-${index}`);
 
-    // Si on reclique sur le même, on met en pause
     if (audioPlayingIndex === index) {
       currentAudio.pause();
       setAudioPlayingIndex(null);
     } else {
-      // Mettre en pause le précédent s'il y en a un
       if (audioPlayingIndex !== null) {
         document.getElementById(`audio-${audioPlayingIndex}`).pause();
       }
-      // Lecture du nouveau
       currentAudio.play();
       setAudioPlayingIndex(index);
     }
@@ -140,14 +140,12 @@ export default function Home() {
    * ----------------------------------------------------------------------- */
   const handleTimeUpdate = (index) => {
     const audio = document.getElementById(`audio-${index}`);
-    // Met à jour currentTime
     setCurrentTimes((prev) => {
       const updated = [...prev];
       updated[index] = audio.currentTime;
       return updated;
     });
 
-    // Met à jour la barre de progression via la variable CSS
     const progressBar = document.getElementById(`progress-${index}`);
     if (progressBar && audio.duration > 0) {
       const progress = (audio.currentTime / audio.duration) * 100;
@@ -188,9 +186,21 @@ export default function Home() {
           <div className="generations-list">
             {generations.map((gen, index) => (
               <div key={index} className="generation-item">
-                <h3 className="generation-title">{gen.title}</h3>
+                <div
+                  className="tooltip-container"
+                  onMouseEnter={() => gen.title.length > 30 && setTooltipVisible(index)}
+                  onMouseLeave={() => setTooltipVisible(null)}
+                >
+                  <h3 className="generation-title">
+                    {gen.title.length > 30
+                      ? gen.title.substring(0, 30) + "..."
+                      : gen.title}
+                  </h3>
+                  {tooltipVisible === index && gen.title.length > 30 && (
+                    <div className="tooltip">{gen.title}</div>
+                  )}
+                </div>
 
-                {/* Image du podcast */}
                 {gen.image_url && (
                   <img
                     src={
@@ -201,7 +211,6 @@ export default function Home() {
                   />
                 )}
 
-                {/* Audio Player */}
                 {gen.audio_url && (
                   <div className="audio-player">
                     <audio
@@ -217,20 +226,17 @@ export default function Home() {
                       Votre navigateur ne supporte pas l'élément audio.
                     </audio>
 
-                    {/* Temps (écoulé / total) */}
                     <div className="audio-info">
                       <span>{formatTime(currentTimes[index])}</span> /{" "}
                       <span>{formatTime(totalDurations[index])}</span>
                     </div>
 
-                    {/* Barre de progression (lecture seule) */}
                     <div
                       id={`progress-${index}`}
                       className="progress-bar"
                       style={{ "--progress-width": "0%" }}
                     ></div>
 
-                    {/* Contrôles audio */}
                     <div className="audio-controls">
                       <button
                         onClick={() => handleRewind(index)}
