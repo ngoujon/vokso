@@ -34,9 +34,14 @@ $methodName = !empty($segments[1]) ? $segments[1] : 'generateText';
 // Paramètres supplémentaires (après le nom de la méthode)
 $params = array_slice($segments, 2);
 
-// Si la route est "/listing", on remplace la méthode par "generateListing"
+// Si la route est "/listing", on remplace la méthode par "getLastPodcasts"
 if ($controllerName === 'ListingController') {
-    $methodName = 'getLastPodcasts'; // Remplace 'generateText' par 'generateListing'
+    $methodName = 'getLastPodcasts';
+}
+
+// Si la route est "/search", configurer pour effectuer une recherche
+if ($controllerName === 'SearchController') {
+    $methodName = 'searchPodcasts'; // Nom de la méthode de recherche
 }
 
 try {
@@ -56,8 +61,14 @@ try {
         throw new Exception("La méthode $methodName n'existe pas dans le contrôleur $controllerClass.");
     }
 
-    // Appeler la méthode avec les paramètres
-    call_user_func_array([$controller, $methodName], $params);
+    // Si c'est une recherche, récupérer la requête "query" depuis les paramètres GET
+    if ($controllerName === 'SearchController' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $query = $_GET['query'] ?? '';
+        call_user_func_array([$controller, $methodName], [$query]);
+    } else {
+        // Appeler la méthode avec les paramètres normaux
+        call_user_func_array([$controller, $methodName], $params);
+    }
 
 } catch (Exception $e) {
     // Gestion des erreurs : retourne un code 404 si un problème est rencontré

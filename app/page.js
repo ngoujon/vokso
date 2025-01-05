@@ -79,8 +79,36 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchLastGenerations();
-  }, []);
+    // Fonction de recherche dynamique
+    const searchPodcasts = async () => {
+      try {
+        if (inputValue.length >= 3) {
+          const response = await fetch(`http://api-podcast.qwebty.local/search?query=${inputValue}`);
+          const data = await response.json();
+  
+          if (data.success) {
+            setGenerations(data.data); // Met à jour les générations avec les résultats de recherche
+          } else {
+            setGenerations([]); // Vide les générations si aucun résultat n'est trouvé
+            setError(data.message); // Affiche un message d'erreur
+          }
+        } else if (inputValue.length === 0) {
+          // Si l'input est vidé, recharge les dernières générations
+          fetchLastGenerations();
+        }
+      } catch (err) {
+        setError("Erreur lors de la recherche."); // Gestion des erreurs réseau
+      }
+    };
+  
+    // Délai de recherche (2 secondes)
+    const timer = setTimeout(() => {
+      searchPodcasts();
+    }, 2000);
+  
+    // Nettoie le timer si l'utilisateur continue à taper
+    return () => clearTimeout(timer);
+  }, [inputValue]); // Déclenche l'effet lorsque `inputValue` change
 
   /* -------------------------------------------------------------------------
    * Gestion de la lecture/pause
