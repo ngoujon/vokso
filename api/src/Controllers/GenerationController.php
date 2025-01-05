@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers;
 
 use GuzzleHttp\Client;
@@ -280,18 +281,25 @@ class GenerationController
                     'Content-Type' => 'application/json',
                 ],
                 'json' => [
-                    "model" => "gpt-4o", // Modèle mis à jour ici
+                    "model" => "gpt-4", // Correct modèle
                     "temperature" => 0.2,
                     "messages" => [
-                        ["role" => "user", "content" => "En un mot, Quel serait le mot qui permettrait de ranger dans une catégorie d'activité le sujet: $userInput ?"]
+                        ["role" => "system", "content" => "Répondez avec un seul mot décrivant la catégorie d'activité ou le domaine correspondant au sujet donné."],
+                        ["role" => "user", "content" => "Quel est le mot qui décrit la catégorie pour : \"$userInput\" ?"]
                     ]
                 ]
             ]);
 
             $data = json_decode($response->getBody(), true);
-            return $data['choices'][0]['text'] ?? 'Non défini'; // Retourne le résultat ou un mot par défaut
+
+            // Vérification et récupération de la réponse
+            if (isset($data['choices'][0]['message']['content'])) {
+                return trim($data['choices'][0]['message']['content']); // Supprime les espaces inutiles
+            } else {
+                throw new Exception('Aucune réponse valide reçue de l\'API');
+            }
         } catch (Exception $e) {
-            throw new Exception('Error with categorization API: ' . $e->getMessage());
+            throw new Exception('Erreur lors de la catégorisation : ' . $e->getMessage());
         }
     }
 }
