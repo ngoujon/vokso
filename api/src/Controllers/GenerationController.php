@@ -79,18 +79,18 @@ class GenerationController
                         return;
                     }
 
-                    // Enregistrer les informations dans la table generations
-                    $generationId = $this->saveGeneration($inputData['input'], $generatedText, $imageFileName, $audioFileName);
-
-                    // Appel API pour la catégorisation
+                    // Appel API pour la catégorisation et récupération/assignation de l'idcategorie
                     try {
                         $categoryKeyword = $this->generateCategory($inputData['input']);
-                        $this->saveCategory($generationId, $categoryKeyword);
+                        $idcategorie = $this->saveOrGetCategory($categoryKeyword);
                     } catch (Exception $e) {
                         http_response_code(500);
                         echo json_encode(['error' => 'Erreur lors de la catégorisation : ' . $e->getMessage()]);
                         return;
                     }
+
+                    // Enregistrer les informations dans la table generations avec l'idcategorie
+                    $generationId = $this->saveGeneration($inputData['input'], $generatedText, $imageFileName, $audioFileName, $idcategorie);
 
                     // Retourner la réponse
                     header('Content-Type: application/json');
@@ -100,7 +100,8 @@ class GenerationController
                         'generated_text' => $generatedText,
                         'image' => $imageFileName,
                         'audio' => $audioFileName,
-                        'generation_id' => $generationId
+                        'generation_id' => $generationId,
+                        'idcategorie' => $idcategorie
                     ]);
                 } else {
                     http_response_code(500);
@@ -165,9 +166,42 @@ class GenerationController
         }
     }
 
+    private function saveOrGetCategory($categoryKeyword)
+    {
+        // Vérifier si la catégorie existe déjà
+        $stmt = $this->db->prepare('SELECT idcategorie FROM categorie WHERE keyword = :keyword');
+        $stmt->execute([':keyword' => $categoryKeyword]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row) {
+            return $row['idcategorie']; // Retourner l'idcategorie existant
+        }
+
+        // Sinon, insérer une nouvelle catégorie
+        $stmt = $this->db->prepare('INSERT INTO categorie (keyword) VALUES (:keyword)');
+        $stmt->execute([':keyword' => $categoryKeyword]);
+
+        return $this->db->lastInsertId(); // Retourner l'id de la nouvelle catégorie
+    }
+
+    private function saveGeneration($title, $description, $imageUrl, $audioUrl, $idcategorie)
+    {
+        $generationId = 'gen_' . uniqid(); // Générer un ID unique avec "gen_"
+        $stmt = $this->db->prepare('INSERT INTO generations (generation_id, title, description, image_url, audio_url, idcategorie) VALUES (:generation_id, :title, :description, :image_url, :audio_url, :idcategorie)');
+        $stmt->execute([
+            ':generation_id' => $generationId,
+            ':title' => $title,
+            ':description' => $description,
+            ':image_url' => $imageUrl,
+            ':audio_url' => $audioUrl,
+            ':idcategorie' => $idcategorie
+        ]);
+        return $generationId;
+    }
+
     private function generateImageWithDallE($text, $prompt)
     {
-        $apiKey = '***CLE-API-SUPPRIMEE***';  // Remplacez par votre propre clé API DALL-E
+        $apiKey = '***CLE-API-SUPPRIMEE***';
         $client = new Client();
 
         $prompt = str_replace('###REPLACE###', $text, $prompt);
@@ -199,7 +233,7 @@ class GenerationController
 
     private function generateAudioWithTTS($text)
     {
-        $apiKey = '***CLE-API-SUPPRIMEE***';  // Remplacez par votre propre clé API TTS
+        $apiKey = '***CLE-API-SUPPRIMEE***';
         $client = new Client();
         $voice = rand(0, 1) ? "nova" : "onyx";
 
@@ -215,11 +249,10 @@ class GenerationController
                     "input" => $text,
                     "speed" => 1
                 ],
-                'sink' => fopen('php://memory', 'w')  // Garde la réponse en mémoire
+                'sink' => fopen('php://memory', 'w')
             ]);
 
             $audioContent = $response->getBody();
-            // Nom du fichier audio avec date/heure formatée
             $audioFileName = 'audio_' . $this->getCurrentDateTime() . '.mp3';
             file_put_contents(__DIR__ . '/../../../public/output/audios/' . $audioFileName, $audioContent);
 
@@ -231,7 +264,6 @@ class GenerationController
 
     private function sanitizeInput($input)
     {
-        // Ici, on applique un nettoyage de base pour éliminer les tentatives de prompt injection
         return htmlspecialchars(strip_tags($input));
     }
 
@@ -245,36 +277,13 @@ class GenerationController
 
     private function getCurrentDateTime()
     {
-        return date('Ymd_His'); // Format : année mois jour_heure minute seconde
-    }
-
-    private function saveGeneration($title, $description, $imageUrl, $audioUrl)
-    {
-        $generationId = 'gen_' . uniqid(); // Générer un ID unique avec "gen_"
-        $stmt = $this->db->prepare('INSERT INTO generations (generation_id, title, description, image_url, audio_url) VALUES (:generation_id, :title, :description, :image_url, :audio_url)');
-        $stmt->execute([
-            ':generation_id' => $generationId,
-            ':title' => $title,
-            ':description' => $description,
-            ':image_url' => $imageUrl,
-            ':audio_url' => $audioUrl
-        ]);
-        return $generationId;
-    }
-
-    private function saveCategory($generationId, $categoryKeyword)
-    {
-        $stmt = $this->db->prepare('INSERT INTO categorie (generation_id, keyword) VALUES (:generation_id, :keyword)');
-        $stmt->execute([
-            ':generation_id' => $generationId,
-            ':keyword' => $categoryKeyword
-        ]);
+        return date('Ymd_His');
     }
 
     private function generateCategory($userInput)
     {
         $client = new Client();
-        $apiKey = '***CLE-API-SUPPRIMEE***';  // Remplacez par votre propre clé API
+        $apiKey = '***CLE-API-SUPPRIMEE***';
 
         try {
             $response = $client->post('https://api.openai.com/v1/chat/completions', [
@@ -283,7 +292,7 @@ class GenerationController
                     'Content-Type' => 'application/json',
                 ],
                 'json' => [
-                    "model" => "gpt-4", // Correct modèle
+                    "model" => "gpt-4",
                     "temperature" => 0.2,
                     "messages" => [
                         ["role" => "system", "content" => "Répondez avec un seul mot décrivant la catégorie d'activité ou le domaine correspondant au sujet donné."],
@@ -294,9 +303,8 @@ class GenerationController
 
             $data = json_decode($response->getBody(), true);
 
-            // Vérification et récupération de la réponse
             if (isset($data['choices'][0]['message']['content'])) {
-                return trim($data['choices'][0]['message']['content']); // Supprime les espaces inutiles
+                return trim($data['choices'][0]['message']['content']);
             } else {
                 throw new Exception('Aucune réponse valide reçue de l\'API');
             }
