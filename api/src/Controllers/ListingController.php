@@ -29,7 +29,7 @@ class ListingController
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
     
         // Récupérer les 3 derniers podcasts générés
-        $query = 'SELECT id, title, image_url, audio_url FROM generations ORDER BY created_at DESC LIMIT 3';
+        $query = 'SELECT id, title, image_url, audio_url FROM generations WHERE statut = "on" ORDER BY created_at DESC LIMIT 3';
         $stmt = $pdo->query($query);
         $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     

@@ -39,7 +39,7 @@ class SearchController
             // Préparer et exécuter la requête SQL
             $query = 'SELECT id, title, image_url, audio_url 
                       FROM generations 
-                      WHERE title LIKE :searchQuery 
+                      WHERE title LIKE :searchQuery  AND statut = "on" 
                       ORDER BY created_at DESC';
 
             $stmt = $this->pdo->prepare($query);
