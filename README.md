@@ -1,113 +1,200 @@
-# Flask AI Multimedia Generator
+# Podcast Generator
 
-Ce projet est une application web basée sur **Flask** qui utilise les services d'OpenAI pour générer du **texte**, de l'**audio** et des **images** à partir des entrées des utilisateurs. Il combine plusieurs technologies de génération automatique pour offrir une expérience multimédia complète et interactive.
+Une application complète pour générer des podcasts comprenant du texte, des images et des fichiers audio, avec une interface utilisateur interactive et une API puissante.
+
+---
 
 ## Fonctionnalités
 
-- **Génération de texte** : Utilisation de GPT-3.5 pour produire des réponses détaillées et organisées selon une structure prédéfinie (Introduction, Historique, Concepts clés, Applications, etc.).
-- **Synthèse vocale** : Conversion du texte généré en fichier audio MP3 à l'aide de l'API Text-to-Speech d'OpenAI.
-- **Génération d'images** : Création d'images minimalistes basées sur le sujet saisi par l'utilisateur via DALL-E 2.
-- **Suivi de la progression** : Le processus est divisé en plusieurs étapes, et l'utilisateur peut voir l'avancement de la génération en temps réel.
-- **Sauvegarde des fichiers** : Les réponses textuelles, les fichiers audio, et les images générées sont sauvegardés localement avec des noms de fichiers basés sur la date et l'heure.
-
-## Technologies utilisées
-
-### Backend
-
-- **Flask** : Framework web léger en Python utilisé pour créer l'API et gérer les requêtes utilisateur.
-- **OpenAI API** : L'API d'OpenAI est utilisée pour générer du texte, de l'audio et des images.
-  - **GPT-3.5-turbo** : Modèle de traitement du langage naturel pour générer des réponses textuelles.
-  - **Text-to-Speech (TTS)** : Modèle de conversion de texte en parole pour générer des fichiers audio MP3.
-  - **DALL-E 2** : Modèle de génération d'images basé sur des descriptions textuelles.
+### Backend (API)
+- Génération de texte à l'aide de **OpenAI GPT-4**.
+- Création d'images à partir du texte généré via **DALL-E**.
+- Synthèse vocale (TTS) pour produire des fichiers audio.
+- Catégorisation automatique des entrées utilisateur.
+- Stockage des données générées (texte, images, audio) dans une base de données MySQL.
+- API REST permettant :
+  - **POST** `/generation` : Soumettre une génération.
+  - **GET** `/listing` : Récupérer les dernières générations.
+  - **GET** `/search?query=...` : Rechercher des contenus.
 
 ### Frontend
+- Champ de saisie pour générer du contenu.
+- Recherche dynamique dans les contenus existants.
+- Lecture audio avec contrôle avancé (lecture/pause, avancer/reculer, barre de progression).
+- Affichage des images et texte générés.
+- Info-bulles pour les titres longs.
+- Gestion des erreurs et indicateurs de chargement.
 
-- **HTML/CSS avec Flask** : L'interface utilisateur de base est servie via des templates Flask. La route principale `/` charge une page où l'utilisateur peut soumettre des demandes de génération.
-
-### Stockage des fichiers
-
-- **Pathlib** : Utilisé pour gérer la création et la gestion des chemins d'accès aux fichiers. Les fichiers générés (texte, audio et images) sont sauvegardés dans un dossier `output` avec un nom basé sur un horodatage.
-
-### Environnement
-
-- **Dotenv** : Pour charger les variables d'environnement (comme la clé API d'OpenAI) à partir d'un fichier `.env`.
-
-### Dépendances Python
-
-Le fichier `requirements.txt` contient toutes les bibliothèques nécessaires pour exécuter le projet :
-
-- `Flask`
-- `requests`
-- `python-dotenv`
-- `openai`
-
-## Prérequis
-
-1. **Clé API OpenAI** : Assurez-vous d'avoir une clé API OpenAI valide pour accéder aux modèles GPT-3.5, Text-to-Speech et DALL-E.
-2. **Python 3.x** : Le projet est écrit en Python, donc assurez-vous d'avoir une version récente de Python installée.
-3. **Pip** : Utilisé pour installer les dépendances Python.
+---
 
 ## Installation
 
-1. Clonez le dépôt Git :
+### Prérequis
+- PHP (≥ 7.4)
+- Composer
+- Node.js (≥ 14.0) et npm/yarn
+- MySQL
+- OpenAI API Key
 
-    ```bash
-    git clone https://github.com/votre-utilisateur/flask-ai-multimedia.git
-    cd flask-ai-multimedia
-    ```
+### Backend
 
-2. Installez les dépendances :
+1. Installez les dépendances PHP avec Composer :
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+cd backend  
+composer install  
 
-3. Créez un fichier .env à la racine du projet et ajoutez votre clé OpenAI :
+2. Configurez votre environnement :
+   - Créez un fichier `.env` à la racine du répertoire backend avec les clés API et les paramètres de base de données :
 
-    ```
-    bash
-    OPENAI_API_KEY=your-openai-api-key
-    ```
+DB_HOST=localhost  
+DB_NAME=generation_db  
+DB_USER=webapp  
+DB_PASS=***MOT-DE-PASSE-SUPPRIME***  
 
-4. Créez un répertoire output dans le projet pour stocker les fichiers générés :
+OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  
 
-    ```bash
-    mkdir output
-    ```
-5. Lancez l'application Flask :
+3. Configurez la base de données :
+   - Importez le fichier SQL (`schema.sql`) pour créer les tables nécessaires :
 
-    ```bash
-    python app.py
-    ```
-6. Accédez à l'application dans votre navigateur :
+mysql -u root -p generation_db < schema.sql  
 
-    ```bash
-    http://127.0.0.1:5000
-    ```
+4. Démarrez le serveur local pour le backend :
+
+php -S localhost:8000 -t public  
+
+### Frontend
+
+1. Naviguez dans le répertoire frontend :
+
+cd ../frontend  
+
+2. Installez les dépendances Node.js :
+
+npm install  
+
+3. Lancez l'application React en mode développement :
+
+npm run dev  
+
+4. Accédez à l'interface utilisateur :
+   - [http://localhost:3000](http://localhost:3000)
+
+---
 
 ## Utilisation
 
-- Saisissez une demande dans le formulaire sur la page d'accueil.
-- L'application génèrera une réponse textuelle, un fichier audio et une image en fonction de votre entrée.
-- Vous recevrez un retour JSON avec des liens vers les fichiers générés.
+### Génération d'un contenu
+1. Entrez un texte dans le champ d'entrée sur la page d'accueil.
+2. Cliquez sur **Générer**.
+3. Les résultats (texte, image, audio) s'affichent avec des options de lecture et d'affichage.
+
+### Recherche
+1. Tapez un mot-clé dans le champ d'entrée.
+2. Attendez 2 secondes pour voir les résultats de la recherche.
+3. Les résultats s'affichent dynamiquement.
+
+---
 
 ## Structure du projet
 
-```bash
-├── app.py                 # Application principale
-├── output/                # Dossier de sauvegarde des fichiers générés
-├── templates/             # Fichiers HTML pour l'interface utilisateur
-│   └── index.php          # Page d'accueil de l'application
-├── .env                   # Fichier d'environnement pour la clé API
-├── requirements.txt       # Dépendances Python
-└── README.md              # Ce fichier
+### Backend
+- **`/app/Controllers/GenerationController.php`** : Contrôleur principal pour la génération.
+- **`/app/Models`** : Gestion des interactions avec la base de données.
+- **`/public/output/`** : Répertoire pour stocker les fichiers générés (texte, images, audios).
+
+### Frontend
+- **`/frontend/pages/Home.js`** : Composant principal React pour l'interface utilisateur.
+- **`/frontend/styles/globals.css`** : Styles globaux.
+- **`/frontend/public/`** : Ressources statiques.
+
+---
+
+## API Endpoints
+
+### POST `/generation`
+- **Description** : Génère du contenu (texte, image, audio) à partir d'une entrée utilisateur.
+- **Requête** :
 ```
+{
+  "input": "Votre texte ici"
+}
+```
+- **Réponse** :
+```
+{
+  "message": "Texte, image et audio générés avec succès",
+  "file": "response_20250101_123456.txt",
+  "generated_text": "Texte généré...",
+  "image": "image_20250101_123456.png",
+  "audio": "audio_20250101_123456.mp3",
+  "generation_id": "gen_xxxxx",
+  "idcategorie": 1
+}
+```
+### GET `/listing`
+- **Description** : Récupère les trois dernières générations.
+- **Réponse** :
+```
+{
+  "success": true,
+  "data": [
+    {
+      "title": "Titre 1",
+      "description": "Description 1",
+      "image_url": "image1.png",
+      "audio_url": "audio1.mp3"
+    },
+    ...
+  ]
+}
+```
+### GET `/search?query=...`
+- **Description** : Recherche des contenus générés basés sur un mot-clé.
+- **Réponse** :
+```
+{
+  "success": true,
+  "data": [...]
+}
+```
+---
 
-## Améliorations possibles
+## Technologies utilisées
 
-- Gestion d'erreurs : Ajouter une gestion des erreurs plus robuste pour traiter les éventuels échecs des appels API.
-- Interface utilisateur : Améliorer l'interface en ajoutant du feedback visuel ou des barres de progression animées.
-- Multilingue : Permettre la génération de réponses dans plusieurs langues, en fonction des préférences utilisateur.
+- **Backend** :
+  - PHP 7+ (Framework custom)
+  - MySQL pour le stockage des données
+  - Guzzle pour les appels API
 
-## Contributeurs
-Nicolas GOUJON - Développeur principal
+- **Frontend** :
+  - React (avec Hooks)
+  - CSS personnalisé
+  - Fetch API pour les requêtes
+
+- **Services externes** :
+  - OpenAI API pour GPT-4, DALL-E et TTS
+
+---
+
+## Contribution
+
+1. Forkez le projet.
+2. Créez une branche pour votre fonctionnalité :
+
+git checkout -b nouvelle-fonctionnalite  
+
+3. Faites vos modifications et testez-les.
+4. Soumettez une Pull Request.
+
+---
+
+## Auteur
+
+- **Nom** : [Votre Nom]
+- **Contact** : [Votre Email]
+
+---
+
+## Licence
+
+Ce projet est sous licence MIT. Consultez le fichier `LICENSE` pour plus de détails.
