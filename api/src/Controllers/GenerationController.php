@@ -170,6 +170,8 @@ class GenerationController
         $apiKey = '***CLE-API-SUPPRIMEE***';  // Remplacez par votre propre clé API DALL-E
         $client = new Client();
 
+        $prompt = str_replace('###REPLACE###', $text, $prompt);
+
         try {
             $response = $client->post('https://api.openai.com/v1/images/generations', [
                 'headers' => [
@@ -178,7 +180,7 @@ class GenerationController
                 ],
                 'json' => [
                     'model' => 'dall-e-3',
-                    'prompt' => $text . ' ' . $prompt,
+                    'prompt' => $prompt,
                     'n' => 1,
                     'size' => '1024x1024',
                 ]
