@@ -269,10 +269,10 @@ class GenerationController
 
     private function getPrompt($type)
     {
-        $stmt = $this->db->prepare('SELECT description FROM prompts WHERE type = :type');
+        $stmt = $this->db->prepare('SELECT content FROM prompt WHERE type = :type');
         $stmt->execute([':type' => $type]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row ? $row['description'] : '';
+        return $row ? $row['content'] : '';
     }
 
     private function getCurrentDateTime()
@@ -284,7 +284,16 @@ class GenerationController
     {
         $client = new Client();
         $apiKey = '***CLE-API-SUPPRIMEE***';
-
+    
+        // Récupérer le prompt de type "keyword" depuis la base de données
+        $keywordPrompt = $this->getPrompt('keyword');
+        if (empty($keywordPrompt)) {
+            throw new Exception('Le prompt de type "keyword" est introuvable dans la base de données.');
+        }
+    
+        // Remplacer le placeholder par l'entrée utilisateur
+        $promptContent = str_replace('###REPLACE###', $userInput, $keywordPrompt);
+    
         try {
             $response = $client->post('https://api.openai.com/v1/chat/completions', [
                 'headers' => [
@@ -296,13 +305,13 @@ class GenerationController
                     "temperature" => 0.2,
                     "messages" => [
                         ["role" => "system", "content" => "Répondez avec un seul mot décrivant la catégorie d'activité ou le domaine correspondant au sujet donné."],
-                        ["role" => "user", "content" => "Quel est le mot qui décrit la catégorie pour : \"$userInput\" ?"]
+                        ["role" => "user", "content" => $promptContent]
                     ]
                 ]
             ]);
-
+    
             $data = json_decode($response->getBody(), true);
-
+    
             if (isset($data['choices'][0]['message']['content'])) {
                 return trim($data['choices'][0]['message']['content']);
             } else {
