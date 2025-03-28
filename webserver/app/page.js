@@ -116,6 +116,23 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [inputValue]); // Déclenche l'effet lorsque `inputValue` change
 
+  // Actualisation automatique toutes les 60 secondes
+  useEffect(() => {
+    // Chargement initial
+    fetchLastGenerations();
+
+    // Mise en place de l'intervalle de 60 secondes
+    const interval = setInterval(() => {
+      // Ne recharge que si l'input est vide (pas de recherche en cours)
+      if (inputValue.length === 0) {
+        fetchLastGenerations();
+      }
+    }, 60000);
+
+    // Nettoyage de l'intervalle lors du démontage du composant
+    return () => clearInterval(interval);
+  }, [inputValue]); // Dépendance sur inputValue pour gérer les changements de recherche
+
   /* -------------------------------------------------------------------------
    * Gestion de la lecture/pause
    * ----------------------------------------------------------------------- */
