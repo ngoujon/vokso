@@ -48,9 +48,9 @@ class SearchController
 
         try {
             // Préparer et exécuter la requête SQL
-            $query = 'SELECT id, title, image_url, audio_url 
+            $query = 'SELECT id, title, image_url, audio_url, created_at 
                       FROM generations 
-                      WHERE title LIKE :searchQuery  AND statut = "on" 
+                      WHERE title LIKE :searchQuery AND statut = "on" 
                       ORDER BY created_at DESC';
 
             $stmt = $this->pdo->prepare($query);
@@ -68,7 +68,7 @@ class SearchController
                 header("Content-Type: application/json");
                 echo json_encode([
                     'success' => false,
-                    // 'message' => 'Aucun résultat trouvé pour votre recherche.'
+                    'data' => []
                 ]);
             }
         } catch (\PDOException $e) {
