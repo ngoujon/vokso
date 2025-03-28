@@ -2,6 +2,12 @@
 
 import { useState, useEffect } from "react";
 import "../styles/globals.css";
+import { config } from "./config";
+
+// Vérification des variables d'environnement
+if (!config.apiUrl || !config.staticUrl) {
+  throw new Error("Les variables d'environnement NEXT_PUBLIC_API_URL et NEXT_PUBLIC_STATIC_URL doivent être définies");
+}
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
@@ -31,7 +37,7 @@ export default function Home() {
 
     const startTime = Date.now();
     try {
-      const response = await fetch("http://api-podcast.qwebty.local/generation", {
+      const response = await fetch(`${config.apiUrl}/generation`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -61,7 +67,7 @@ export default function Home() {
    * ----------------------------------------------------------------------- */
   const fetchLastGenerations = async () => {
     try {
-      const response = await fetch("http://api-podcast.qwebty.local/listing");
+      const response = await fetch(`${config.apiUrl}/listing`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -83,7 +89,7 @@ export default function Home() {
     const searchPodcasts = async () => {
       try {
         if (inputValue.length >= 3) {
-          const response = await fetch(`http://api-podcast.qwebty.local/search?query=${inputValue}`);
+          const response = await fetch(`${config.apiUrl}/search?query=${inputValue}`);
           const data = await response.json();
   
           if (data.success) {
@@ -242,7 +248,7 @@ export default function Home() {
                 {gen.image_url && (
                   <img
                     src={
-                      "http://static-podcast.qwebty.local/images/" + gen.image_url
+                      `${config.staticUrl}/images/` + gen.image_url
                     }
                     alt={gen.title}
                     className="generation-image"
@@ -254,7 +260,7 @@ export default function Home() {
                     <audio
                       id={`audio-${index}`}
                       src={
-                        "http://static-podcast.qwebty.local/audios/" +
+                        `${config.staticUrl}/audios/` +
                         gen.audio_url
                       }
                       type="audio/mp3"
