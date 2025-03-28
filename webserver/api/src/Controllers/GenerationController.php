@@ -25,7 +25,11 @@ class GenerationController
         }
 
         // Connexion à la base de données
-        $this->db = new PDO('mysql:host=db;dbname=generation_db', 'webapp', '***MOT-DE-PASSE-SUPPRIME***');
+        $this->db = new PDO(
+            'mysql:host=' . $_ENV['DB_HOST'] . ';dbname=' . $_ENV['DB_NAME'],
+            $_ENV['DB_USER'],
+            $_ENV['DB_PASS']
+        );
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 

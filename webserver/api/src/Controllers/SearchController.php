@@ -2,15 +2,26 @@
 
 namespace App\Controllers;
 
+use Dotenv\Dotenv;
+use Exception;
+
 class SearchController
 {
     private $pdo;
 
     public function __construct()
     {
+        // Charger les variables d'environnement
+        $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
+        $dotenv->load();
+
         // Connexion à la base de données
         try {
-            $this->pdo = new \PDO('mysql:host=db;dbname=generation_db', 'webapp', '***MOT-DE-PASSE-SUPPRIME***');
+            $this->pdo = new \PDO(
+                'mysql:host=' . $_ENV['DB_HOST'] . ';dbname=' . $_ENV['DB_NAME'],
+                $_ENV['DB_USER'],
+                $_ENV['DB_PASS']
+            );
             $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $this->pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
