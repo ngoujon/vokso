@@ -1,0 +1,19 @@
+{
+    "name": "nicolasgoujon/api",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Nicolas GOUJON",
+            "email": "48332010+ngoujon@users.noreply.github.com"
+        }
+    ],
+    "require": {
+        "monolog/monolog": "^3.8",
+        "vlucas/phpdotenv": "^5.6",
+        "guzzlehttp/guzzle": "^7.9"
+    }
+}
