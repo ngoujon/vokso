@@ -187,14 +187,24 @@ export default function Home() {
       <div className="form-container">
         <h1>Générer un podcast</h1>
         <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Tapez ici..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            className="input-field"
-            required
-          />
+          <div className="input-container">
+            <input
+              type="text"
+              placeholder="Tapez ici..."
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              className="input-field"
+              required
+            />
+            <button
+              type="button"
+              className={`clear-input ${inputValue.length > 0 ? 'visible' : ''}`}
+              onClick={() => setInputValue('')}
+              aria-label="Effacer le texte"
+            >
+              <i className="bi bi-x-lg"></i>
+            </button>
+          </div>
           <button type="submit" disabled={loading} className="submit-btn">
             {loading ? "Envoi en cours..." : "Générer"}
           </button>

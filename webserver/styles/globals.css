@@ -41,9 +41,18 @@ h1 {
   margin:0px;
 }
 
+.input-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .input-field {
   width: 350px;
   padding: 0.8rem;
+  padding-right: 2.5rem;
   margin: 1rem 0;
   background-color: #2a2a40;
   border: 1px solid #565685;
@@ -53,9 +62,33 @@ h1 {
   transition: all 0.3s ease;
 }
 
-.input-field:focus {
-  outline: 2px solid #7c4dff;
-  outline-offset: 2px;
+.clear-input {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #e3e3ff;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+  font-size: 1.2rem;
+}
+
+.clear-input.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.clear-input:hover {
+  color: #7c4dff;
+  transform: translateY(-50%) scale(1.1);
 }
 
 .submit-btn {
