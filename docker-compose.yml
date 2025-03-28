@@ -1,0 +1,59 @@
+services:
+  web:
+    image: php:8.3-apache
+    container_name: podcast_qwebty
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./webserver:/var/www/html
+      - ./apache-config:/etc/apache2/sites-available  # Ajout du volume pour Virtual Hosts
+    environment:
+      PHP_EXTENSION_DIR: "/usr/local/lib/php/extensions/no-debug-non-zts-20220829"
+    depends_on:
+      - db
+    networks:
+      - app_network
+    command: >
+      /bin/bash -c "
+      apt-get update &&
+      apt-get install -y libpq-dev libzip-dev zip unzip &&
+      docker-php-ext-install pdo pdo_mysql mysqli &&
+      a2enmod rewrite &&
+      a2ensite *.conf &&
+      apachectl -D FOREGROUND"
+
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: rootpassword
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+volumes:
+  db_data:
+
+networks:
+  app_network:
+    driver: bridge

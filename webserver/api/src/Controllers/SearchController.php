@@ -10,7 +10,7 @@ class SearchController
     {
         // Connexion à la base de données
         try {
-            $this->pdo = new \PDO('mysql:host=localhost;dbname=generation_db', 'webapp', '***MOT-DE-PASSE-SUPPRIME***');
+            $this->pdo = new \PDO('mysql:host=db;dbname=generation_db', 'webapp', '***MOT-DE-PASSE-SUPPRIME***');
             $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $this->pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {

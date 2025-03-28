@@ -10,11 +10,22 @@ use PDO;
 class GenerationController
 {
     private $db;
+    private $apiKey;
 
     public function __construct()
     {
+        // Charger les variables d'environnement
+        $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
+        $dotenv->load();
+
+        // Récupérer la clé API
+        $this->apiKey = $_ENV['OPENAI_API_KEY'];
+        if (!$this->apiKey) {
+            throw new Exception('OPENAI_API_KEY is missing in environment variables.');
+        }
+
         // Connexion à la base de données
-        $this->db = new PDO('mysql:host=localhost;dbname=generation_db', 'webapp', '***MOT-DE-PASSE-SUPPRIME***');
+        $this->db = new PDO('mysql:host=db;dbname=generation_db', 'webapp', '***MOT-DE-PASSE-SUPPRIME***');
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
@@ -119,11 +130,7 @@ class GenerationController
 
     private function callOpenAiApi($userInput, $prompt)
     {
-        $dotenv = Dotenv::createImmutable('/Applications/XAMPP/xamppfiles/htdocs/qwai-pod/api/');
-        $dotenv->load();
-
-        $apiKey = '***CLE-API-SUPPRIMEE***';
-        if (!$apiKey) {
+        if (!$this->apiKey) {
             throw new Exception('API Key is missing.');
         }
 
@@ -135,7 +142,7 @@ class GenerationController
         try {
             $response = $client->post('https://api.openai.com/v1/chat/completions', [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Authorization' => 'Bearer ' . $this->apiKey,
                     'Content-Type' => 'application/json',
                 ],
                 'json' => [
@@ -201,7 +208,10 @@ class GenerationController
 
     private function generateImageWithDallE($text, $prompt)
     {
-        $apiKey = '***CLE-API-SUPPRIMEE***';
+        if (!$this->apiKey) {
+            throw new Exception('API Key is missing.');
+        }
+
         $client = new Client();
 
         $prompt = str_replace('###REPLACE###', $text, $prompt);
@@ -209,7 +219,7 @@ class GenerationController
         try {
             $response = $client->post('https://api.openai.com/v1/images/generations', [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Authorization' => 'Bearer ' . $this->apiKey,
                     'Content-Type' => 'application/json',
                 ],
                 'json' => [
@@ -233,14 +243,17 @@ class GenerationController
 
     private function generateAudioWithTTS($text)
     {
-        $apiKey = '***CLE-API-SUPPRIMEE***';
+        if (!$this->apiKey) {
+            throw new Exception('API Key is missing.');
+        }
+
         $client = new Client();
         $voice = rand(0, 1) ? "nova" : "onyx";
 
         try {
             $response = $client->post('https://api.openai.com/v1/audio/speech', [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Authorization' => 'Bearer ' . $this->apiKey,
                     'Content-Type' => 'application/json',
                 ],
                 'json' => [
@@ -282,8 +295,11 @@ class GenerationController
 
     private function generateCategory($userInput)
     {
+        if (!$this->apiKey) {
+            throw new Exception('API Key is missing.');
+        }
+
         $client = new Client();
-        $apiKey = '***CLE-API-SUPPRIMEE***';
     
         // Récupérer le prompt de type "keyword" depuis la base de données
         $keywordPrompt = $this->getPrompt('keyword');
@@ -297,7 +313,7 @@ class GenerationController
         try {
             $response = $client->post('https://api.openai.com/v1/chat/completions', [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Authorization' => 'Bearer ' . $this->apiKey,
                     'Content-Type' => 'application/json',
                 ],
                 'json' => [
