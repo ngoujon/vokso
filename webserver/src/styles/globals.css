@@ -41,7 +41,7 @@ body {
 
 /* Formulaire */
 .form-container {
-  padding: 2rem 0;
+  padding: 1rem 0;
   margin: 0 auto 3rem;
   width: 75%;
   min-width: 300px;
@@ -179,7 +179,7 @@ h1 {
 
 /* Liste des générations */
 .last-generations {
-  padding: 2rem 0;
+  padding: 1rem 0;
   border-radius: 8px;
 }
 
@@ -214,7 +214,6 @@ h2 {
 }
 
 .generation-thumbnail {
-  width: 260px;
   aspect-ratio: 1;
   border-radius: 6px;
   overflow: hidden;
@@ -345,7 +344,7 @@ h2 {
   }
   
   .form-container {
-    padding: 1rem 0;
+    padding: 0;
     width: 90%;
     min-width: 250px;
   }
@@ -361,7 +360,7 @@ h2 {
   }
   
   .last-generations {
-    padding: 1rem 0;
+    padding: 0;
     min-width: 250px;
   }
   
