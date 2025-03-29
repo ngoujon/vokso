@@ -30,6 +30,14 @@ ADD
 AFTER
     audio_url;
 
+CREATE TABLE IF NOT EXISTS prompt (
+    idprompt INT NOT NULL AUTO_INCREMENT,
+    type VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    content TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+    statut ENUM('on', 'off') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+    PRIMARY KEY (idprompt)
+);
+
 INSERT INTO
     prompt (type, content, statut)
 VALUES
@@ -67,27 +75,28 @@ CREATE TABLE histo_prompt (
     FOREIGN KEY (idprompt) REFERENCES prompt(idprompt) ON DELETE CASCADE
 );
 
-DELIMITER $ $ CREATE TRIGGER before_prompt_update BEFORE
-UPDATE
-    ON prompt FOR EACH ROW BEGIN
-INSERT INTO
-    histo_prompt (
+DELIMITER $$
+
+CREATE TRIGGER before_prompt_update
+BEFORE UPDATE ON prompt
+FOR EACH ROW
+BEGIN
+    INSERT INTO histo_prompt (
         idprompt,
         type,
         content,
         statut,
         modification_date
-    )
-VALUES
-    (
+    ) VALUES (
         OLD.idprompt,
         OLD.type,
         OLD.content,
         OLD.statut,
         CURRENT_TIMESTAMP
     );
+END$$
 
-END $ $ DELIMITER;
+DELIMITER ;
 
 DROP TABLE `generation_db`.`prompts`;
 

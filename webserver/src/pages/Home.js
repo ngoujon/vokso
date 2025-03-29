@@ -72,7 +72,6 @@ export default function Home() {
         setGenerations(validGenerations);
         setCurrentTimes(new Array(validGenerations.length).fill(0));
       } else {
-        setError("Aucune génération trouvée");
         setGenerations([]);
       }
     } catch (err) {

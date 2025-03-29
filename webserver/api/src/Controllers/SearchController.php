@@ -31,11 +31,6 @@ class SearchController
 
     public function searchPodcasts($searchQuery)
     {
-        // Autoriser les requêtes CORS
-        header("Access-Control-Allow-Origin: *");
-        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-        header("Access-Control-Allow-Headers: Content-Type, Authorization");
-
         // Vérifier que le texte de recherche est fourni et a une longueur de 3 caractères minimum
         if (strlen(trim($searchQuery)) < 3) {
             header("Content-Type: application/json");

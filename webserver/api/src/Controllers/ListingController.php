@@ -15,12 +15,6 @@ class ListingController
         $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
         $dotenv->load();
 
-        // Autoriser les requêtes CORS
-        header("Access-Control-Allow-Origin: *"); // Autorise toutes les origines (*), vous pouvez restreindre à un domaine spécifique
-        header("Access-Control-Allow-Methods: GET, POST, OPTIONS"); // Méthodes autorisées
-        header("Access-Control-Allow-Headers: Content-Type, Authorization"); // Headers autorisés
-        header("Content-Type: application/json"); // Définition du type de contenu
-
         // Connexion à la base de données
         try {
             $this->pdo = new \PDO(
