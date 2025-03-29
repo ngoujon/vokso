@@ -1,200 +1,114 @@
-# Podcast Generator
+# QwaiPod - Générateur de Podcasts
 
-Une application complète pour générer des podcasts comprenant du texte, des images et des fichiers audio, avec une interface utilisateur interactive et une API puissante.
+Une application web permettant de générer automatiquement des podcasts à partir de textes, en utilisant l'intelligence artificielle pour créer du contenu multimédia complet.
 
----
+## Description
+
+QwaiPod est une application qui transforme du texte en podcasts complets, incluant :
+- Un texte structuré en français
+- Une illustration générée par IA
+- Un fichier audio de synthèse vocale
+
+Le système utilise des modèles d'IA avancés pour :
+- Générer du contenu textuel cohérent et structuré
+- Créer des images minimalistes et modernes
+- Convertir le texte en audio naturel
+- Catégoriser automatiquement le contenu
 
 ## Fonctionnalités
 
-### Backend (API)
-- Génération de texte à l'aide de **OpenAI GPT-4**.
-- Création d'images à partir du texte généré via **DALL-E**.
-- Synthèse vocale (TTS) pour produire des fichiers audio.
-- Catégorisation automatique des entrées utilisateur.
-- Stockage des données générées (texte, images, audio) dans une base de données MySQL.
-- API REST permettant :
-  - **POST** `/generation` : Soumettre une génération.
-  - **GET** `/listing` : Récupérer les dernières générations.
-  - **GET** `/search?query=...` : Rechercher des contenus.
+### Génération de Contenu
+- Création de textes en français (limité à 4000 caractères)
+- Génération d'images minimalistes avec style scandinave
+- Synthèse vocale pour la narration
+- Catégorisation automatique du contenu
 
-### Frontend
-- Champ de saisie pour générer du contenu.
-- Recherche dynamique dans les contenus existants.
-- Lecture audio avec contrôle avancé (lecture/pause, avancer/reculer, barre de progression).
-- Affichage des images et texte générés.
-- Info-bulles pour les titres longs.
-- Gestion des erreurs et indicateurs de chargement.
-
----
+### Interface Utilisateur
+- Formulaire de saisie pour le contenu
+- Recherche en temps réel dans les podcasts existants
+- Lecteur audio intégré avec contrôles avancés
+- Affichage des images et textes générés
+- Gestion des erreurs et états de chargement
 
 ## Installation
 
 ### Prérequis
-- PHP (≥ 7.4)
+- PHP 7.4 ou supérieur
 - Composer
-- Node.js (≥ 14.0) et npm/yarn
+- Node.js 14.0 ou supérieur
 - MySQL
-- OpenAI API Key
+- Clé API OpenAI
+
+### Configuration
+
+1. Installation du backend :
+```bash
+cd backend
+composer install
+```
+
+2. Configuration de l'environnement :
+Créez un fichier `.env` avec les variables suivantes :
+```env
+DB_HOST=
+DB_NAME=
+DB_USER=
+DB_PASS=
+OPENAI_API_KEY=
+```
+
+3. Configuration de la base de données :
+```bash
+mysql -u root -p < SQL/2025-01-11.sql
+```
+
+4. Démarrage du serveur backend :
+```bash
+php -S localhost:8000 -t public
+```
+
+5. Installation du frontend :
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Architecture
+
+### Base de Données
+- Table `prompt` : Stockage des modèles de prompts
+- Table `histo_prompt` : Historique des modifications des prompts
+- Table `categorie` : Gestion des catégories de contenu
+- Table `generations` : Stockage des contenus générés
+
+### API Endpoints
+- POST `/generation` : Création de nouveau contenu
+- GET `/listing` : Liste des générations récentes
+- GET `/search` : Recherche dans les contenus
+
+## Technologies
 
 ### Backend
-
-1. Installez les dépendances PHP avec Composer :
-
-cd backend  
-composer install  
-
-2. Configurez votre environnement :
-   - Créez un fichier `.env` à la racine du répertoire backend avec les clés API et les paramètres de base de données :
-
-DB_HOST=localhost  
-DB_NAME=generation_db  
-DB_USER=webapp  
-DB_PASS=***MOT-DE-PASSE-SUPPRIME***  
-
-OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  
-
-3. Configurez la base de données :
-   - Importez le fichier SQL (`schema.sql`) pour créer les tables nécessaires :
-
-mysql -u root -p generation_db < schema.sql  
-
-4. Démarrez le serveur local pour le backend :
-
-php -S localhost:8000 -t public  
+- PHP 7+
+- MySQL
+- Guzzle (client HTTP)
 
 ### Frontend
+- React
+- CSS personnalisé
+- Fetch API
 
-1. Naviguez dans le répertoire frontend :
-
-cd ../frontend  
-
-2. Installez les dépendances Node.js :
-
-npm install  
-
-3. Lancez l'application React en mode développement :
-
-npm run dev  
-
-4. Accédez à l'interface utilisateur :
-   - [http://localhost:3000](http://localhost:3000)
-
----
-
-## Utilisation
-
-### Génération d'un contenu
-1. Entrez un texte dans le champ d'entrée sur la page d'accueil.
-2. Cliquez sur **Générer**.
-3. Les résultats (texte, image, audio) s'affichent avec des options de lecture et d'affichage.
-
-### Recherche
-1. Tapez un mot-clé dans le champ d'entrée.
-2. Attendez 2 secondes pour voir les résultats de la recherche.
-3. Les résultats s'affichent dynamiquement.
-
----
-
-## Structure du projet
-
-### Backend
-- **`/app/Controllers/GenerationController.php`** : Contrôleur principal pour la génération.
-- **`/app/Models`** : Gestion des interactions avec la base de données.
-- **`/public/output/`** : Répertoire pour stocker les fichiers générés (texte, images, audios).
-
-### Frontend
-- **`/frontend/pages/Home.js`** : Composant principal React pour l'interface utilisateur.
-- **`/frontend/styles/globals.css`** : Styles globaux.
-- **`/frontend/public/`** : Ressources statiques.
-
----
-
-## API Endpoints
-
-### POST `/generation`
-- **Description** : Génère du contenu (texte, image, audio) à partir d'une entrée utilisateur.
-- **Requête** :
-```
-{
-  "input": "Votre texte ici"
-}
-```
-- **Réponse** :
-```
-{
-  "message": "Texte, image et audio générés avec succès",
-  "file": "response_20250101_123456.txt",
-  "generated_text": "Texte généré...",
-  "image": "image_20250101_123456.png",
-  "audio": "audio_20250101_123456.mp3",
-  "generation_id": "gen_xxxxx",
-  "idcategorie": 1
-}
-```
-### GET `/listing`
-- **Description** : Récupère les trois dernières générations.
-- **Réponse** :
-```
-{
-  "success": true,
-  "data": [
-    {
-      "title": "Titre 1",
-      "description": "Description 1",
-      "image_url": "image1.png",
-      "audio_url": "audio1.mp3"
-    },
-    ...
-  ]
-}
-```
-### GET `/search?query=...`
-- **Description** : Recherche des contenus générés basés sur un mot-clé.
-- **Réponse** :
-```
-{
-  "success": true,
-  "data": [...]
-}
-```
----
-
-## Technologies utilisées
-
-- **Backend** :
-  - PHP 7+ (Framework custom)
-  - MySQL pour le stockage des données
-  - Guzzle pour les appels API
-
-- **Frontend** :
-  - React (avec Hooks)
-  - CSS personnalisé
-  - Fetch API pour les requêtes
-
-- **Services externes** :
-  - OpenAI API pour GPT-4, DALL-E et TTS
-
----
+### Services Externes
+- OpenAI API (GPT-4, DALL-E, TTS)
 
 ## Contribution
 
-1. Forkez le projet.
-2. Créez une branche pour votre fonctionnalité :
-
-git checkout -b nouvelle-fonctionnalite  
-
-3. Faites vos modifications et testez-les.
-4. Soumettez une Pull Request.
-
----
-
-## Auteur
-
-- **Nom** : [Votre Nom]
-- **Contact** : [Votre Email]
-
----
+1. Fork du projet
+2. Création d'une branche pour la fonctionnalité
+3. Tests et modifications
+4. Pull Request
 
 ## Licence
 
-Ce projet est sous licence MIT. Consultez le fichier `LICENSE` pour plus de détails.
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
