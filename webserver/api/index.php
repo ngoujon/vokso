@@ -7,14 +7,14 @@ require_once 'vendor/autoload.php';
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// Gérer les pré-requêtes OPTIONS pour CORS (Cross-Origin Resource Sharing)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type");
-    http_response_code(204); // Pas de contenu
-    exit(0);
-}
+// Charger les variables d'environnement
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+// Initialiser et gérer le CORS
+use App\Utils\CorsHandler;
+CorsHandler::init();
+CorsHandler::handleCors();
 
 // Obtenir l'URL après le domaine (par exemple : "/generation" ou "/listing")
 $request = trim($_SERVER['REQUEST_URI'], '/');

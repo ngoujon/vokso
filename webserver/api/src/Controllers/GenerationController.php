@@ -35,11 +35,6 @@ class GenerationController
 
     public function generateText()
     {
-        // Autoriser les requêtes CORS
-        header("Access-Control-Allow-Origin: *");
-        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-        header("Access-Control-Allow-Headers: Content-Type, Authorization");
-
         // Vérifier si la requête est en POST
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $inputData = json_decode(file_get_contents('php://input'), true);
