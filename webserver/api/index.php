@@ -11,7 +11,7 @@ error_reporting(E_ALL);
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
-// Initialiser et gérer le CORS
+// Initialiser et gérer le CORS AVANT toute autre opération
 use App\Utils\CorsHandler;
 CorsHandler::init();
 CorsHandler::handleCors();
