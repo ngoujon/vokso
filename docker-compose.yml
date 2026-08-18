@@ -51,8 +51,24 @@ services:
     networks:
       - app_network
 
+  # Pile IA locale, désactivée par défaut. Démarrage :
+  #   docker compose --profile local-ai up -d
+  # puis : docker compose exec ollama ollama pull llama3.1:8b
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    profiles: ["local-ai"]
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - app_network
+
 volumes:
   db_data:
+  ollama_data:
 
 networks:
   app_network:

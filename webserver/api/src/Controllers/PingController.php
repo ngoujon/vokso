@@ -8,10 +8,8 @@ class PingController
     {
         // Gérer les pré-requêtes OPTIONS pour CORS
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            // Permettre les méthodes et origines spécifiques
-            header("Access-Control-Allow-Origin: *"); // Ou spécifie ton domaine si besoin
-            header("Access-Control-Allow-Methods: POST, OPTIONS");
-            header("Access-Control-Allow-Headers: Content-Type");
+            // Les en-têtes CORS sont déjà posés par CorsHandler à partir de la
+            // liste blanche ALLOWED_ORIGINS : ne pas les rouvrir en "*" ici.
             http_response_code(204); // Pas de contenu
             exit(0);
         }
@@ -25,12 +23,10 @@ class PingController
             if (isset($inputData['value'])) {
                 // Si la valeur est 'ping', on répond 'pong'
                 if ($inputData['value'] === 'ping') {
-                    header("Access-Control-Allow-Origin: *");
                     header('Content-Type: application/json');
                     echo json_encode(['message' => 'pong']);
                 } else {
                     // Autre valeur : Mauvais choix
-                    header("Access-Control-Allow-Origin: *");
                     http_response_code(400); // Mauvaise requête
                     header('Content-Type: application/json');
                     echo json_encode(['error' => 'Mauvais choix']);

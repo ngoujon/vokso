@@ -54,3 +54,10 @@ yarn-error.log*
 next-env.d.ts
 
 
+
+# Modèle de configuration versionné volontairement
+!webserver/api/.env.example
+
+# Artefacts de test navigateur
+.playwright-mcp/
+desktop.png

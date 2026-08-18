@@ -25,7 +25,10 @@ class ListingController
             $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $this->pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
-            die(json_encode(['error' => 'Erreur de connexion à la base de données: ' . $e->getMessage()]));
+            // Le message PDO contient l'hôte et l'utilisateur : il reste dans les logs.
+            error_log('[listing] ' . $e->getMessage());
+            http_response_code(500);
+            die(json_encode(['error' => 'Erreur de connexion à la base de données']));
         }
     }
 

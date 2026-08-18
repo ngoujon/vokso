@@ -25,7 +25,10 @@ class SearchController
             $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $this->pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
-            die('Erreur de connexion à la base de données : ' . $e->getMessage());
+            error_log('[search] ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            die(json_encode(['error' => 'Erreur de connexion à la base de données']));
         }
     }
 
@@ -68,10 +71,12 @@ class SearchController
             }
         } catch (\PDOException $e) {
             // Gestion des erreurs liées à la base de données
+            error_log('[search] ' . $e->getMessage());
+            http_response_code(500);
             header("Content-Type: application/json");
             echo json_encode([
                 'success' => false,
-                'message' => 'Erreur lors de la recherche : ' . $e->getMessage()
+                'message' => 'Erreur lors de la recherche'
             ]);
         }
     }

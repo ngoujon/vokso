@@ -226,6 +226,11 @@ export default function Home() {
   };
 
   const formatTime = (seconds) => {
+    // Les durées ne sont connues qu'après le chargement des métadonnées audio :
+    // sans ce garde-fou, le lecteur affiche "NaN:NaN".
+    if (!Number.isFinite(seconds)) {
+      return "0:00";
+    }
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`;

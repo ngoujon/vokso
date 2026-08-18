@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QwaiPod — Vos idées deviennent des podcasts</title>
+<meta name="description" content="QwaiPod transforme un simple sujet en podcast complet : texte structuré, illustration et voix de synthèse, en quelques minutes.">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #151b25;
+    --card: #1a2230;
+    --line: #2a3346;
+    --text: #e8ecf3;
+    --muted: #9aa7bd;
+    --accent: #7cc4ff;
+    --accent-2: #b79dff;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  a { color: var(--accent); }
+  .wrap { width: min(1080px, 100% - 2.5rem); margin-inline: auto; }
+
+  header.site {
+    position: sticky; top: 0; z-index: 10;
+    backdrop-filter: blur(10px);
+    background: rgba(13, 17, 23, .82);
+    border-bottom: 1px solid var(--line);
+  }
+  header.site .wrap {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; padding: .9rem 0; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: .6rem; font-weight: 700; letter-spacing: .3px; }
+  .brand .dot {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    flex: none;
+  }
+  nav.site a { color: var(--muted); text-decoration: none; margin-left: 1.4rem; font-size: .95rem; }
+  nav.site a:hover { color: var(--text); }
+
+  .hero { padding: 4.5rem 0 3.5rem; }
+  .hero h1 {
+    font-size: clamp(2rem, 6vw, 3.4rem);
+    line-height: 1.15; margin: 0 0 1rem;
+  }
+  .hero h1 span {
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p.lead { font-size: clamp(1rem, 2.4vw, 1.2rem); color: var(--muted); max-width: 62ch; margin: 0 0 2rem; }
+  .cta { display: flex; gap: .8rem; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: .8rem 1.4rem; border-radius: 999px;
+    text-decoration: none; font-weight: 600; border: 1px solid transparent;
+  }
+  .btn-primary { background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: #0d1117; }
+  .btn-ghost { border-color: var(--line); color: var(--text); }
+
+  section { padding: 3.2rem 0; border-top: 1px solid var(--line); }
+  h2 { font-size: clamp(1.4rem, 3.6vw, 2rem); margin: 0 0 .6rem; }
+  .section-intro { color: var(--muted); max-width: 65ch; margin: 0 0 2rem; }
+
+  .grid { display: grid; gap: 1.1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 1.3rem;
+  }
+  .card h3 { margin: .2rem 0 .5rem; font-size: 1.05rem; }
+  .card p { margin: 0; color: var(--muted); font-size: .95rem; }
+  .card .ico { font-size: 1.5rem; }
+
+  ol.steps { list-style: none; counter-reset: step; padding: 0; margin: 0; display: grid; gap: 1rem; }
+  ol.steps li {
+    counter-increment: step; position: relative;
+    background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 1.1rem 1.2rem 1.1rem 3.6rem;
+  }
+  ol.steps li::before {
+    content: counter(step);
+    position: absolute; left: 1.1rem; top: 1.1rem;
+    width: 1.8rem; height: 1.8rem; border-radius: 50%;
+    display: grid; place-items: center; font-weight: 700; font-size: .9rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #0d1117;
+  }
+  ol.steps strong { display: block; }
+  ol.steps span { color: var(--muted); font-size: .95rem; }
+
+  table.modes { width: 100%; border-collapse: collapse; font-size: .95rem; }
+  table.modes th, table.modes td { text-align: left; padding: .75rem .8rem; border-bottom: 1px solid var(--line); }
+  table.modes th { color: var(--muted); font-weight: 600; }
+  table.modes tbody tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; padding: .12rem .55rem; border-radius: 999px; font-size: .78rem; border: 1px solid var(--line); color: var(--muted); }
+  .tag.ok { color: #8ce0b0; border-color: #2f5c45; }
+  .tag.warn { color: #ffcf8a; border-color: #6b5327; }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  .stack { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .stack span { border: 1px solid var(--line); border-radius: 999px; padding: .3rem .8rem; font-size: .85rem; color: var(--muted); }
+
+  footer.site { border-top: 1px solid var(--line); padding: 2rem 0 3rem; color: var(--muted); font-size: .9rem; }
+
+  @media (max-width: 640px) {
+    header.site .wrap { justify-content: center; }
+    nav.site { display: flex; flex-wrap: wrap; justify-content: center; }
+    nav.site a { margin: 0 .7rem; }
+    .hero { padding: 3rem 0 2.5rem; }
+    .btn { width: 100%; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span> QwaiPod</div>
+    <nav class="site">
+      <a href="#concept">Le concept</a>
+      <a href="#fonctionnement">Fonctionnement</a>
+      <a href="#modes">Cloud ou local</a>
+      <a href="#technique">Technique</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <h1>Un sujet en une phrase.<br><span>Un podcast complet en retour.</span></h1>
+    <p class="lead">
+      QwaiPod écrit le texte, dessine l'illustration et enregistre la voix. Vous saisissez
+      simplement le thème que vous voulez explorer : l'épisode est prêt à écouter quelques
+      minutes plus tard, avec sa jaquette et son classement par thématique.
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" href="#fonctionnement">Voir comment ça marche</a>
+      <a class="btn btn-ghost" href="#modes">Cloud ou 100 % local ?</a>
+    </div>
+  </div>
+
+  <section id="concept">
+    <div class="wrap">
+      <h2>Ce que fait QwaiPod</h2>
+      <p class="section-intro">
+        Trois métiers habituellement séparés — la rédaction, l'illustration et la voix —
+        réunis derrière un unique champ de saisie.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <div class="ico">✍️</div>
+          <h3>Un texte structuré</h3>
+          <p>Un épisode rédigé en français : contexte, repères historiques, notions clés, applications concrètes et mise en perspective.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🎨</div>
+          <h3>Une illustration dédiée</h3>
+          <p>Une jaquette originale au style minimaliste et cohérent d'un épisode à l'autre, générée à partir du contenu du texte.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🎧</div>
+          <h3>Une voix naturelle</h3>
+          <p>La narration est enregistrée automatiquement et lisible depuis le lecteur intégré, avec avance et retour rapides.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🗂️</div>
+          <h3>Un classement automatique</h3>
+          <p>Chaque épisode reçoit sa thématique sans intervention, et la recherche retrouve un sujet dès trois lettres saisies.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="fonctionnement">
+    <div class="wrap">
+      <h2>Comment ça marche</h2>
+      <p class="section-intro">Quatre étapes enchaînées automatiquement après validation du sujet.</p>
+      <ol class="steps">
+        <li><strong>Vous décrivez le sujet</strong><span>Une phrase suffit : « l'histoire du café », « la photosynthèse », « les marchés obligataires ».</span></li>
+        <li><strong>Le texte est rédigé</strong><span>Un modèle de langage produit un épisode complet en français, guidé par des consignes de rédaction stockées côté serveur.</span></li>
+        <li><strong>L'image et la voix sont produites</strong><span>L'illustration est générée à partir du texte, puis la narration est enregistrée dans la foulée.</span></li>
+        <li><strong>L'épisode rejoint la bibliothèque</strong><span>Il apparaît dans les dernières publications, classé par thématique et immédiatement écoutable.</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="modes">
+    <div class="wrap">
+      <h2>Dans le cloud ou entièrement chez vous</h2>
+      <p class="section-intro">
+        QwaiPod choisit son moteur capacité par capacité. On peut donc rester sur les services
+        en ligne, tout rapatrier sur sa propre machine, ou panacher les deux pendant la transition.
+      </p>
+      <div class="table-scroll">
+        <table class="modes">
+          <thead>
+            <tr><th>Besoin</th><th>Mode en ligne</th><th>Mode local</th><th>Disponible</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Rédaction du texte</td><td>OpenAI</td><td>Ollama</td><td><span class="tag ok">Prêt</span></td></tr>
+            <tr><td>Classement thématique</td><td>OpenAI</td><td>Ollama</td><td><span class="tag ok">Prêt</span></td></tr>
+            <tr><td>Illustration</td><td>DALL·E</td><td>Stable Diffusion</td><td><span class="tag warn">À raccorder</span></td></tr>
+            <tr><td>Voix de synthèse</td><td>OpenAI</td><td>Serveur vocal local</td><td><span class="tag warn">À raccorder</span></td></tr>
+            <tr><td>Transcription audio</td><td>OpenAI</td><td>Whisper local</td><td><span class="tag warn">À raccorder</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="section-intro" style="margin-top:1.4rem">
+        À retenir : Ollama seul ne suffit pas — il ne sait produire que du texte. Une installation
+        sans aucune dépendance externe l'associe à trois moteurs locaux complémentaires pour
+        l'image, la voix et la transcription.
+      </p>
+    </div>
+  </section>
+
+  <section id="technique">
+    <div class="wrap">
+      <h2>Sous le capot</h2>
+      <p class="section-intro">Une architecture volontairement simple, hébergeable sur un seul serveur.</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Interface</h3>
+          <p>Application React : saisie du sujet, recherche instantanée et lecteur audio maison.</p>
+        </div>
+        <div class="card">
+          <h3>Service applicatif</h3>
+          <p>API PHP qui orchestre les moteurs d'IA, stocke les fichiers produits et sert la bibliothèque.</p>
+        </div>
+        <div class="card">
+          <h3>Données</h3>
+          <p>Base MySQL pour les épisodes, les thématiques et les consignes de rédaction modifiables sans redéploiement.</p>
+        </div>
+        <div class="card">
+          <h3>Déploiement</h3>
+          <p>Ensemble conteneurisé, avec une pile d'IA locale activable à la demande.</p>
+        </div>
+      </div>
+      <div class="stack" style="margin-top:1.4rem">
+        <span>React</span><span>PHP 8</span><span>MySQL</span><span>Docker</span><span>Ollama</span><span>OpenAI</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    QwaiPod — générateur de podcasts. Site de présentation du projet.
+  </div>
+</footer>
+
+</body>
+</html>
