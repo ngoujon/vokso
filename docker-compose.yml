@@ -1,6 +1,7 @@
 services:
   web:
-    image: php:8.3-apache
+    build:
+      context: ./webserver
     container_name: podcast_qwebty
     restart: always
     ports:
@@ -8,18 +9,12 @@ services:
     volumes:
       - ./webserver:/var/www/html
       - ./apache-config:/etc/apache2/sites-available  # Ajout du volume pour Virtual Hosts
-    environment:
-      PHP_EXTENSION_DIR: "/usr/local/lib/php/extensions/no-debug-non-zts-20220829"
     depends_on:
       - db
     networks:
       - app_network
     command: >
       /bin/bash -c "
-      apt-get update &&
-      apt-get install -y libpq-dev libzip-dev zip unzip &&
-      docker-php-ext-install pdo pdo_mysql mysqli &&
-      a2enmod rewrite &&
       a2ensite *.conf &&
       apachectl -D FOREGROUND"
 
@@ -28,10 +23,10 @@ services:
     container_name: mysql_db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: mydatabase
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?La variable MYSQL_ROOT_PASSWORD doit être définie dans .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?La variable MYSQL_DATABASE doit être définie dans .env}
+      MYSQL_USER: ${MYSQL_USER:?La variable MYSQL_USER doit être définie dans .env}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?La variable MYSQL_PASSWORD doit être définie dans .env}
     volumes:
       - db_data:/var/lib/mysql
     networks:
@@ -42,10 +37,10 @@ services:
     container_name: phpmyadmin
     restart: always
     ports:
-      - "8081:80"
+      - "127.0.0.1:8081:80"
     environment:
       PMA_HOST: db
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?La variable MYSQL_ROOT_PASSWORD doit être définie dans .env}
     depends_on:
       - db
     networks:
