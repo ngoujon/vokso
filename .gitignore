@@ -65,3 +65,4 @@ next-env.d.ts
 # Artefacts de test navigateur
 .playwright-mcp/
 desktop.png
+test_audio.m4a
