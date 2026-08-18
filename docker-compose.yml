@@ -54,6 +54,7 @@ services:
   # Pile IA locale, désactivée par défaut. Démarrage :
   #   docker compose --profile local-ai up -d
   # puis : docker compose exec ollama ollama pull llama3.1:8b
+  # Modèles recommandés par service : voir docs/LOCAL_AI.md
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
@@ -66,9 +67,58 @@ services:
     networks:
       - app_network
 
+  # Génération d'image via l'API AUTOMATIC1111 (webui2image). Image CUDA :
+  # nécessite une carte NVIDIA + nvidia-container-toolkit sur l'hôte Docker.
+  # Placer un checkpoint (.safetensors) dans le volume sd_data avant usage.
+  stable-diffusion:
+    image: universonic/stable-diffusion-webui:latest
+    container_name: stable-diffusion
+    profiles: ["local-ai"]
+    restart: always
+    entrypoint: ["/app/entrypoint.sh", "--api", "--listen", "--port", "7860"]
+    ports:
+      - "7860:7860"
+    volumes:
+      - sd_data:/app/stable-diffusion-webui/models/Stable-diffusion
+    networks:
+      - app_network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: ["gpu"]
+
+  # Synthèse vocale, API compatible OpenAI (/v1/audio/speech). Variante CPU :
+  # fonctionne sans GPU, plus lente. Voir docs/LOCAL_AI.md pour la variante GPU.
+  tts:
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest
+    container_name: tts
+    profiles: ["local-ai"]
+    restart: always
+    ports:
+      - "8880:8880"
+    networks:
+      - app_network
+
+  # Transcription, API compatible OpenAI (/v1/audio/transcriptions). Variante
+  # CPU : fonctionne sans GPU, plus lente. Modèle téléchargé au 1er appel.
+  whisper:
+    image: fedirz/faster-whisper-server:latest-cpu
+    container_name: whisper
+    profiles: ["local-ai"]
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - whisper_data:/root/.cache/huggingface
+    networks:
+      - app_network
+
 volumes:
   db_data:
   ollama_data:
+  sd_data:
+  whisper_data:
 
 networks:
   app_network:
