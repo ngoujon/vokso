@@ -3,6 +3,7 @@
 namespace Tests\Services;
 
 use App\Services\AiProviderFactory;
+use App\Services\OllamaCloudProvider;
 use App\Services\OllamaProvider;
 use App\Services\OpenAiProvider;
 use App\Services\StableDiffusionProvider;
@@ -34,6 +35,12 @@ class AiProviderFactoryTest extends TestCase
     {
         $provider = $this->factory(['AI_TEXT_PROVIDER' => 'OLLAMA'])->textGenerator();
         $this->assertInstanceOf(OllamaProvider::class, $provider);
+    }
+
+    public function testTextGeneratorRoutesToOllamaCloud(): void
+    {
+        $provider = $this->factory(['AI_TEXT_PROVIDER' => 'ollamacloud', 'OLLAMACLOUD_API_KEY' => 'sk-cloud-test'])->textGenerator();
+        $this->assertInstanceOf(OllamaCloudProvider::class, $provider);
     }
 
     public function testTextGeneratorRejectsInvalidProvider(): void

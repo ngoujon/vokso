@@ -11,7 +11,7 @@ use Exception;
  * du tout-OpenAI à une installation 100 % locale (Ollama + Stable Diffusion
  * + TTS + Whisper), ou de panacher les deux pendant la migration.
  *
- *   AI_TEXT_PROVIDER=openai|ollama
+ *   AI_TEXT_PROVIDER=openai|ollama|ollamacloud
  *   AI_IMAGE_PROVIDER=openai|stablediffusion
  *   AI_SPEECH_PROVIDER=openai|local
  *   AI_TRANSCRIPTION_PROVIDER=openai|whisper
@@ -30,8 +30,9 @@ class AiProviderFactory
     {
         return $this->instances['text'] ??= match ($this->choice('AI_TEXT_PROVIDER')) {
             'ollama' => new OllamaProvider($this->ollamaConfig()),
+            'ollamacloud' => new OllamaCloudProvider($this->ollamaCloudConfig()),
             'openai' => new OpenAiProvider($this->openAiConfig()),
-            default => throw new Exception('AI_TEXT_PROVIDER invalide (attendu : openai ou ollama).'),
+            default => throw new Exception('AI_TEXT_PROVIDER invalide (attendu : openai, ollama ou ollamacloud).'),
         };
     }
 
@@ -93,6 +94,15 @@ class AiProviderFactory
         return array_filter([
             'base_url' => $this->get('OLLAMA_BASE_URL'),
             'text_model' => $this->get('OLLAMA_TEXT_MODEL'),
+        ], fn ($value) => $value !== null);
+    }
+
+    private function ollamaCloudConfig(): array
+    {
+        return array_filter([
+            'api_key' => $this->get('OLLAMACLOUD_API_KEY'),
+            'base_url' => $this->get('OLLAMACLOUD_BASE_URL'),
+            'text_model' => $this->get('OLLAMACLOUD_TEXT_MODEL'),
         ], fn ($value) => $value !== null);
     }
 
