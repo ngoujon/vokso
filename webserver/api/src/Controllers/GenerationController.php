@@ -201,7 +201,7 @@ class GenerationController
 
         $stmt = $this->db->prepare(
             'SELECT j.status, j.step, j.progress, j.error_message, j.generation_id,
-                    g.title, g.image_url, g.audio_url
+                    g.text_content as title, g.image_url, g.audio_url
              FROM generation_jobs j
              LEFT JOIN generations g ON g.generation_id = j.generation_id
              WHERE j.job_id = :job_id'

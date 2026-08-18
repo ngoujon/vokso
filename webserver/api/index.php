@@ -33,7 +33,15 @@ $routes = [
 ];
 
 // Obtenir l'URL après le domaine (par exemple : "/generation" ou "/listing")
-$request = trim($_SERVER['REQUEST_URI'], '/');
+// Utiliser PATH_INFO si disponible (avec mod_rewrite), sinon REQUEST_URI
+$request = isset($_SERVER['PATH_INFO'])
+    ? trim($_SERVER['PATH_INFO'], '/')
+    : trim($_SERVER['REQUEST_URI'], '/');
+
+// Si la requête commence par '/api/', enlever ce préfixe
+if (strpos($request, 'api/') === 0) {
+    $request = substr($request, 4);
+}
 
 // Supprimer les éventuels paramètres de requête (ex: ?param=value)
 $request = strtok($request, '?');
