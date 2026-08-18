@@ -8,7 +8,8 @@ if (!config.apiUrl || !config.staticUrl) {
 }
 
 export default function Home() {
-  const [inputValue, setInputValue] = useState("");
+  const [subject, setSubject] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [sourceMode, setSourceMode] = useState("text");
   const [audioFile, setAudioFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,8 @@ export default function Home() {
   const lastFetchRef = useRef(null);
   const debounceTimerRef = useRef(null);
   const pollTimerRef = useRef(null);
+  const audioRefs = useRef({});
+  const progressRefs = useRef({});
 
   const STEP_LABELS = {
     queued: "En file d'attente...",
@@ -159,7 +162,7 @@ export default function Home() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ input: inputValue }),
+          body: JSON.stringify({ input: subject }),
         });
       }
 
@@ -190,10 +193,10 @@ export default function Home() {
 
     const searchPodcasts = async () => {
       try {
-        if (inputValue.length >= 3) {
+        if (searchQuery.length >= 3) {
           setIsSearching(true);
-          await fetchGenerations(`${config.apiUrl}/search?query=${inputValue}`);
-        } else if (inputValue.length === 0) {
+          await fetchGenerations(`${config.apiUrl}/search?query=${encodeURIComponent(searchQuery)}`);
+        } else if (searchQuery.length === 0) {
           setIsSearching(false);
           await fetchGenerations(`${config.apiUrl}/listing`);
         }
@@ -220,13 +223,13 @@ export default function Home() {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [inputValue]);
+  }, [searchQuery]);
 
   useEffect(() => {
     let isMounted = true;
 
     const fetchInitialData = async () => {
-      if (isMounted && inputValue.length === 0) {
+      if (isMounted && searchQuery.length === 0) {
         await fetchGenerations(`${config.apiUrl}/listing`);
       }
     };
@@ -239,7 +242,7 @@ export default function Home() {
   }, []); // Dépendance vide pour ne s'exécuter qu'une fois au montage
 
   const handleLoadedMetadata = (index) => {
-    const audio = document.getElementById(`audio-${index}`);
+    const audio = audioRefs.current[index];
     if (audio && !isNaN(audio.duration)) {
       setTotalDurations((prev) => {
         const updated = [...prev];
@@ -252,7 +255,7 @@ export default function Home() {
   };
 
   const handleTimeUpdate = (index) => {
-    const audio = document.getElementById(`audio-${index}`);
+    const audio = audioRefs.current[index];
     if (audio) {
       setCurrentTimes((prev) => {
         const updated = [...prev];
@@ -260,7 +263,7 @@ export default function Home() {
         return updated;
       });
 
-      const progressBar = document.getElementById(`progress-${index}`);
+      const progressBar = progressRefs.current[index];
       if (progressBar && audio.duration > 0) {
         const progress = (audio.currentTime / audio.duration) * 100;
         progressBar.style.setProperty("--progress-width", `${progress}%`);
@@ -269,14 +272,14 @@ export default function Home() {
   };
 
   const handlePlayPause = (index) => {
-    const currentAudio = document.getElementById(`audio-${index}`);
+    const currentAudio = audioRefs.current[index];
 
     if (audioPlayingIndex === index) {
       currentAudio.pause();
       setAudioPlayingIndex(null);
     } else {
       if (audioPlayingIndex !== null) {
-        document.getElementById(`audio-${audioPlayingIndex}`).pause();
+        audioRefs.current[audioPlayingIndex]?.pause();
       }
       currentAudio.play();
       setAudioPlayingIndex(index);
@@ -284,12 +287,12 @@ export default function Home() {
   };
 
   const handleRewind = (index) => {
-    const audio = document.getElementById(`audio-${index}`);
+    const audio = audioRefs.current[index];
     audio.currentTime = Math.max(0, audio.currentTime - 10);
   };
 
   const handleForward = (index) => {
-    const audio = document.getElementById(`audio-${index}`);
+    const audio = audioRefs.current[index];
     audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
   };
 
@@ -357,19 +360,15 @@ export default function Home() {
               <input
                 type="text"
                 placeholder="Tapez ici..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
                 className="input-field"
                 required
               />
               <button
                 type="button"
-                className={`clear-input ${inputValue.length > 0 ? 'visible' : ''}`}
-                onClick={() => {
-                  setInputValue('');
-                  setIsSearching(false);
-                  fetchGenerations(`${config.apiUrl}/listing`);
-                }}
+                className={`clear-input ${subject.length > 0 ? 'visible' : ''}`}
+                onClick={() => setSubject('')}
                 aria-label="Effacer le texte"
               >
                 <i className="bi bi-x-lg"></i>
@@ -413,6 +412,23 @@ export default function Home() {
       </div>
 
       <div className="last-generations">
+        <div className="input-container">
+          <input
+            type="text"
+            placeholder="Rechercher un podcast..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="input-field"
+          />
+          <button
+            type="button"
+            className={`clear-input ${searchQuery.length > 0 ? 'visible' : ''}`}
+            onClick={() => setSearchQuery('')}
+            aria-label="Effacer la recherche"
+          >
+            <i className="bi bi-x-lg"></i>
+          </button>
+        </div>
         <h2>{isSearching ? "Résultats" : "Les 3 dernières générations"}</h2>
         {generations.length > 0 ? (
           <div className="generations-list">
@@ -432,7 +448,7 @@ export default function Home() {
                 </div>
                 <div className="audio-player">
                   <audio
-                    id={`audio-${index}`}
+                    ref={(el) => (audioRefs.current[index] = el)}
                     src={`${config.staticUrl}/audios/${gen.audio_url}`}
                     onLoadedMetadata={() => handleLoadedMetadata(index)}
                     onTimeUpdate={() => handleTimeUpdate(index)}
@@ -484,7 +500,10 @@ export default function Home() {
                     <span>{formatTime(totalDurations[index])}</span>
                   </div>
                   <div className="progress-container">
-                    <div className="progress-bar" id={`progress-${index}`}></div>
+                    <div
+                      className="progress-bar"
+                      ref={(el) => (progressRefs.current[index] = el)}
+                    ></div>
                   </div>
                 </div>
               </div>
