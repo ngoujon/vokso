@@ -12,6 +12,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [duration, setDuration] = useState(null);
+  const [jobProgress, setJobProgress] = useState(null);
   const [generations, setGenerations] = useState([]);
   const [audioPlayingIndex, setAudioPlayingIndex] = useState(null);
   const [currentTimes, setCurrentTimes] = useState([]);
@@ -23,6 +24,16 @@ export default function Home() {
   const cacheRef = useRef(new Map());
   const lastFetchRef = useRef(null);
   const debounceTimerRef = useRef(null);
+  const pollTimerRef = useRef(null);
+
+  const STEP_LABELS = {
+    queued: "En file d'attente...",
+    text: "Génération du texte...",
+    image: "Génération de l'image...",
+    audio: "Génération de l'audio...",
+    category: "Classification...",
+    done: "Terminé",
+  };
 
   const fetchGenerations = async (url, forceRefresh = false) => {
     try {
@@ -82,11 +93,46 @@ export default function Home() {
     }
   };
 
+  const pollJobStatus = (jobId, startTime) => {
+    pollTimerRef.current = setInterval(async () => {
+      try {
+        const response = await fetch(`${config.apiUrl}/generation-status?id=${jobId}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Erreur inconnue");
+        }
+
+        setJobProgress({ step: data.step, progress: data.progress });
+
+        if (data.status === "done") {
+          clearInterval(pollTimerRef.current);
+          const durationInSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+          setDuration(durationInSeconds);
+          setLoading(false);
+          setJobProgress(null);
+          await fetchGenerations(`${config.apiUrl}/listing`, true);
+        } else if (data.status === "error") {
+          clearInterval(pollTimerRef.current);
+          setError(data.error || "La génération a échoué.");
+          setLoading(false);
+          setJobProgress(null);
+        }
+      } catch (err) {
+        clearInterval(pollTimerRef.current);
+        setError(err.message);
+        setLoading(false);
+        setJobProgress(null);
+      }
+    }, 2000);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setDuration(null);
+    setJobProgress({ step: "queued", progress: 0 });
 
     const startTime = Date.now();
     try {
@@ -104,18 +150,21 @@ export default function Home() {
         throw new Error(data.error || "Erreur inconnue");
       }
 
-      const endTime = Date.now();
-      const durationInSeconds = ((endTime - startTime) / 1000).toFixed(2);
-      setDuration(durationInSeconds);
-
-      // Forcer le rafraîchissement après une génération
-      await fetchGenerations(`${config.apiUrl}/listing`, true);
+      pollJobStatus(data.job_id, startTime);
     } catch (err) {
       setError(err.message);
-    } finally {
       setLoading(false);
+      setJobProgress(null);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -295,7 +344,22 @@ export default function Home() {
           </button>
         </form>
 
-        {loading && <div className="loader"></div>}
+        {loading && (
+          <div className="job-progress">
+            <div className="loader"></div>
+            {jobProgress && (
+              <>
+                <p className="job-progress-label">{STEP_LABELS[jobProgress.step] || "Traitement en cours..."}</p>
+                <div className="progress-container">
+                  <div
+                    className="progress-bar"
+                    style={{ "--progress-width": `${jobProgress.progress}%` }}
+                  ></div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
         {error && <p className="error">{error}</p>}
         {duration && (
           <p className="success">Temps d'appel API : {duration} secondes</p>

@@ -26,6 +26,7 @@ $routes = [
     'home' => ['App\Controllers\HomeController', 'index'],
     'ping' => ['App\Controllers\PingController', 'index'],
     'generation' => ['App\Controllers\GenerationController', 'generateText'],
+    'generation-status' => ['App\Controllers\GenerationController', 'status'],
     'listing' => ['App\Controllers\ListingController', 'getLastPodcasts'],
     'search' => ['App\Controllers\SearchController', 'searchPodcasts'],
 ];
