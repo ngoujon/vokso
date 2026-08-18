@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\AiProviderFactory;
+use App\Utils\RateLimiter;
 use Exception;
 use Dotenv\Dotenv;
 use PDO;
@@ -13,6 +14,7 @@ class GenerationController
 
     private $db;
     private AiProviderFactory $ai;
+    private RateLimiter $rateLimiter;
     private string $outputDir;
 
     public function __construct()
@@ -31,6 +33,12 @@ class GenerationController
             $_ENV['DB_PASS']
         );
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $this->rateLimiter = new RateLimiter(
+            $this->db,
+            (int) ($_ENV['RATE_LIMIT_MAX_REQUESTS'] ?? 5),
+            (int) ($_ENV['RATE_LIMIT_WINDOW_SECONDS'] ?? 3600)
+        );
     }
 
     public function generateText()
@@ -40,6 +48,18 @@ class GenerationController
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['error' => 'Méthode non autorisée']);
+            return;
+        }
+
+        // Quota par IP : cet endpoint déclenche 2 à 3 appels IA payants (texte,
+        // image, audio), il ne doit pas pouvoir être appelé en boucle par un
+        // visiteur anonyme. On se base sur REMOTE_ADDR (pas X-Forwarded-For,
+        // trivialement falsifiable tant qu'aucun reverse proxy de confiance
+        // n'est configuré en amont).
+        $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        if ($this->rateLimiter->tooManyRequests($clientIp, 'generation')) {
+            http_response_code(429);
+            echo json_encode(['error' => 'Trop de requêtes. Merci de réessayer plus tard.']);
             return;
         }
 
