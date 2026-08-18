@@ -4,6 +4,8 @@
 *.env
 webserver/api/.env
 webserver/api/vendor
+webserver/api/.phpunit.result.cache
+webserver/api/.phpunit.cache/
 *.htaccess
 *.lock
 webserver/logs/
