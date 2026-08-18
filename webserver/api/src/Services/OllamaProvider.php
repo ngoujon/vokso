@@ -41,7 +41,7 @@ class OllamaProvider implements TextGeneratorInterface
                     ],
                 ],
             ]);
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
+        } catch (\GuzzleHttp\Exception\GuzzleException $e) {
             $body = $e->getResponse() ? (string) $e->getResponse()->getBody() : '';
             throw new Exception('Appel Ollama en échec : ' . $e->getMessage() . ' ' . $body);
         }

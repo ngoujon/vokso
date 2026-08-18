@@ -137,7 +137,7 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
     {
         try {
             $response = $this->client->request($method, $this->baseUrl . $path, ['json' => $payload]);
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
+        } catch (\GuzzleHttp\Exception\GuzzleException $e) {
             $body = $e->getResponse() ? (string) $e->getResponse()->getBody() : '';
             throw new Exception('Appel OpenAI en échec (' . $path . ') : ' . $e->getMessage() . ' ' . $body);
         }

@@ -38,7 +38,7 @@ class OpenAiCompatibleSpeechProvider implements SpeechSynthesizerInterface
                     'response_format' => $this->format,
                 ],
             ]);
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
+        } catch (\GuzzleHttp\Exception\GuzzleException $e) {
             throw new Exception('Appel TTS local en échec : ' . $e->getMessage());
         }
 

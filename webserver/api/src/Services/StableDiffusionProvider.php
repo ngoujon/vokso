@@ -39,7 +39,7 @@ class StableDiffusionProvider implements ImageGeneratorInterface
                     'batch_size' => 1,
                 ],
             ]);
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
+        } catch (\GuzzleHttp\Exception\GuzzleException $e) {
             throw new Exception('Appel Stable Diffusion en échec : ' . $e->getMessage());
         }
 

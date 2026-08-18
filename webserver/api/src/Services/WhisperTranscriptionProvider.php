@@ -40,7 +40,7 @@ class WhisperTranscriptionProvider implements TranscriberInterface
                     ['name' => 'file', 'contents' => fopen($audioFilePath, 'r'), 'filename' => basename($audioFilePath)],
                 ],
             ]);
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
+        } catch (\GuzzleHttp\Exception\GuzzleException $e) {
             throw new Exception('Appel Whisper local en échec : ' . $e->getMessage());
         }
 
