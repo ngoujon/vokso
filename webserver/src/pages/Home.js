@@ -9,6 +9,8 @@ if (!config.apiUrl || !config.staticUrl) {
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
+  const [sourceMode, setSourceMode] = useState("text");
+  const [audioFile, setAudioFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [duration, setDuration] = useState(null);
@@ -28,6 +30,7 @@ export default function Home() {
 
   const STEP_LABELS = {
     queued: "En file d'attente...",
+    transcription: "Transcription de l'audio...",
     text: "Génération du texte...",
     image: "Génération de l'image...",
     audio: "Génération de l'audio...",
@@ -129,6 +132,12 @@ export default function Home() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (sourceMode === "audio" && !audioFile) {
+      setError("Merci de sélectionner un fichier audio.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setDuration(null);
@@ -136,13 +145,23 @@ export default function Home() {
 
     const startTime = Date.now();
     try {
-      const response = await fetch(`${config.apiUrl}/generation`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ input: inputValue }),
-      });
+      let response;
+      if (sourceMode === "audio") {
+        const formData = new FormData();
+        formData.append("audio", audioFile);
+        response = await fetch(`${config.apiUrl}/generation-audio`, {
+          method: "POST",
+          body: formData,
+        });
+      } else {
+        response = await fetch(`${config.apiUrl}/generation`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ input: inputValue }),
+        });
+      }
 
       const data = await response.json();
 
@@ -316,29 +335,56 @@ export default function Home() {
     <div className="container">
       <div className="form-container">
         <h1>Générer un podcast</h1>
+        <div className="source-mode-tabs">
+          <button
+            type="button"
+            className={sourceMode === "text" ? "active" : ""}
+            onClick={() => setSourceMode("text")}
+          >
+            Sujet texte
+          </button>
+          <button
+            type="button"
+            className={sourceMode === "audio" ? "active" : ""}
+            onClick={() => setSourceMode("audio")}
+          >
+            Fichier audio
+          </button>
+        </div>
         <form onSubmit={handleSubmit}>
-          <div className="input-container">
-            <input
-              type="text"
-              placeholder="Tapez ici..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              className="input-field"
-              required
-            />
-            <button
-              type="button"
-              className={`clear-input ${inputValue.length > 0 ? 'visible' : ''}`}
-              onClick={() => {
-                setInputValue('');
-                setIsSearching(false);
-                fetchGenerations(`${config.apiUrl}/listing`);
-              }}
-              aria-label="Effacer le texte"
-            >
-              <i className="bi bi-x-lg"></i>
-            </button>
-          </div>
+          {sourceMode === "text" ? (
+            <div className="input-container">
+              <input
+                type="text"
+                placeholder="Tapez ici..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                className="input-field"
+                required
+              />
+              <button
+                type="button"
+                className={`clear-input ${inputValue.length > 0 ? 'visible' : ''}`}
+                onClick={() => {
+                  setInputValue('');
+                  setIsSearching(false);
+                  fetchGenerations(`${config.apiUrl}/listing`);
+                }}
+                aria-label="Effacer le texte"
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
+            </div>
+          ) : (
+            <div className="input-container">
+              <input
+                type="file"
+                accept="audio/*"
+                onChange={(e) => setAudioFile(e.target.files[0] || null)}
+                className="input-field"
+              />
+            </div>
+          )}
           <button type="submit" disabled={loading} className="submit-btn">
             {loading ? "Envoi en cours..." : "Générer"}
           </button>

@@ -10,6 +10,7 @@ webserver/api/.phpunit.cache/
 *.lock
 webserver/logs/
 webserver/public/output/
+webserver/api/storage/uploads/
 webserver/build/
 
 

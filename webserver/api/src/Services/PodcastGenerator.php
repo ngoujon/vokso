@@ -13,6 +13,8 @@ use PDO;
  */
 class PodcastGenerator
 {
+    private const MAX_INPUT_LENGTH = 300;
+
     public function __construct(
         private PDO $db,
         private AiProviderFactory $ai,
@@ -28,6 +30,22 @@ class PodcastGenerator
         }
 
         $userInput = $job['input'];
+
+        if ($job['source_type'] === 'audio') {
+            $this->updateJob($jobId, 'processing', 'transcription', 5);
+            try {
+                $userInput = $this->transcribeAudio($job['audio_path']);
+            } catch (Exception $e) {
+                $this->failJob($jobId, 'Erreur lors de la transcription audio', $e);
+                return;
+            } finally {
+                $this->deleteUploadedAudio($job['audio_path']);
+            }
+
+            $stmt = $this->db->prepare('UPDATE generation_jobs SET input = :input WHERE job_id = :job_id');
+            $stmt->execute([':input' => $userInput, ':job_id' => $jobId]);
+        }
+
         $this->updateJob($jobId, 'processing', 'text', 10);
 
         try {
@@ -81,10 +99,37 @@ class PodcastGenerator
 
     private function fetchJob(string $jobId): ?array
     {
-        $stmt = $this->db->prepare('SELECT input FROM generation_jobs WHERE job_id = :job_id');
+        $stmt = $this->db->prepare('SELECT input, source_type, audio_path FROM generation_jobs WHERE job_id = :job_id');
         $stmt->execute([':job_id' => $jobId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
+    }
+
+    /**
+     * Transcrit le fichier audio déposé et le ramène au même format qu'un
+     * sujet saisi au clavier : un texte assaini et borné à MAX_INPUT_LENGTH,
+     * pour pouvoir alimenter la même chaîne de prompts.
+     */
+    private function transcribeAudio(?string $audioPath): string
+    {
+        if ($audioPath === null || $audioPath === '') {
+            throw new Exception('Aucun fichier audio associé à ce job.');
+        }
+
+        $transcript = $this->ai->transcriber()->transcribe($audioPath);
+        $transcript = trim(htmlspecialchars(strip_tags($transcript)));
+        if ($transcript === '') {
+            throw new Exception('La transcription audio est vide.');
+        }
+
+        return mb_substr($transcript, 0, self::MAX_INPUT_LENGTH);
+    }
+
+    private function deleteUploadedAudio(?string $audioPath): void
+    {
+        if ($audioPath !== null && is_file($audioPath)) {
+            @unlink($audioPath);
+        }
     }
 
     private function updateJob(string $jobId, string $status, string $step, int $progress): void

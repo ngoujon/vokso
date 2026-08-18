@@ -9,9 +9,12 @@ use PDO;
 class GenerationController
 {
     private const MAX_INPUT_LENGTH = 300;
+    private const MAX_AUDIO_SIZE = 26214400; // 25 Mo, alignée sur la limite de l'API OpenAI Whisper
+    private const ALLOWED_AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'ogg', 'webm', 'mp4', 'mpeg', 'mpga'];
 
     private PDO $db;
     private RateLimiter $rateLimiter;
+    private string $uploadDir;
 
     public function __construct()
     {
@@ -32,6 +35,10 @@ class GenerationController
             (int) ($_ENV['RATE_LIMIT_MAX_REQUESTS'] ?? 5),
             (int) ($_ENV['RATE_LIMIT_WINDOW_SECONDS'] ?? 3600)
         );
+
+        // Hors de public/ : ces fichiers sont une entrée de travail temporaire,
+        // pas un résultat à servir (contrairement à public/output/).
+        $this->uploadDir = __DIR__ . '/../../storage/uploads';
     }
 
     /**
@@ -78,12 +85,7 @@ class GenerationController
             return;
         }
 
-        $jobId = 'job_' . bin2hex(random_bytes(16));
-        $stmt = $this->db->prepare(
-            'INSERT INTO generation_jobs (job_id, status, step, progress, input) VALUES (:job_id, "pending", "queued", 0, :input)'
-        );
-        $stmt->execute([':job_id' => $jobId, ':input' => $userInput]);
-
+        $jobId = $this->createJob('text', $userInput, null);
         $this->dispatch($jobId);
 
         http_response_code(202);
@@ -92,6 +94,97 @@ class GenerationController
             'job_id' => $jobId,
             'status' => 'pending',
         ]);
+    }
+
+    /**
+     * Variante de generateText() qui prend un fichier audio comme source : il
+     * sera transcrit par le worker (voir PodcastGenerator::process()) avant
+     * de suivre la même chaîne texte → image → audio → catégorie.
+     */
+    public function generateFromAudio()
+    {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Méthode non autorisée']);
+            return;
+        }
+
+        $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        if ($this->rateLimiter->tooManyRequests($clientIp, 'generation')) {
+            http_response_code(429);
+            echo json_encode(['error' => 'Trop de requêtes. Merci de réessayer plus tard.']);
+            return;
+        }
+
+        if (!isset($_FILES['audio']) || $_FILES['audio']['error'] === UPLOAD_ERR_NO_FILE) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Aucun fichier audio reçu.']);
+            return;
+        }
+
+        $file = $_FILES['audio'];
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Échec de l\'envoi du fichier audio.']);
+            return;
+        }
+
+        if ($file['size'] > self::MAX_AUDIO_SIZE) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Le fichier audio ne doit pas dépasser 25 Mo.']);
+            return;
+        }
+
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!in_array($extension, self::ALLOWED_AUDIO_EXTENSIONS, true)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Format audio non supporté.']);
+            return;
+        }
+
+        if (!is_dir($this->uploadDir) && !mkdir($this->uploadDir, 0775, true) && !is_dir($this->uploadDir)) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Impossible de préparer le stockage du fichier audio.']);
+            return;
+        }
+
+        $storedName = 'upload_' . bin2hex(random_bytes(16)) . '.' . $extension;
+        $destination = $this->uploadDir . '/' . $storedName;
+
+        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Impossible d\'enregistrer le fichier audio.']);
+            return;
+        }
+
+        $jobId = $this->createJob('audio', null, $destination);
+        $this->dispatch($jobId);
+
+        http_response_code(202);
+        echo json_encode([
+            'message' => 'Transcription et génération mises en file d\'attente',
+            'job_id' => $jobId,
+            'status' => 'pending',
+        ]);
+    }
+
+    private function createJob(string $sourceType, ?string $input, ?string $audioPath): string
+    {
+        $jobId = 'job_' . bin2hex(random_bytes(16));
+        $stmt = $this->db->prepare(
+            'INSERT INTO generation_jobs (job_id, status, step, progress, source_type, input, audio_path)
+             VALUES (:job_id, "pending", "queued", 0, :source_type, :input, :audio_path)'
+        );
+        $stmt->execute([
+            ':job_id' => $jobId,
+            ':source_type' => $sourceType,
+            ':input' => $input,
+            ':audio_path' => $audioPath,
+        ]);
+
+        return $jobId;
     }
 
     /** Suivi de progression d'un job, interrogé par le front en polling. */
