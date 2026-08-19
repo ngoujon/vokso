@@ -3,12 +3,21 @@
 La génération de texte peut passer par OpenAI ou par Ollama Cloud (`AI_TEXT_PROVIDER=ollama`),
 via son API compatible OpenAI (`https://ollama.com/v1`, clé API du compte Ollama).
 
-L'image reste toujours sur OpenAI : Ollama (local ou cloud) ne propose aucun modèle de
-génération d'image, seulement des modèles de texte (et des modèles de vision qui
-*analysent* une image, pas qui en génèrent).
+L'image reste toujours sur OpenAI. Piste explorée en 2026-08 : Ollama a bien lancé une
+génération d'images en janvier 2026 (modèles `x/z-image-turbo` et `x/flux2-klein`), mais
+uniquement dans l'application Ollama locale sur macOS — pas via l'API Ollama Cloud
+utilisée par ce projet. Un ticket ouvert côté Ollama (`ollama/ollama#12789`, "Cloud
+doesn't support images in /api/generate") confirme que cette route cloud n'existe pas
+encore, même pour un modèle marqué "cloud". À réévaluer si Ollama ouvre un jour cet
+endpoint côté cloud ; en attendant, il n'y a pas de bascule possible sans changer de
+fournisseur ou repasser en local (ce qui demanderait un GPU sur le serveur, contrairement
+au profil texte qui, lui, passe bien par le cloud).
 
-La transcription (Whisper) suit la même limite : Ollama Cloud n'expose pas de modèle de
-transcription audio. Elle peut donc tourner soit via OpenAI, soit en local via
+La transcription (Whisper) suit la même limite, mais de façon plus définitive : Ollama
+n'a jamais proposé de brique speech-to-text, ni en local ni en cloud, ce n'est pas dans
+son périmètre (Whisper est un projet OpenAI distinct, seulement combiné à Ollama par des
+tiers dans des tutoriels, jamais intégré nativement). Elle peut donc tourner soit via
+OpenAI, soit en local via
 `docker-compose.yml` (conteneur `whisper` ci-dessous), utilisé pour la saisie vocale :
 l'utilisateur enregistre sa voix au lieu de taper son sujet, le texte transcrit est
 ensuite utilisé comme n'importe quelle saisie manuelle.
