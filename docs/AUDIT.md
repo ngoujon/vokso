@@ -31,7 +31,7 @@ couplage direct au SDK OpenAI empêchant toute alternative locale.
    WITH GRANT OPTION`. Mot de passe à révoquer et privilèges à restreindre à la seule base.
 2. **`docker-compose.yml`** — mots de passe MySQL en dur, phpMyAdmin exposé sur `:8081` sans
    restriction, installation des extensions PHP à chaque démarrage (préférer un `Dockerfile`).
-3. **Couverture de tests inégale** — 24 tests PHPUnit couvrent le système de rate-limiting et les contrôleurs critiques, mais la couverture front (React) reste absente ; toute régression côté interface passe inaperçue.
+3. **Couverture de tests inégale** — 24 tests PHPUnit couvrent le système de rate-limiting et les contrôleurs critiques (API PHP), mais la couverture front (React) reste absente ; toute régression côté interface passe inaperçue.
 4. **Génération synchrone** — la requête HTTP reste ouverte pendant toute la chaîne
    (plusieurs minutes, davantage en local). Une file d'attente avec suivi d'état est nécessaire.
 5. **Incohérences de schéma** — la migration `20250111` écrit dans `prompts.description` alors
