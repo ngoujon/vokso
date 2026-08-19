@@ -75,12 +75,14 @@ services:
       - "8000:8000"
     volumes:
       - whisper_data:/root/.cache/huggingface
+      - whisper_uv_cache:/root/.cache/uv
     networks:
       - app_network
 
 volumes:
   db_data:
   whisper_data:
+  whisper_uv_cache:
 
 networks:
   app_network:
