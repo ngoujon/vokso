@@ -7,10 +7,13 @@ use Exception;
 /**
  * Construit les fournisseurs d'IA à partir des variables d'environnement.
  *
- * Le texte et l'image passent toujours par OpenAI. La synthèse vocale et la
- * transcription peuvent rester locales (TTS + Whisper), Whisper servant à
- * transcrire la voix de l'utilisateur pour remplacer la saisie au clavier.
+ * Le texte peut passer par OpenAI ou par Ollama Cloud (API compatible
+ * OpenAI). L'image reste sur OpenAI : Ollama Cloud n'expose aucun modèle de
+ * génération d'image. La synthèse vocale et la transcription peuvent rester
+ * locales (TTS + Whisper), Whisper servant à transcrire la voix de
+ * l'utilisateur pour remplacer la saisie au clavier.
  *
+ *   AI_TEXT_PROVIDER=openai|ollama
  *   AI_SPEECH_PROVIDER=openai|local
  *   AI_TRANSCRIPTION_PROVIDER=openai|whisper
  */
@@ -26,7 +29,11 @@ class AiProviderFactory
 
     public function textGenerator(): TextGeneratorInterface
     {
-        return $this->instances['text'] ??= new OpenAiProvider($this->openAiConfig());
+        return $this->instances['text'] ??= match ($this->choice('AI_TEXT_PROVIDER')) {
+            'ollama' => new OpenAiProvider($this->ollamaConfig()),
+            'openai' => new OpenAiProvider($this->openAiConfig()),
+            default => throw new Exception('AI_TEXT_PROVIDER invalide (attendu : openai ou ollama).'),
+        };
     }
 
     public function imageGenerator(): ImageGeneratorInterface
@@ -70,6 +77,16 @@ class AiProviderFactory
             'image_model' => $this->get('OPENAI_IMAGE_MODEL'),
             'speech_model' => $this->get('OPENAI_SPEECH_MODEL'),
             'transcription_model' => $this->get('OPENAI_TRANSCRIPTION_MODEL'),
+        ], fn ($value) => $value !== null);
+    }
+
+    /** Ollama Cloud expose une API de chat compatible OpenAI (texte uniquement). */
+    private function ollamaConfig(): array
+    {
+        return array_filter([
+            'api_key' => $this->get('OLLAMA_API_KEY'),
+            'base_url' => $this->get('OLLAMA_BASE_URL'),
+            'text_model' => $this->get('OLLAMA_TEXT_MODEL'),
         ], fn ($value) => $value !== null);
     }
 

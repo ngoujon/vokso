@@ -28,6 +28,19 @@ class AiProviderFactoryTest extends TestCase
         $this->assertInstanceOf(OpenAiProvider::class, $provider);
     }
 
+    public function testTextGeneratorRoutesToOllama(): void
+    {
+        $provider = $this->factory(['AI_TEXT_PROVIDER' => 'ollama', 'OLLAMA_API_KEY' => 'ollama-test'])->textGenerator();
+        $this->assertInstanceOf(OpenAiProvider::class, $provider);
+    }
+
+    public function testTextGeneratorRejectsInvalidProvider(): void
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('AI_TEXT_PROVIDER invalide');
+        $this->factory(['AI_TEXT_PROVIDER' => 'bogus'])->textGenerator();
+    }
+
     public function testSpeechSynthesizerRoutesToLocal(): void
     {
         $provider = $this->factory(['AI_SPEECH_PROVIDER' => 'local'])->speechSynthesizer();
