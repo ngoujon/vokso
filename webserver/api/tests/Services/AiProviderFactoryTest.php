@@ -3,10 +3,7 @@
 namespace Tests\Services;
 
 use App\Services\AiProviderFactory;
-use App\Services\OllamaCloudProvider;
-use App\Services\OllamaProvider;
 use App\Services\OpenAiProvider;
-use App\Services\StableDiffusionProvider;
 use App\Services\OpenAiCompatibleSpeechProvider;
 use App\Services\WhisperTranscriptionProvider;
 use Exception;
@@ -25,42 +22,10 @@ class AiProviderFactoryTest extends TestCase
         $this->assertInstanceOf(OpenAiProvider::class, $provider);
     }
 
-    public function testTextGeneratorRoutesToOllama(): void
+    public function testImageGeneratorUsesOpenAi(): void
     {
-        $provider = $this->factory(['AI_TEXT_PROVIDER' => 'ollama'])->textGenerator();
-        $this->assertInstanceOf(OllamaProvider::class, $provider);
-    }
-
-    public function testTextGeneratorChoiceIsCaseInsensitive(): void
-    {
-        $provider = $this->factory(['AI_TEXT_PROVIDER' => 'OLLAMA'])->textGenerator();
-        $this->assertInstanceOf(OllamaProvider::class, $provider);
-    }
-
-    public function testTextGeneratorRoutesToOllamaCloud(): void
-    {
-        $provider = $this->factory(['AI_TEXT_PROVIDER' => 'ollamacloud', 'OLLAMACLOUD_API_KEY' => 'sk-cloud-test'])->textGenerator();
-        $this->assertInstanceOf(OllamaCloudProvider::class, $provider);
-    }
-
-    public function testTextGeneratorRejectsInvalidProvider(): void
-    {
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('AI_TEXT_PROVIDER invalide');
-        $this->factory(['AI_TEXT_PROVIDER' => 'bogus'])->textGenerator();
-    }
-
-    public function testImageGeneratorRoutesToStableDiffusion(): void
-    {
-        $provider = $this->factory(['AI_IMAGE_PROVIDER' => 'stablediffusion'])->imageGenerator();
-        $this->assertInstanceOf(StableDiffusionProvider::class, $provider);
-    }
-
-    public function testImageGeneratorRejectsInvalidProvider(): void
-    {
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('AI_IMAGE_PROVIDER invalide');
-        $this->factory(['AI_IMAGE_PROVIDER' => 'bogus'])->imageGenerator();
+        $provider = $this->factory([])->imageGenerator();
+        $this->assertInstanceOf(OpenAiProvider::class, $provider);
     }
 
     public function testSpeechSynthesizerRoutesToLocal(): void

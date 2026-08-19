@@ -7,12 +7,10 @@ use Exception;
 /**
  * Construit les fournisseurs d'IA à partir des variables d'environnement.
  *
- * Chaque capacité est configurable indépendamment, ce qui permet de passer
- * du tout-OpenAI à une installation 100 % locale (Ollama + Stable Diffusion
- * + TTS + Whisper), ou de panacher les deux pendant la migration.
+ * Le texte et l'image passent toujours par OpenAI. La synthèse vocale et la
+ * transcription peuvent rester locales (TTS + Whisper), Whisper servant à
+ * transcrire la voix de l'utilisateur pour remplacer la saisie au clavier.
  *
- *   AI_TEXT_PROVIDER=openai|ollama|ollamacloud
- *   AI_IMAGE_PROVIDER=openai|stablediffusion
  *   AI_SPEECH_PROVIDER=openai|local
  *   AI_TRANSCRIPTION_PROVIDER=openai|whisper
  */
@@ -28,26 +26,12 @@ class AiProviderFactory
 
     public function textGenerator(): TextGeneratorInterface
     {
-        return $this->instances['text'] ??= match ($this->choice('AI_TEXT_PROVIDER')) {
-            'ollama' => new OllamaProvider($this->ollamaConfig()),
-            'ollamacloud' => new OllamaCloudProvider($this->ollamaCloudConfig()),
-            'openai' => new OpenAiProvider($this->openAiConfig()),
-            default => throw new Exception('AI_TEXT_PROVIDER invalide (attendu : openai, ollama ou ollamacloud).'),
-        };
+        return $this->instances['text'] ??= new OpenAiProvider($this->openAiConfig());
     }
 
     public function imageGenerator(): ImageGeneratorInterface
     {
-        return $this->instances['image'] ??= match ($this->choice('AI_IMAGE_PROVIDER')) {
-            'stablediffusion' => new StableDiffusionProvider([
-                'base_url' => $this->get('SD_BASE_URL'),
-                'width' => $this->get('SD_WIDTH'),
-                'height' => $this->get('SD_HEIGHT'),
-                'steps' => $this->get('SD_STEPS'),
-            ]),
-            'openai' => new OpenAiProvider($this->openAiConfig()),
-            default => throw new Exception('AI_IMAGE_PROVIDER invalide (attendu : openai ou stablediffusion).'),
-        };
+        return $this->instances['image'] ??= new OpenAiProvider($this->openAiConfig());
     }
 
     public function speechSynthesizer(): SpeechSynthesizerInterface
@@ -86,23 +70,6 @@ class AiProviderFactory
             'image_model' => $this->get('OPENAI_IMAGE_MODEL'),
             'speech_model' => $this->get('OPENAI_SPEECH_MODEL'),
             'transcription_model' => $this->get('OPENAI_TRANSCRIPTION_MODEL'),
-        ], fn ($value) => $value !== null);
-    }
-
-    private function ollamaConfig(): array
-    {
-        return array_filter([
-            'base_url' => $this->get('OLLAMA_BASE_URL'),
-            'text_model' => $this->get('OLLAMA_TEXT_MODEL'),
-        ], fn ($value) => $value !== null);
-    }
-
-    private function ollamaCloudConfig(): array
-    {
-        return array_filter([
-            'api_key' => $this->get('OLLAMACLOUD_API_KEY'),
-            'base_url' => $this->get('OLLAMACLOUD_BASE_URL'),
-            'text_model' => $this->get('OLLAMACLOUD_TEXT_MODEL'),
         ], fn ($value) => $value !== null);
     }
 

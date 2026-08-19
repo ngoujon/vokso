@@ -12,6 +12,8 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceMode, setSourceMode] = useState("text");
   const [audioFile, setAudioFile] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingError, setRecordingError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [duration, setDuration] = useState(null);
@@ -30,6 +32,8 @@ export default function Home() {
   const pollTimerRef = useRef(null);
   const audioRefs = useRef({});
   const progressRefs = useRef({});
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
 
   const STEP_LABELS = {
     queued: "En file d'attente...",
@@ -133,11 +137,43 @@ export default function Home() {
     }, 2000);
   };
 
+  const startRecording = async () => {
+    setRecordingError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      recordedChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          recordedChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
+        setAudioFile(new File([blob], `enregistrement-${Date.now()}.webm`, { type: 'audio/webm' }));
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      setRecordingError("Impossible d'accéder au micro. Vérifiez les autorisations du navigateur.");
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (sourceMode === "audio" && !audioFile) {
-      setError("Merci de sélectionner un fichier audio.");
+      setError("Merci d'enregistrer un message vocal.");
       return;
     }
 
@@ -351,7 +387,7 @@ export default function Home() {
             className={sourceMode === "audio" ? "active" : ""}
             onClick={() => setSourceMode("audio")}
           >
-            Fichier audio
+            Message vocal
           </button>
         </div>
         <form onSubmit={handleSubmit}>
@@ -375,13 +411,19 @@ export default function Home() {
               </button>
             </div>
           ) : (
-            <div className="input-container">
-              <input
-                type="file"
-                accept="audio/*"
-                onChange={(e) => setAudioFile(e.target.files[0] || null)}
-                className="input-field"
-              />
+            <div className="voice-input-container">
+              <button
+                type="button"
+                className={`record-btn ${isRecording ? "recording" : ""}`}
+                onClick={isRecording ? stopRecording : startRecording}
+              >
+                <i className={`bi ${isRecording ? "bi-stop-fill" : "bi-mic-fill"}`}></i>
+                {isRecording ? "Arrêter l'enregistrement" : "Parler au lieu d'écrire"}
+              </button>
+              {audioFile && !isRecording && (
+                <p className="recording-ready">Message vocal prêt ({audioFile.name})</p>
+              )}
+              {recordingError && <p className="error">{recordingError}</p>}
             </div>
           )}
           <button type="submit" disabled={loading} className="submit-btn">

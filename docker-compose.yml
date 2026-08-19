@@ -48,40 +48,7 @@ services:
 
   # Pile IA locale, désactivée par défaut. Démarrage :
   #   docker compose --profile local-ai up -d
-  # puis : docker compose exec ollama ollama pull llama3.1:8b
   # Modèles recommandés par service : voir docs/LOCAL_AI.md
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    profiles: ["local-ai"]
-    restart: always
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    networks:
-      - app_network
-
-  # Génération d'image via l'API AUTOMATIC1111 (webui2image). Image CUDA :
-  # nécessite une carte NVIDIA + nvidia-container-toolkit sur l'hôte Docker.
-  # Placer un checkpoint (.safetensors) dans le volume sd_data avant usage.
-  stable-diffusion:
-    image: universonic/stable-diffusion-webui:latest
-    container_name: stable-diffusion
-    profiles: ["local-ai"]
-    restart: always
-    entrypoint: ["/app/entrypoint.sh", "--api", "--listen", "--port", "7860"]
-    ports:
-      - "7860:7860"
-    volumes:
-      - sd_data:/app/stable-diffusion-webui/models/Stable-diffusion
-    networks:
-      - app_network
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: ["gpu"]
 
   # Synthèse vocale, API compatible OpenAI (/v1/audio/speech). Variante CPU :
   # fonctionne sans GPU, plus lente. Voir docs/LOCAL_AI.md pour la variante GPU.
@@ -95,7 +62,8 @@ services:
     networks:
       - app_network
 
-  # Transcription, API compatible OpenAI (/v1/audio/transcriptions). Variante
+  # Transcription, API compatible OpenAI (/v1/audio/transcriptions), utilisée
+  # pour la saisie vocale (l'utilisateur parle plutôt que de taper). Variante
   # CPU : fonctionne sans GPU, plus lente. Modèle téléchargé au 1er appel.
   whisper:
     image: fedirz/faster-whisper-server:latest-cpu
@@ -111,8 +79,6 @@ services:
 
 volumes:
   db_data:
-  ollama_data:
-  sd_data:
   whisper_data:
 
 networks:
