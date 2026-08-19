@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import '../styles/globals.css';
+import '../styles/Dashboard.css';
 import { config } from '../config';
+import { useAuth } from '../AuthContext';
 
 // Vérification des variables d'environnement
 if (!config.apiUrl || !config.staticUrl) {
@@ -8,6 +11,7 @@ if (!config.apiUrl || !config.staticUrl) {
 }
 
 export default function Home() {
+  const { user, logout } = useAuth();
   const [subject, setSubject] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceMode, setSourceMode] = useState("text");
@@ -372,6 +376,18 @@ export default function Home() {
 
   return (
     <div className="container">
+      <div className="top-nav-auth">
+        {user ? (
+          <>
+            <Link to={user.role === 'admin' ? '/admin' : '/dashboard'}>
+              {user.role === 'admin' ? 'Espace admin' : 'Mon espace'}
+            </Link>
+            <button onClick={logout}>Déconnexion</button>
+          </>
+        ) : (
+          <Link to="/login">Se connecter</Link>
+        )}
+      </div>
       <div className="form-container">
         <h1>Générer un podcast</h1>
         <div className="source-mode-tabs">

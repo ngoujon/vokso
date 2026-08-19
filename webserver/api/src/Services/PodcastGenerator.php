@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Utils\CostEstimator;
 use Exception;
 use PDO;
 
@@ -51,6 +52,12 @@ class PodcastGenerator
         try {
             $generatedText = $this->generatePodcastText($userInput);
             $this->storeOutput('responses', 'response_' . $this->getCurrentDateTime() . '.txt', $generatedText);
+            $costText = CostEstimator::textCost(
+                $this->textProvider(),
+                $this->textModel(),
+                $userInput,
+                $generatedText
+            );
         } catch (Exception $e) {
             $this->failJob($jobId, 'Erreur lors de la génération du texte', $e);
             return;
@@ -61,6 +68,7 @@ class PodcastGenerator
             $imagePrompt = str_replace('###REPLACE###', $generatedText, $this->getPrompt('image'));
             $imageContent = $this->ai->imageGenerator()->generateImage($imagePrompt);
             $imageFileName = $this->storeOutput('images', 'image_' . $this->getCurrentDateTime() . '.png', $imageContent);
+            $costImage = CostEstimator::imageCost($_ENV['OPENAI_IMAGE_MODEL'] ?? 'dall-e-3');
         } catch (Exception $e) {
             $this->failJob($jobId, 'Erreur lors de la génération de l\'image', $e);
             return;
@@ -75,6 +83,7 @@ class PodcastGenerator
                 'audio_' . $this->getCurrentDateTime() . '.' . $synthesizer->audioExtension(),
                 $audioContent
             );
+            $costAudio = CostEstimator::speechCost($this->speechProvider(), $this->speechModel(), $generatedText);
         } catch (Exception $e) {
             $this->failJob($jobId, 'Erreur lors de la génération de l\'audio', $e);
             return;
@@ -89,7 +98,17 @@ class PodcastGenerator
             return;
         }
 
-        $generationId = $this->saveGeneration($userInput, $generatedText, $imageFileName, $audioFileName, $idcategorie);
+        $generationId = $this->saveGeneration(
+            $userInput,
+            $generatedText,
+            $imageFileName,
+            $audioFileName,
+            $idcategorie,
+            $job['user_id'] ?? null,
+            $costText,
+            $costImage,
+            $costAudio
+        );
 
         $stmt = $this->db->prepare(
             'UPDATE generation_jobs SET status = "done", step = "done", progress = 100, generation_id = :gid WHERE job_id = :job_id'
@@ -99,7 +118,7 @@ class PodcastGenerator
 
     private function fetchJob(string $jobId): ?array
     {
-        $stmt = $this->db->prepare('SELECT input, source_type, audio_path FROM generation_jobs WHERE job_id = :job_id');
+        $stmt = $this->db->prepare('SELECT input, source_type, audio_path, user_id FROM generation_jobs WHERE job_id = :job_id');
         $stmt->execute([':job_id' => $jobId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
@@ -224,11 +243,23 @@ class PodcastGenerator
         return $this->db->lastInsertId();
     }
 
-    private function saveGeneration($title, $description, $imageUrl, $audioUrl, $idcategorie): string
-    {
+    private function saveGeneration(
+        $title,
+        $description,
+        $imageUrl,
+        $audioUrl,
+        $idcategorie,
+        ?int $userId,
+        float $costText,
+        float $costImage,
+        float $costAudio
+    ): string {
         $generationId = 'gen_' . uniqid();
         $stmt = $this->db->prepare(
-            'INSERT INTO generations (generation_id, title, description, image_url, audio_url, idcategorie) VALUES (:generation_id, :title, :description, :image_url, :audio_url, :idcategorie)'
+            'INSERT INTO generations
+                (generation_id, title, description, image_url, audio_url, idcategorie, user_id, cost_text, cost_image, cost_audio, cost_total)
+             VALUES
+                (:generation_id, :title, :description, :image_url, :audio_url, :idcategorie, :user_id, :cost_text, :cost_image, :cost_audio, :cost_total)'
         );
         $stmt->execute([
             ':generation_id' => $generationId,
@@ -237,8 +268,35 @@ class PodcastGenerator
             ':image_url' => $imageUrl,
             ':audio_url' => $audioUrl,
             ':idcategorie' => $idcategorie,
+            ':user_id' => $userId,
+            ':cost_text' => $costText,
+            ':cost_image' => $costImage,
+            ':cost_audio' => $costAudio,
+            ':cost_total' => $costText + $costImage + $costAudio,
         ]);
         return $generationId;
+    }
+
+    private function textProvider(): string
+    {
+        return strtolower(trim((string) ($_ENV['AI_TEXT_PROVIDER'] ?? 'openai')));
+    }
+
+    private function textModel(): string
+    {
+        return $this->textProvider() === 'ollama'
+            ? (string) ($_ENV['OLLAMA_TEXT_MODEL'] ?? '')
+            : (string) ($_ENV['OPENAI_TEXT_MODEL'] ?? 'gpt-4o-mini');
+    }
+
+    private function speechProvider(): string
+    {
+        return strtolower(trim((string) ($_ENV['AI_SPEECH_PROVIDER'] ?? 'openai')));
+    }
+
+    private function speechModel(): string
+    {
+        return (string) ($_ENV['OPENAI_SPEECH_MODEL'] ?? 'tts-1-hd');
     }
 
     private function getPrompt(string $type): string

@@ -31,6 +31,14 @@ $routes = [
     'listing' => ['App\Controllers\ListingController', 'getLastPodcasts'],
     'search' => ['App\Controllers\SearchController', 'searchPodcasts'],
     'newsletter' => ['App\Controllers\NewsletterController', 'subscribe'],
+    'auth-register' => ['App\Controllers\AuthController', 'register'],
+    'auth-login' => ['App\Controllers\AuthController', 'login'],
+    'auth-me' => ['App\Controllers\AuthController', 'me'],
+    'auth-logout' => ['App\Controllers\AuthController', 'logout'],
+    'user-podcasts' => ['App\Controllers\UserController', 'myPodcasts'],
+    'admin-kpis' => ['App\Controllers\AdminController', 'kpis'],
+    'admin-users' => ['App\Controllers\AdminController', 'users'],
+    'admin-podcasts' => ['App\Controllers\AdminController', 'podcasts'],
 ];
 
 // Obtenir l'URL après le domaine (par exemple : "/generation" ou "/listing")

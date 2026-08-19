@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Utils\Auth;
 use App\Utils\RateLimiter;
 use Dotenv\Dotenv;
 use PDO;
@@ -85,7 +86,8 @@ class GenerationController
             return;
         }
 
-        $jobId = $this->createJob('text', $userInput, null);
+        $currentUser = Auth::currentUser($this->db);
+        $jobId = $this->createJob('text', $userInput, null, $currentUser['id'] ?? null);
         $this->dispatch($jobId);
 
         http_response_code(202);
@@ -159,7 +161,8 @@ class GenerationController
             return;
         }
 
-        $jobId = $this->createJob('audio', null, $destination);
+        $currentUser = Auth::currentUser($this->db);
+        $jobId = $this->createJob('audio', null, $destination, $currentUser['id'] ?? null);
         $this->dispatch($jobId);
 
         http_response_code(202);
@@ -170,18 +173,19 @@ class GenerationController
         ]);
     }
 
-    private function createJob(string $sourceType, ?string $input, ?string $audioPath): string
+    private function createJob(string $sourceType, ?string $input, ?string $audioPath, ?int $userId): string
     {
         $jobId = 'job_' . bin2hex(random_bytes(16));
         $stmt = $this->db->prepare(
-            'INSERT INTO generation_jobs (job_id, status, step, progress, source_type, input, audio_path)
-             VALUES (:job_id, "pending", "queued", 0, :source_type, :input, :audio_path)'
+            'INSERT INTO generation_jobs (job_id, status, step, progress, source_type, input, audio_path, user_id)
+             VALUES (:job_id, "pending", "queued", 0, :source_type, :input, :audio_path, :user_id)'
         );
         $stmt->execute([
             ':job_id' => $jobId,
             ':source_type' => $sourceType,
             ':input' => $input,
             ':audio_path' => $audioPath,
+            ':user_id' => $userId,
         ]);
 
         return $jobId;
