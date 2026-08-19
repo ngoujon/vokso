@@ -66,3 +66,6 @@ next-env.d.ts
 .playwright-mcp/
 desktop.png
 test_audio.m4a
+
+# Remap ports Docker local (multi-projet) — jamais commité
+docker-compose.override.yml
