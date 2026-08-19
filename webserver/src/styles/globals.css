@@ -1,18 +1,18 @@
 /* Variables globales */
 :root {
-  --primary-color: #6b46c1;
-  --primary-light: #805ad5;
-  --primary-dark: #553c9a;
-  --background-color: #0f0f0f;
-  --card-bg: #1a1a1a;
-  --text-primary: #ffffff;
-  --text-secondary: #a0aec0;
-  --border-color: #2d2d2d;
-  --success-color: #6b46c1;
-  --danger-color: #e53e3e;
-  --input-bg: #1a1a1a;
-  --input-border: #2d2d2d;
-  --glow-color: rgba(107, 70, 193, 0.1);
+  --primary-color: #d97a3f;
+  --primary-light: #e2925f;
+  --primary-dark: #c1442c;
+  --background-color: #faf6ef;
+  --card-bg: #fffdf8;
+  --text-primary: #2b2117;
+  --text-secondary: #6b5f4f;
+  --border-color: #e4d8bf;
+  --success-color: #3f7a4f;
+  --danger-color: #a3341f;
+  --input-bg: #fffdf8;
+  --input-border: #e4d8bf;
+  --glow-color: rgba(217, 122, 63, 0.1);
 }
 
 /* Reset et styles de base */
@@ -244,7 +244,7 @@ h1 {
   color: var(--danger-color);
   margin: 1rem 0;
   padding: 0.75rem;
-  background-color: rgba(229, 62, 62, 0.1);
+  background-color: rgba(163, 52, 31, 0.08);
   border-radius: 6px;
   border: 1px solid var(--danger-color);
 }
@@ -253,7 +253,7 @@ h1 {
   color: var(--success-color);
   margin: 1rem auto;
   padding: 0.75rem;
-  background-color: rgba(107, 70, 193, 0.1);
+  background-color: rgba(63, 122, 79, 0.08);
   border-radius: 6px;
   border: 1px solid var(--success-color);
   width: 50%;

@@ -33,6 +33,19 @@ services:
     networks:
       - app_network
 
+  # Serveur mail factice pour le développement local : capture tous les mails
+  # envoyés par l'API (SMTP sur le port 1025) et les affiche dans une
+  # interface web, sans jamais rien envoyer à une vraie boîte mail. À
+  # remplacer par un vrai fournisseur SMTP une fois le nom de domaine choisi.
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    restart: always
+    ports:
+      - "8025:8025"
+    networks:
+      - app_network
+
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin

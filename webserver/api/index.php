@@ -30,6 +30,7 @@ $routes = [
     'generation-status' => ['App\Controllers\GenerationController', 'status'],
     'listing' => ['App\Controllers\ListingController', 'getLastPodcasts'],
     'search' => ['App\Controllers\SearchController', 'searchPodcasts'],
+    'newsletter' => ['App\Controllers\NewsletterController', 'subscribe'],
 ];
 
 // Obtenir l'URL après le domaine (par exemple : "/generation" ou "/listing")
