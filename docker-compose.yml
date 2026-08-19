@@ -7,7 +7,8 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./webserver:/var/www/html
+      - ./webserver:/var/www/html/webapp
+      - ./site:/var/www/html/site
       - ./apache-config:/etc/apache2/sites-available  # Ajout du volume pour Virtual Hosts
     depends_on:
       - db
