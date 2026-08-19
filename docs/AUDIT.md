@@ -22,27 +22,25 @@ couplage direct au SDK OpenAI empêchant toute alternative locale.
 | Téléchargement image | `file_get_contents($url)` sans timeout, dépendant d'`allow_url_fopen` | Client HTTP Guzzle avec timeout |
 | Lecteur audio | `formatTime(undefined)` affichait `NaN:NaN` avant chargement des métadonnées | Valeur de repli `0:00` |
 | Base de données | Connexion sans `charset` : risque de mojibake sur les accents | `charset=utf8mb4` |
+| Absence de protection sur `POST /generation` | Endpoint anonyme déclenchant trois appels IA payants et plusieurs minutes de calcul, sans quota ni limite de débit — risque le plus élevé du projet (facture et déni de service) | Quota par IP et par route (`rate_limit` en base, fenêtre glissante, 5 requêtes/heure par défaut, réglable via `RATE_LIMIT_MAX_REQUESTS`/`RATE_LIMIT_WINDOW_SECONDS`), appliqué à `generation` et `generation-audio`, couvert par des tests PHPUnit |
 
 ## 3. Restant à traiter (voir tâches créées)
 
-1. **Aucune protection sur `POST /generation`** — endpoint anonyme déclenchant trois appels IA
-   payants et plusieurs minutes de calcul. Aucun quota, aucune limite de débit, aucun captcha.
-   C'est le risque le plus élevé du projet aujourd'hui (facture et déni de service).
-2. **Identifiants en clair dans le dépôt** — `SQL/20250329120000.sql` versionne un
+1. **Identifiants en clair dans le dépôt** — `SQL/20250329120000.sql` versionne un
    `CREATE USER … IDENTIFIED BY` avec mot de passe, doublé d'un `GRANT ALL PRIVILEGES ON *.*
    WITH GRANT OPTION`. Mot de passe à révoquer et privilèges à restreindre à la seule base.
-3. **`docker-compose.yml`** — mots de passe MySQL en dur, phpMyAdmin exposé sur `:8081` sans
+2. **`docker-compose.yml`** — mots de passe MySQL en dur, phpMyAdmin exposé sur `:8081` sans
    restriction, installation des extensions PHP à chaque démarrage (préférer un `Dockerfile`).
-4. **Aucun test** — ni PHPUnit ni test front ; toute régression passe inaperçue.
-5. **Génération synchrone** — la requête HTTP reste ouverte pendant toute la chaîne
+3. **Aucun test** — ni PHPUnit ni test front ; toute régression passe inaperçue.
+4. **Génération synchrone** — la requête HTTP reste ouverte pendant toute la chaîne
    (plusieurs minutes, davantage en local). Une file d'attente avec suivi d'état est nécessaire.
-6. **Incohérences de schéma** — la migration `20250111` écrit dans `prompts.description` alors
+5. **Incohérences de schéma** — la migration `20250111` écrit dans `prompts.description` alors
    que le code lit `prompt.content` ; les migrations ne sont pas idempotentes et aucune n'est
    rejouable automatiquement.
-7. **Front** — recherche déclenchée par le même champ que la génération (comportement ambigu),
+6. **Front** — recherche déclenchée par le même champ que la génération (comportement ambigu),
    debounce de 2 s, `lastFetchRef` qui peut annuler une requête légitime, manipulation du DOM par
    `document.getElementById` au lieu de refs React, `key={index}` sur la liste.
-8. **`webserver/index.php`** affiche l'adresse IP du visiteur : reliquat de test à supprimer.
+7. **`webserver/index.php`** affiche l'adresse IP du visiteur : reliquat de test à supprimer.
 
 ## 4. Faisabilité « tout Ollama »
 
