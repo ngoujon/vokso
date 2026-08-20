@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest, useAuth } from '../AuthContext';
 import { config } from '../config';
+import useCanonical from '../hooks/useCanonical';
 import '../styles/globals.css';
 import '../styles/Dashboard.css';
 
@@ -257,6 +258,7 @@ function PodcastsSection() {
 }
 
 export default function AdminDashboard() {
+  useCanonical();
   const { user, logout } = useAuth();
 
   return (

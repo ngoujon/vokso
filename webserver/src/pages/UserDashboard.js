@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest, useAuth } from '../AuthContext';
 import { config } from '../config';
+import useCanonical from '../hooks/useCanonical';
 import '../styles/globals.css';
 import '../styles/Dashboard.css';
 
@@ -24,6 +25,7 @@ function downloadText(title, text) {
 }
 
 export default function UserDashboard() {
+  useCanonical();
   const { user, logout } = useAuth();
   const [podcasts, setPodcasts] = useState([]);
   const [loading, setLoading] = useState(true);

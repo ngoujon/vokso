@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import useCanonical from '../hooks/useCanonical';
 import '../styles/globals.css';
 import '../styles/Dashboard.css';
 
 export default function Login() {
+  useCanonical();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState('login'); // 'login' | 'register'

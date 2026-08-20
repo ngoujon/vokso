@@ -4,6 +4,7 @@ import '../styles/globals.css';
 import '../styles/Dashboard.css';
 import { config } from '../config';
 import { useAuth } from '../AuthContext';
+import useCanonical from '../hooks/useCanonical';
 
 // Vérification des variables d'environnement
 if (!config.apiUrl || !config.staticUrl) {
@@ -11,6 +12,7 @@ if (!config.apiUrl || !config.staticUrl) {
 }
 
 export default function Home() {
+  useCanonical();
   const { user, logout } = useAuth();
   const [subject, setSubject] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
