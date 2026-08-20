@@ -55,11 +55,11 @@ class AdminController
         $jobsByStatus = array_column($jobs, 'total', 'status');
 
         $topCategories = $this->db->query(
-            "SELECT c.keyword, COUNT(*) AS total
+            "SELECT c.label, COUNT(*) AS total
              FROM generations g
              JOIN categorie c ON c.idcategorie = g.idcategorie
              WHERE g.statut = 'on'
-             GROUP BY c.keyword
+             GROUP BY c.label
              ORDER BY total DESC
              LIMIT 5"
         )->fetchAll();
@@ -193,7 +193,7 @@ class AdminController
         $where = "g.statut = 'on'";
         $params = [];
         if ($search !== '') {
-            $where .= ' AND (g.title LIKE :search OR u.email LIKE :search)';
+            $where .= ' AND (g.text_content LIKE :search OR u.email LIKE :search)';
             $params[':search'] = '%' . $search . '%';
         }
 
@@ -204,9 +204,10 @@ class AdminController
         $total = (int) $countStmt->fetchColumn();
 
         $stmt = $this->db->prepare(
-            "SELECT g.generation_id, g.title, g.description, g.image_url, g.audio_url, g.created_at,
+            "SELECT g.generation_id, g.text_content AS title, g.text_content AS description,
+                    g.image_url, g.audio_url, g.created_at,
                     g.cost_text, g.cost_image, g.cost_audio, g.cost_total,
-                    c.keyword AS category, u.email AS user_email
+                    c.label AS category, u.email AS user_email
              FROM generations g
              LEFT JOIN users u ON u.id = g.user_id
              LEFT JOIN categorie c ON c.idcategorie = g.idcategorie

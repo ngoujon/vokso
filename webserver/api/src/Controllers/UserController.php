@@ -31,8 +31,9 @@ class UserController
         $user = Auth::requireUser($this->db);
 
         $stmt = $this->db->prepare(
-            "SELECT g.generation_id, g.title, g.description, g.image_url, g.audio_url, g.created_at,
-                    g.cost_text, g.cost_image, g.cost_audio, g.cost_total, c.keyword AS category
+            "SELECT g.generation_id, g.text_content AS title, g.text_content AS description,
+                    g.image_url, g.audio_url, g.created_at,
+                    g.cost_text, g.cost_image, g.cost_audio, g.cost_total, c.label AS category
              FROM generations g
              LEFT JOIN categorie c ON c.idcategorie = g.idcategorie
              WHERE g.user_id = :user_id AND g.statut = 'on'
