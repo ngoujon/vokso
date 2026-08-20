@@ -56,6 +56,7 @@ export default function UserDashboard() {
         <p>Vous n'avez pas encore généré de podcast. Retournez à l'accueil pour en créer un.</p>
       )}
 
+      {!loading && podcasts.length > 0 && <h2>Mes podcasts</h2>}
       <div className="podcast-grid">
         {podcasts.map((p) => (
           <div className="podcast-card" key={p.generation_id}>
