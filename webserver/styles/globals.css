@@ -94,7 +94,7 @@ h1 {
 .submit-btn {
   width: 100%;
   padding: 1rem;
-  background: linear-gradient(90deg, #7c4dff, #536dfe);
+  background: linear-gradient(90deg, #7c4dff, #4a5fe0);
   border: none;
   border-radius: 4px;
   color: #fff;
@@ -104,7 +104,7 @@ h1 {
 }
 
 .submit-btn:hover {
-  background: linear-gradient(90deg, #536dfe, #7c4dff);
+  background: linear-gradient(90deg, #4a5fe0, #7c4dff);
 }
 
 .submit-btn:disabled {
@@ -244,8 +244,8 @@ h1 {
   bottom: 110%; /* Place le tooltip au-dessus */
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(90deg, #7c4dff, #536dfe);
-  color: #e3e3ff;
+  background: linear-gradient(90deg, #7c4dff, #4a5fe0);
+  color: #fff;
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 0.9rem;
