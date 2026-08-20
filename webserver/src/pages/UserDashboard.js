@@ -64,6 +64,7 @@ export default function UserDashboard() {
               src={`${config.staticUrl}/images/${p.image_url}`}
               alt={p.title}
               className="podcast-card-image"
+              loading="lazy"
             />
             <div className="podcast-card-body">
               <h3>{p.title}</h3>

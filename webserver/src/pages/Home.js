@@ -495,9 +495,10 @@ export default function Home() {
             {generations.map((gen, index) => (
               <div key={index} className="generation-item">
                 <div className="generation-thumbnail">
-                  <img 
-                    src={`${config.staticUrl}/images/${gen.image_url}`} 
+                  <img
+                    src={`${config.staticUrl}/images/${gen.image_url}`}
                     alt={`Image pour ${gen.title || 'Génération'}`}
+                    loading="lazy"
                   />
                 </div>
                 <div className="generation-info">

@@ -68,6 +68,7 @@ class PodcastGenerator
             $imagePrompt = str_replace('###REPLACE###', $generatedText, $this->getPrompt('image'));
             $imageContent = $this->ai->imageGenerator()->generateImage($imagePrompt);
             $imageFileName = $this->storeOutput('images', 'image_' . $this->getCurrentDateTime() . '.png', $imageContent);
+            $this->convertImageToWebP($imageFileName);
             $costImage = CostEstimator::imageCost($_ENV['OPENAI_IMAGE_MODEL'] ?? 'dall-e-3');
         } catch (Exception $e) {
             $this->failJob($jobId, 'Erreur lors de la génération de l\'image', $e);
@@ -310,5 +311,36 @@ class PodcastGenerator
     private function getCurrentDateTime(): string
     {
         return date('Ymd_His');
+    }
+
+    private function convertImageToWebP(string $pngFileName): void
+    {
+        $pngPath = $this->outputDir . '/images/' . $pngFileName;
+        if (!file_exists($pngPath)) {
+            return;
+        }
+
+        $webpPath = str_replace('.png', '.webp', $pngPath);
+        if (extension_loaded('imagick')) {
+            try {
+                $image = new \Imagick($pngPath);
+                $image->setImageFormat('webp');
+                $image->setImageCompressionQuality(80);
+                $image->writeImage($webpPath);
+                $image->clear();
+            } catch (\Exception $e) {
+                error_log('Erreur conversion WebP via Imagick: ' . $e->getMessage());
+            }
+        } elseif (extension_loaded('gd')) {
+            try {
+                $image = imagecreatefrompng($pngPath);
+                if ($image !== false) {
+                    imagewebp($image, $webpPath, 80);
+                    imagedestroy($image);
+                }
+            } catch (\Exception $e) {
+                error_log('Erreur conversion WebP via GD: ' . $e->getMessage());
+            }
+        }
     }
 }
