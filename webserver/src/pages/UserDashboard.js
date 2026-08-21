@@ -61,7 +61,7 @@ export default function UserDashboard() {
         {podcasts.map((p) => (
           <div className="podcast-card" key={p.generation_id}>
             <img
-              src={`${config.staticUrl}/images/${p.image_url}`}
+              src={`${config.staticUrl}/static/images/${p.image_url}`}
               alt={p.title}
               className="podcast-card-image"
               loading="lazy"
@@ -71,12 +71,12 @@ export default function UserDashboard() {
               <span className="podcast-card-category">{p.category}</span>
               <p className="podcast-card-date">{new Date(p.created_at).toLocaleString('fr-FR')}</p>
               <p className="podcast-card-cost">Coût estimé : {Number(p.cost_total).toFixed(4)} $</p>
-              <audio controls src={`${config.staticUrl}/audios/${p.audio_url}`} className="podcast-card-audio" />
+              <audio controls src={`${config.staticUrl}/static/audios/${p.audio_url}`} className="podcast-card-audio" />
               <div className="podcast-card-actions">
-                <button onClick={() => downloadFile(`${config.staticUrl}/images/${p.image_url}`, p.image_url)}>
+                <button onClick={() => downloadFile(`${config.staticUrl}/static/images/${p.image_url}`, p.image_url)}>
                   Télécharger l'image
                 </button>
-                <button onClick={() => downloadFile(`${config.staticUrl}/audios/${p.audio_url}`, p.audio_url)}>
+                <button onClick={() => downloadFile(`${config.staticUrl}/static/audios/${p.audio_url}`, p.audio_url)}>
                   Télécharger l'audio
                 </button>
                 <button onClick={() => downloadText(p.title, p.description)}>

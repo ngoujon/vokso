@@ -239,8 +239,8 @@ function PodcastsSection() {
               <td>{Number(p.cost_audio).toFixed(4)} $</td>
               <td><strong>{Number(p.cost_total).toFixed(4)} $</strong></td>
               <td className="data-table-actions">
-                <button onClick={() => downloadFile(`${config.staticUrl}/images/${p.image_url}`, p.image_url)}>Image</button>
-                <button onClick={() => downloadFile(`${config.staticUrl}/audios/${p.audio_url}`, p.audio_url)}>Audio</button>
+                <button onClick={() => downloadFile(`${config.staticUrl}/static/images/${p.image_url}`, p.image_url)}>Image</button>
+                <button onClick={() => downloadFile(`${config.staticUrl}/static/audios/${p.audio_url}`, p.audio_url)}>Audio</button>
                 <button onClick={() => downloadText(p.title, p.description)}>Texte</button>
               </td>
             </tr>

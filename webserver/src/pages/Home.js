@@ -496,7 +496,7 @@ export default function Home() {
               <div key={index} className="generation-item">
                 <div className="generation-thumbnail">
                   <img
-                    src={`${config.staticUrl}/images/${gen.image_url}`}
+                    src={`${config.staticUrl}/static/images/${gen.image_url}`}
                     alt={`Image pour ${gen.title || 'Génération'}`}
                     loading="lazy"
                   />
@@ -510,7 +510,7 @@ export default function Home() {
                 <div className="audio-player">
                   <audio
                     ref={(el) => (audioRefs.current[index] = el)}
-                    src={`${config.staticUrl}/audios/${gen.audio_url}`}
+                    src={`${config.staticUrl}/static/audios/${gen.audio_url}`}
                     onLoadedMetadata={() => handleLoadedMetadata(index)}
                     onTimeUpdate={() => handleTimeUpdate(index)}
                     onEnded={() => {
