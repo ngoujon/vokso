@@ -41,6 +41,12 @@ couplage direct au SDK OpenAI empêchant toute alternative locale.
    debounce de 2 s, `lastFetchRef` qui peut annuler une requête légitime, manipulation du DOM par
    `document.getElementById` au lieu de refs React, `key={index}` sur la liste.
 7. **`webserver/index.php`** affiche l'adresse IP du visiteur : reliquat de test à supprimer.
+8. **Pas de limitation de débit sur l'authentification et le formulaire de contact** — `RateLimiter`
+   (base de données, fenêtre glissante) n'est appliqué qu'à `POST /generation` et
+   `/generation-audio`. `AuthController::register()` et `AuthController::login()` (bruteforce de
+   mots de passe, création de comptes en masse) ainsi que `NewsletterController::subscribe()`
+   (inscriptions en masse) restent sans quota, sans captcha et sans honeypot. Étendre le même
+   `RateLimiter` à ces trois routes est le correctif le plus simple.
 
 ## 4. Faisabilité « tout Ollama »
 
