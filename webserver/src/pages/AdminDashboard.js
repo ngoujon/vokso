@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { apiRequest, useAuth } from '../AuthContext';
 import { config } from '../config';
 import useCanonical from '../hooks/useCanonical';
+import useDocumentMeta from '../hooks/useDocumentMeta';
 import '../styles/globals.css';
 import '../styles/Dashboard.css';
 
@@ -259,6 +260,7 @@ function PodcastsSection() {
 
 export default function AdminDashboard() {
   useCanonical();
+  useDocumentMeta('Administration — QWAI Podcast', null);
   const { user, logout } = useAuth();
 
   return (

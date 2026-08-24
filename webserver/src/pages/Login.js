@@ -2,11 +2,16 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import useCanonical from '../hooks/useCanonical';
+import useDocumentMeta from '../hooks/useDocumentMeta';
 import '../styles/globals.css';
 import '../styles/Dashboard.css';
 
 export default function Login() {
   useCanonical();
+  useDocumentMeta(
+    'Connexion — QWAI Podcast',
+    'Connectez-vous ou créez un compte QWAI Podcast pour générer et gérer vos épisodes.'
+  );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState('login'); // 'login' | 'register'

@@ -5,6 +5,8 @@ import '../styles/Dashboard.css';
 import { config } from '../config';
 import { useAuth } from '../AuthContext';
 import useCanonical from '../hooks/useCanonical';
+import useDocumentMeta from '../hooks/useDocumentMeta';
+import useJsonLd from '../hooks/useJsonLd';
 
 // Vérification des variables d'environnement
 if (!config.apiUrl || !config.staticUrl) {
@@ -13,6 +15,10 @@ if (!config.apiUrl || !config.staticUrl) {
 
 export default function Home() {
   useCanonical();
+  useDocumentMeta(
+    'QWAI Podcast — Générez et écoutez des podcasts',
+    "QWAI Podcast permet de générer et d'écouter des épisodes de podcast à partir d'un sujet ou d'un texte."
+  );
   const { user, logout } = useAuth();
   const [subject, setSubject] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -375,6 +381,37 @@ export default function Home() {
       return 'Date non disponible';
     }
   };
+
+  useJsonLd({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        name: 'QWAI Podcast',
+        url: window.location.origin,
+      },
+      ...(generations.length > 0
+        ? [
+          {
+            '@type': 'ItemList',
+            itemListElement: generations.map((gen, index) => ({
+              '@type': 'ListItem',
+              position: index + 1,
+              item: {
+                '@type': 'PodcastEpisode',
+                name: gen.title || 'Sans titre',
+                datePublished: gen.created_at,
+                associatedMedia: {
+                  '@type': 'MediaObject',
+                  contentUrl: `${config.staticUrl}/static/audios/${gen.audio_url}`,
+                },
+              },
+            })),
+          },
+        ]
+        : []),
+    ],
+  });
 
   return (
     <div className="container">
