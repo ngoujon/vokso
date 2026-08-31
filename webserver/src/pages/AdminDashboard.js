@@ -260,7 +260,10 @@ function PodcastsSection() {
 
 export default function AdminDashboard() {
   useCanonical();
-  useDocumentMeta('Administration — QWAI Podcast', null);
+  useDocumentMeta(
+    'Administration — QWAI Podcast',
+    "Espace d'administration QWAI Podcast : gestion des utilisateurs et suivi de l'activité."
+  );
   const { user, logout } = useAuth();
 
   return (
