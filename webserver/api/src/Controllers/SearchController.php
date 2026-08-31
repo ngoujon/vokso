@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Utils\Logger;
 use Dotenv\Dotenv;
 use Exception;
 
@@ -25,7 +26,7 @@ class SearchController
             $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $this->pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
-            error_log('[search] ' . $e->getMessage());
+            Logger::get()->error($e->getMessage(), ['controller' => 'search', 'exception' => get_class($e)]);
             http_response_code(500);
             header('Content-Type: application/json');
             die(json_encode(['error' => 'Erreur de connexion à la base de données']));
@@ -71,7 +72,7 @@ class SearchController
             }
         } catch (\PDOException $e) {
             // Gestion des erreurs liées à la base de données
-            error_log('[search] ' . $e->getMessage());
+            Logger::get()->error($e->getMessage(), ['controller' => 'search', 'exception' => get_class($e)]);
             http_response_code(500);
             header("Content-Type: application/json");
             echo json_encode([

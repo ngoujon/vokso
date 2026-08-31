@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Utils\Logger;
 use Dotenv\Dotenv;
 use Exception;
 
@@ -26,7 +27,7 @@ class ListingController
             $this->pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
             // Le message PDO contient l'hôte et l'utilisateur : il reste dans les logs.
-            error_log('[listing] ' . $e->getMessage());
+            Logger::get()->error($e->getMessage(), ['controller' => 'listing', 'exception' => get_class($e)]);
             http_response_code(500);
             die(json_encode(['error' => 'Erreur de connexion à la base de données']));
         }

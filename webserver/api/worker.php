@@ -12,11 +12,13 @@ require_once __DIR__ . '/vendor/autoload.php';
 use App\Services\AiProviderFactory;
 use App\Services\PodcastGenerator;
 use App\Utils\ErrorTracking;
+use App\Utils\Logger;
 use Dotenv\Dotenv;
 
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 ErrorTracking::init();
+Logger::init();
 
 $jobId = $argv[1] ?? null;
 if (!$jobId) {
@@ -37,6 +39,12 @@ $outputDir = realpath(__DIR__ . '/../public') . '/output';
 try {
     (new PodcastGenerator($db, $ai, $outputDir))->process($jobId);
 } catch (Throwable $e) {
+    Logger::get()->error($e->getMessage(), [
+        'service' => 'worker',
+        'job_id' => $jobId,
+        'exception' => get_class($e),
+        'trace' => $e->getTraceAsString(),
+    ]);
     \Sentry\captureException($e);
     throw $e;
 }

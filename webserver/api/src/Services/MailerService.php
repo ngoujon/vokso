@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Utils\Logger;
+
 /**
  * Client SMTP minimal, sans authentification : suffisant pour parler à
  * MailHog en local (voir docker-compose.yml). Le nom de domaine définitif et
@@ -22,7 +24,12 @@ class MailerService
     {
         $socket = @fsockopen($this->host, $this->port, $errno, $errstr, 5);
         if ($socket === false) {
-            error_log("[mailer] Connexion SMTP impossible ({$this->host}:{$this->port}) : {$errstr}");
+            Logger::get()->error('Connexion SMTP impossible', [
+                'service' => 'mailer',
+                'host' => $this->host,
+                'port' => $this->port,
+                'reason' => $errstr,
+            ]);
             return false;
         }
 
@@ -46,7 +53,7 @@ class MailerService
 
             return true;
         } catch (\RuntimeException $e) {
-            error_log('[mailer] ' . $e->getMessage());
+            Logger::get()->error($e->getMessage(), ['service' => 'mailer', 'exception' => get_class($e)]);
             return false;
         } finally {
             fclose($socket);

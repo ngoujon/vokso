@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\MailerService;
+use App\Utils\Logger;
 use Dotenv\Dotenv;
 use PDO;
 use PDOException;
@@ -57,7 +58,7 @@ class NewsletterController
             // Code 23000 : contrainte unique déjà présente en base, l'email
             // est donc déjà inscrit. Ce n'est pas une erreur pour l'appelant.
             if ($e->getCode() !== '23000') {
-                error_log('[newsletter] ' . $e->getMessage());
+                Logger::get()->error($e->getMessage(), ['controller' => 'newsletter', 'exception' => get_class($e)]);
                 http_response_code(500);
                 echo json_encode(['message' => "L'inscription a échoué, réessayez plus tard"]);
                 return;

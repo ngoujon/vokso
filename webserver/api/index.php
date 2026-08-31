@@ -21,6 +21,9 @@ CorsHandler::handleCors();
 use App\Utils\ErrorTracking;
 ErrorTracking::init();
 
+use App\Utils\Logger;
+Logger::init();
+
 // Table de routage explicite : seules ces routes sont exposées. Instancier un
 // contrôleur et appeler une méthode dont le nom vient de l'URL permettrait
 // d'atteindre n'importe quelle classe publique du projet.
@@ -79,7 +82,11 @@ try {
         $controller->{$methodName}();
     }
 } catch (Throwable $e) {
-    error_log('[api] ' . $e->getMessage());
+    Logger::get()->error($e->getMessage(), [
+        'route' => $route,
+        'exception' => get_class($e),
+        'trace' => $e->getTraceAsString(),
+    ]);
     \Sentry\captureException($e);
     http_response_code(500);
     header('Content-Type: application/json');

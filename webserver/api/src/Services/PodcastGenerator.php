@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Utils\CostEstimator;
+use App\Utils\Logger;
 use Exception;
 use PDO;
 
@@ -167,7 +168,12 @@ class PodcastGenerator
 
     private function failJob(string $jobId, string $message, Exception $e): void
     {
-        error_log('[generation-worker] ' . $message . ' : ' . $e->getMessage());
+        Logger::get()->error($message, [
+            'service' => 'generation-worker',
+            'job_id' => $jobId,
+            'exception' => get_class($e),
+            'reason' => $e->getMessage(),
+        ]);
         $stmt = $this->db->prepare(
             'UPDATE generation_jobs SET status = "error", error_message = :error WHERE job_id = :job_id'
         );
@@ -329,7 +335,7 @@ class PodcastGenerator
                 $image->writeImage($webpPath);
                 $image->clear();
             } catch (\Exception $e) {
-                error_log('Erreur conversion WebP via Imagick: ' . $e->getMessage());
+                Logger::get()->error('Erreur conversion WebP via Imagick', ['exception' => get_class($e), 'reason' => $e->getMessage()]);
             }
         } elseif (extension_loaded('gd')) {
             try {
@@ -339,7 +345,7 @@ class PodcastGenerator
                     imagedestroy($image);
                 }
             } catch (\Exception $e) {
-                error_log('Erreur conversion WebP via GD: ' . $e->getMessage());
+                Logger::get()->error('Erreur conversion WebP via GD', ['exception' => get_class($e), 'reason' => $e->getMessage()]);
             }
         }
     }
