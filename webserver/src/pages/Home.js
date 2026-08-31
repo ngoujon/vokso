@@ -611,6 +611,9 @@ export default function Home() {
           <p className="no-generations">Aucune génération disponible</p>
         )}
       </div>
+      <footer style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+        <Link to="/politique-de-confidentialite">Politique de confidentialité</Link>
+      </footer>
     </div>
   );
 } 
