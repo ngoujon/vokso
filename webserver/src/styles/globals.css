@@ -15,6 +15,24 @@
   --glow-color: rgba(217, 122, 63, 0.1);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary-color: #d97a3f;
+    --primary-light: #e2925f;
+    --primary-dark: #c1442c;
+    --background-color: #1b1712;
+    --card-bg: #2a231b;
+    --text-primary: #f2ead9;
+    --text-secondary: #b8a98e;
+    --border-color: #443a2c;
+    --success-color: #6fbf7f;
+    --danger-color: #e0685a;
+    --input-bg: #2a231b;
+    --input-border: #443a2c;
+    --glow-color: rgba(217, 122, 63, 0.2);
+  }
+}
+
 /* Reset et styles de base */
 * {
   margin: 0;

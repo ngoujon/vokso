@@ -7,17 +7,17 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #faf6ef;
-  color: #2b2117;
+  background-color: var(--background-color, #faf6ef);
+  color: var(--text-primary, #2b2117);
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
-  background-color: #f2ead9;
+  background-color: var(--card-bg, #f2ead9);
   padding: 0.2em 0.4em;
   border-radius: 3px;
-  color: #c1442c;
+  color: var(--primary-dark, #c1442c);
 }
 
 /* Scrollbar personnalisée */
@@ -26,14 +26,14 @@ code {
 }
 
 ::-webkit-scrollbar-track {
-  background: #faf6ef;
+  background: var(--background-color, #faf6ef);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d97a3f;
+  background: var(--primary-color, #d97a3f);
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #c1442c;
+  background: var(--primary-dark, #c1442c);
 } 
