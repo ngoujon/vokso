@@ -6,6 +6,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import CookieConsentBanner from './components/CookieConsentBanner';
 import { AuthProvider } from './AuthContext';
 import './styles/App.css';
 
@@ -13,6 +14,7 @@ function App() {
   return (
     <AuthProvider>
       <div className="App">
+        <CookieConsentBanner />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
