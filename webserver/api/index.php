@@ -18,6 +18,9 @@ use App\Utils\CorsHandler;
 CorsHandler::init();
 CorsHandler::handleCors();
 
+use App\Utils\ErrorTracking;
+ErrorTracking::init();
+
 // Table de routage explicite : seules ces routes sont exposées. Instancier un
 // contrôleur et appeler une méthode dont le nom vient de l'URL permettrait
 // d'atteindre n'importe quelle classe publique du projet.
@@ -77,6 +80,7 @@ try {
     }
 } catch (Throwable $e) {
     error_log('[api] ' . $e->getMessage());
+    \Sentry\captureException($e);
     http_response_code(500);
     header('Content-Type: application/json');
     echo json_encode(['error' => $debug ? $e->getMessage() : 'Erreur interne du serveur']);

@@ -11,10 +11,12 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use App\Services\AiProviderFactory;
 use App\Services\PodcastGenerator;
+use App\Utils\ErrorTracking;
 use Dotenv\Dotenv;
 
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
+ErrorTracking::init();
 
 $jobId = $argv[1] ?? null;
 if (!$jobId) {
@@ -32,4 +34,9 @@ $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $ai = new AiProviderFactory($_ENV);
 $outputDir = realpath(__DIR__ . '/../public') . '/output';
 
-(new PodcastGenerator($db, $ai, $outputDir))->process($jobId);
+try {
+    (new PodcastGenerator($db, $ai, $outputDir))->process($jobId);
+} catch (Throwable $e) {
+    \Sentry\captureException($e);
+    throw $e;
+}
