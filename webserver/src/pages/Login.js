@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import NavBar from '../components/NavBar';
+import Footer from '../components/Footer';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import '../styles/globals.css';
@@ -35,34 +37,38 @@ export default function Login() {
   };
 
   return (
-    <div className="container">
-      <div className="auth-card">
-        <h1>{mode === 'login' ? 'Connexion' : 'Créer un compte'}</h1>
-        <form onSubmit={handleSubmit} className="auth-form">
-          <label>
-            Email
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </label>
-          <label>
-            Mot de passe
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              minLength={8}
-              required
-            />
-          </label>
-          {error && <p className="auth-error">{error}</p>}
-          <button type="submit" disabled={loading}>
-            {loading ? 'Chargement...' : mode === 'login' ? 'Se connecter' : "S'inscrire"}
+    <>
+      <NavBar />
+      <div className="container">
+        <div className="auth-card">
+          <h1>{mode === 'login' ? 'Connexion' : 'Créer un compte'}</h1>
+          <form onSubmit={handleSubmit} className="auth-form">
+            <label>
+              Email
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </label>
+            <label>
+              Mot de passe
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={8}
+                required
+              />
+            </label>
+            {error && <p className="auth-error">{error}</p>}
+            <button type="submit" disabled={loading}>
+              {loading ? 'Chargement...' : mode === 'login' ? 'Se connecter' : "S'inscrire"}
+            </button>
+          </form>
+          <button className="auth-switch" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
+            {mode === 'login' ? 'Pas encore de compte ? Inscrivez-vous' : 'Déjà un compte ? Connectez-vous'}
           </button>
-        </form>
-        <button className="auth-switch" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
-          {mode === 'login' ? 'Pas encore de compte ? Inscrivez-vous' : 'Déjà un compte ? Connectez-vous'}
-        </button>
-        <Link to="/" className="auth-back">← Retour à l'accueil</Link>
+          <Link to="/" className="auth-back">← Retour à l'accueil</Link>
+        </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 }

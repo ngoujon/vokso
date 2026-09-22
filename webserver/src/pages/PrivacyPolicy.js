@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/globals.css';
+import NavBar from '../components/NavBar';
+import Footer from '../components/Footer';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 
@@ -12,6 +14,8 @@ export default function PrivacyPolicy() {
   );
 
   return (
+    <>
+    <NavBar />
     <div className="page-container" style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem 1.5rem', lineHeight: 1.6 }}>
       <p><Link to="/">&larr; Retour à l'accueil</Link></p>
       <h1>Politique de confidentialité</h1>
@@ -85,5 +89,7 @@ export default function PrivacyPolicy() {
         (maintien de la session). Aucun cookie publicitaire ou de mesure d'audience tiers n'est déposé.
       </p>
     </div>
+    <Footer />
+    </>
   );
 }
