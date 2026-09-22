@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { ReactComponent as VoksoMark } from '../assets/vokso-mark.svg';
 
 export default function NavBar() {
   const { user, logout } = useAuth();
@@ -13,7 +14,7 @@ export default function NavBar() {
       <div className="navbar-inner">
         <Link to="/" className="navbar-logo">
           <span className="navbar-logo-mark" aria-hidden="true">
-            <i className="bi bi-soundwave"></i>
+            <VoksoMark />
           </span>
           Vokso
         </Link>

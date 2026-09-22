@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <style>
+    .vk-bg { fill: #f4f5fa; }
+    .vk-fg { fill: #4653d6; }
+    @media (prefers-color-scheme: dark) {
+      .vk-bg { fill: #0e1016; }
+      .vk-fg { fill: #5b6ef5; }
+    }
+  </style>
+  <rect class="vk-bg" width="1024" height="1024" rx="228" />
+  <rect class="vk-fg" x="258" y="432" width="52" height="160" rx="26" />
+  <rect class="vk-fg" x="336" y="352" width="52" height="320" rx="26" />
+  <rect class="vk-fg" x="414" y="402" width="52" height="220" rx="26" />
+  <rect class="vk-fg" x="500" y="362" width="266" height="52" rx="26" opacity="0.5" />
+  <rect class="vk-fg" x="500" y="442" width="200" height="52" rx="26" opacity="0.5" />
+  <rect class="vk-fg" x="500" y="522" width="266" height="52" rx="26" opacity="0.5" />
+  <rect class="vk-fg" x="500" y="602" width="160" height="52" rx="26" opacity="0.5" />
+</svg>

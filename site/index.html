@@ -7,7 +7,9 @@
 <meta name="description" content="Vokso transforme un simple sujet en podcast complet — texte, illustration et voix de synthèse — en quelques minutes. Essai gratuit, hébergement européen.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="/">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234653d6'/%3E%3Cstop offset='1' stop-color='%23ff7a52'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='16' fill='url(%23g)'/%3E%3C/svg%3E">
+<link rel="icon" href="/assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="apple-touch-icon" href="/assets/vokso-icon-180.png">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Vokso">
@@ -107,7 +109,10 @@
     width: 28px; height: 28px; border-radius: 8px;
     background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
     flex: none;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
   }
+  .brand .dot svg { width: 62%; height: 62%; }
   nav.site a { color: var(--muted); text-decoration: none; margin-left: 1.4rem; font-size: .95rem; font-weight: 600; }
   nav.site a:hover { color: var(--text); }
 
@@ -204,7 +209,20 @@
 
 <header class="site">
   <div class="wrap">
-    <div class="brand"><span class="dot"></span> Vokso</div>
+    <div class="brand">
+      <span class="dot" aria-hidden="true">
+        <svg viewBox="218 312 588 382" fill="currentColor">
+          <rect x="258" y="432" width="52" height="160" rx="26" />
+          <rect x="336" y="352" width="52" height="320" rx="26" />
+          <rect x="414" y="402" width="52" height="220" rx="26" />
+          <rect x="500" y="362" width="266" height="52" rx="26" opacity="0.5" />
+          <rect x="500" y="442" width="200" height="52" rx="26" opacity="0.5" />
+          <rect x="500" y="522" width="266" height="52" rx="26" opacity="0.5" />
+          <rect x="500" y="602" width="160" height="52" rx="26" opacity="0.5" />
+        </svg>
+      </span>
+      Vokso
+    </div>
     <nav class="site">
       <a href="#concept">Le concept</a>
       <a href="#fonctionnement">Fonctionnement</a>
