@@ -57,6 +57,12 @@ class AuthController
         $stmt->execute([':email' => $email, ':password_hash' => password_hash($password, PASSWORD_BCRYPT)]);
         $userId = (int) $this->db->lastInsertId();
 
+        // Formule gratuite par défaut : BillingController s'appuie sur cette
+        // ligne pour associer le client Stripe au premier passage à l'achat.
+        $this->db->prepare(
+            'INSERT INTO subscriptions (user_id, plan, status) VALUES (:user_id, "decouverte", "active")'
+        )->execute([':user_id' => $userId]);
+
         $this->sendWelcomeEmail($email);
 
         $token = Auth::createToken($this->db, $userId);

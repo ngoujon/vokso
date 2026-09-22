@@ -1,5 +1,6 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { apiRequest, useAuth } from '../AuthContext';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import SovereigntySection from '../components/SovereigntySection';
@@ -24,6 +25,7 @@ const PLANS = [
   },
   {
     name: 'Créateur',
+    planId: 'createur',
     tagline: "Pour publier régulièrement",
     price: '9,90€',
     period: '/ mois',
@@ -39,10 +41,11 @@ const PLANS = [
   },
   {
     name: 'Studio',
+    planId: 'studio',
     tagline: 'Pour les équipes et les usages pro',
     price: '29€',
     period: '/ mois',
-    cta: 'Nous contacter',
+    cta: 'Choisir Studio',
     features: [
       'Tout Créateur, plus :',
       'Accès API pour vos intégrations',
@@ -78,6 +81,29 @@ export default function Pricing() {
     'Tarifs — Vokso',
     'Découvrez les formules Vokso pour générer vos podcasts par IA, hébergés en Europe.'
   );
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [loadingPlan, setLoadingPlan] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleSubscribe = async (planId) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    setError(null);
+    setLoadingPlan(planId);
+    try {
+      const data = await apiRequest('billing-checkout', {
+        method: 'POST',
+        body: JSON.stringify({ plan: planId }),
+      });
+      window.location.href = data.url;
+    } catch (err) {
+      setError(err.message);
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <>
@@ -91,6 +117,8 @@ export default function Pricing() {
             Changez ou annulez à tout moment.
           </p>
         </div>
+
+        {error && <p className="auth-error">{error}</p>}
 
         <div className="pricing-grid">
           {PLANS.map((plan) => (
@@ -107,9 +135,20 @@ export default function Pricing() {
                   <li key={feature}><i className="bi bi-check-circle-fill"></i>{feature}</li>
                 ))}
               </ul>
-              <Link to="/login" className={`btn ${plan.featured ? 'btn-primary' : 'btn-outline'}`}>
-                {plan.cta}
-              </Link>
+              {plan.planId ? (
+                <button
+                  type="button"
+                  className={`btn ${plan.featured ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => handleSubscribe(plan.planId)}
+                  disabled={loadingPlan === plan.planId}
+                >
+                  {loadingPlan === plan.planId ? 'Redirection…' : plan.cta}
+                </button>
+              ) : (
+                <Link to="/login" className={`btn ${plan.featured ? 'btn-primary' : 'btn-outline'}`}>
+                  {plan.cta}
+                </Link>
+              )}
             </div>
           ))}
         </div>

@@ -102,6 +102,14 @@
   cursor: pointer;
 }
 
+.dashboard-notice {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
 section {
   margin-bottom: 2.5rem;
 }

@@ -12,6 +12,9 @@ class GenerationController
     private const MAX_INPUT_LENGTH = 300;
     private const MAX_AUDIO_SIZE = 26214400; // 25 Mo, alignée sur la limite de l'API OpenAI Whisper
     private const ALLOWED_AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'ogg', 'webm', 'mp4', 'mpeg', 'mpga'];
+    // Formule "Découverte" (gratuite, voir /tarifs) : Créateur et Studio n'ont
+    // pas de limite ici (usage raisonnable géré manuellement pour l'instant).
+    private const FREE_PLAN_MONTHLY_LIMIT = 5;
 
     private PDO $db;
     private RateLimiter $rateLimiter;
@@ -87,6 +90,12 @@ class GenerationController
         }
 
         $currentUser = Auth::currentUser($this->db);
+        if ($currentUser && $this->freePlanQuotaReached((int) $currentUser['id'])) {
+            http_response_code(402);
+            echo json_encode(['error' => 'Quota mensuel de la formule Découverte atteint. Passez à une formule supérieure pour continuer.']);
+            return;
+        }
+
         $jobId = $this->createJob('text', $userInput, null, $currentUser['id'] ?? null);
         $this->dispatch($jobId);
 
@@ -162,6 +171,12 @@ class GenerationController
         }
 
         $currentUser = Auth::currentUser($this->db);
+        if ($currentUser && $this->freePlanQuotaReached((int) $currentUser['id'])) {
+            http_response_code(402);
+            echo json_encode(['error' => 'Quota mensuel de la formule Découverte atteint. Passez à une formule supérieure pour continuer.']);
+            return;
+        }
+
         $jobId = $this->createJob('audio', null, $destination, $currentUser['id'] ?? null);
         $this->dispatch($jobId);
 
@@ -171,6 +186,25 @@ class GenerationController
             'job_id' => $jobId,
             'status' => 'pending',
         ]);
+    }
+
+    /** Formule Découverte uniquement : Créateur/Studio n'ont pas de plafond mensuel. */
+    private function freePlanQuotaReached(int $userId): bool
+    {
+        $stmt = $this->db->prepare('SELECT plan FROM subscriptions WHERE user_id = :user_id');
+        $stmt->execute([':user_id' => $userId]);
+        $plan = $stmt->fetchColumn();
+
+        if ($plan !== false && $plan !== 'decouverte') {
+            return false;
+        }
+
+        $stmt = $this->db->prepare(
+            "SELECT COUNT(*) FROM generations WHERE user_id = :user_id AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')"
+        );
+        $stmt->execute([':user_id' => $userId]);
+
+        return (int) $stmt->fetchColumn() >= self::FREE_PLAN_MONTHLY_LIMIT;
     }
 
     private function createJob(string $sourceType, ?string $input, ?string $audioPath, ?int $userId): string
@@ -231,10 +265,18 @@ class GenerationController
         ]);
     }
 
-    /** Lance le traitement du job dans un processus PHP CLI détaché. */
+    /**
+     * Lance le traitement du job dans un processus PHP CLI détaché.
+     *
+     * PHP_BINARY est vide sous le SAPI apache2handler (mod_php charge PHP
+     * comme module de l'exécutable Apache, pas comme binaire séparé) : s'y
+     * fier fait échouer exec() silencieusement (commande vide), et le job
+     * reste bloqué en "pending" indéfiniment. PHP_BINDIR, lui, reste valide
+     * sous les deux SAPI (CLI et apache2handler).
+     */
     private function dispatch(string $jobId): void
     {
-        $php = escapeshellarg(PHP_BINARY);
+        $php = escapeshellarg(PHP_BINARY !== '' ? PHP_BINARY : PHP_BINDIR . '/php');
         $script = escapeshellarg(__DIR__ . '/../../worker.php');
         $arg = escapeshellarg($jobId);
         exec("$php $script $arg > /dev/null 2>&1 &");

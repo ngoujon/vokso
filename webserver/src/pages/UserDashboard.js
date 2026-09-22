@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { apiRequest, useAuth } from '../AuthContext';
 import { config } from '../config';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import '../styles/globals.css';
 import '../styles/Dashboard.css';
+
+const PLAN_LABELS = {
+  decouverte: 'Découverte',
+  createur: 'Créateur',
+  studio: 'Studio',
+};
 
 function downloadFile(url, filename) {
   const link = document.createElement('a');
@@ -35,13 +41,32 @@ export default function UserDashboard() {
   const [podcasts, setPodcasts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [subscription, setSubscription] = useState(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const checkoutState = searchParams.get('checkout');
 
   useEffect(() => {
     apiRequest('user-podcasts')
       .then((data) => setPodcasts(data.data))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
+
+    apiRequest('billing-status')
+      .then((data) => setSubscription(data.subscription))
+      .catch(() => setSubscription(null));
   }, []);
+
+  const openBillingPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const data = await apiRequest('billing-portal', { method: 'POST' });
+      window.location.href = data.url;
+    } catch (e) {
+      setError(e.message);
+      setPortalLoading(false);
+    }
+  };
 
   return (
     <div className="container">
@@ -53,6 +78,34 @@ export default function UserDashboard() {
           <button onClick={logout}>Déconnexion</button>
         </div>
       </div>
+
+      {checkoutState === 'success' && (
+        <p className="dashboard-notice">Votre abonnement est actif, merci !</p>
+      )}
+      {checkoutState === 'cancel' && (
+        <p className="dashboard-notice">Paiement annulé, vous pouvez réessayer à tout moment.</p>
+      )}
+
+      <section>
+        <h2>Ma formule</h2>
+        {subscription ? (
+          <>
+            <p>
+              Formule actuelle : <strong>{PLAN_LABELS[subscription.plan] || subscription.plan}</strong>
+              {subscription.cancel_at_period_end && ' (résiliation programmée en fin de période)'}
+            </p>
+            {subscription.has_stripe_customer ? (
+              <button onClick={openBillingPortal} disabled={portalLoading}>
+                {portalLoading ? 'Redirection…' : 'Gérer mon abonnement'}
+              </button>
+            ) : (
+              <Link to="/tarifs" className="btn btn-primary">Passer à une formule supérieure</Link>
+            )}
+          </>
+        ) : (
+          <p>Chargement de votre formule...</p>
+        )}
+      </section>
 
       {loading && <p>Chargement de vos podcasts...</p>}
       {error && <p className="auth-error">{error}</p>}
