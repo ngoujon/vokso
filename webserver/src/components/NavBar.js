@@ -1,0 +1,40 @@
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
+
+export default function NavBar() {
+  const { user, logout } = useAuth();
+  const location = useLocation();
+
+  const isActive = (path) => location.pathname === path;
+
+  return (
+    <nav className="navbar">
+      <div className="navbar-inner">
+        <Link to="/" className="navbar-logo">
+          <span className="navbar-logo-mark" aria-hidden="true">
+            <i className="bi bi-soundwave"></i>
+          </span>
+          QwaiPod
+        </Link>
+        <div className="navbar-links">
+          <Link to="/" className={isActive('/') ? 'active' : ''}>Accueil</Link>
+          <Link to="/tarifs" className={isActive('/tarifs') ? 'active' : ''}>Tarifs</Link>
+          {user ? (
+            <>
+              <Link to={user.role === 'admin' ? '/admin' : '/dashboard'}>
+                {user.role === 'admin' ? 'Espace admin' : 'Mon espace'}
+              </Link>
+              <button onClick={logout}>Déconnexion</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login">Connexion</Link>
+              <Link to="/login" className="btn btn-primary">S'inscrire</Link>
+            </>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+}

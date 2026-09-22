@@ -1,6 +1,18 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
+import { AuthProvider } from '../AuthContext';
 import Home from './Home';
+
+function renderHome() {
+  return render(
+    <MemoryRouter>
+      <AuthProvider>
+        <Home />
+      </AuthProvider>
+    </MemoryRouter>
+  );
+}
 
 function mockListingFetch() {
   return jest.fn().mockResolvedValue({
@@ -18,30 +30,30 @@ afterEach(() => {
 });
 
 test('affiche le formulaire en mode texte par défaut', async () => {
-  render(<Home />);
+  renderHome();
   expect(screen.getByPlaceholderText('Tapez ici...')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Générer' })).toBeInTheDocument();
   await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 });
 
-test('bascule vers le mode fichier audio', async () => {
+test('bascule vers le mode message vocal', async () => {
   const user = userEvent.setup();
-  render(<Home />);
+  renderHome();
 
-  await user.click(screen.getByRole('button', { name: 'Fichier audio' }));
+  await user.click(screen.getByRole('button', { name: 'Message vocal' }));
 
   expect(screen.queryByPlaceholderText('Tapez ici...')).not.toBeInTheDocument();
-  expect(document.querySelector('input[type="file"]')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: "Parler au lieu d'écrire" })).toBeInTheDocument();
 });
 
-test('affiche une erreur si on soumet le mode audio sans fichier', async () => {
+test('affiche une erreur si on soumet le mode audio sans enregistrement', async () => {
   const user = userEvent.setup();
-  render(<Home />);
+  renderHome();
 
-  await user.click(screen.getByRole('button', { name: 'Fichier audio' }));
+  await user.click(screen.getByRole('button', { name: 'Message vocal' }));
   await user.click(screen.getByRole('button', { name: 'Générer' }));
 
-  expect(await screen.findByText('Merci de sélectionner un fichier audio.')).toBeInTheDocument();
+  expect(await screen.findByText('Merci d\'enregistrer un message vocal.')).toBeInTheDocument();
 });
 
 test('envoie le sujet saisi lors de la soumission du formulaire', async () => {
@@ -50,7 +62,7 @@ test('envoie le sujet saisi lors de la soumission du formulaire', async () => {
     .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, data: [] }) })
     .mockResolvedValueOnce({ ok: true, json: async () => ({ job_id: 'job-1' }) });
 
-  render(<Home />);
+  renderHome();
 
   const input = screen.getByPlaceholderText('Tapez ici...');
   await user.type(input, 'Un sujet de test');
@@ -72,7 +84,7 @@ test('recherche un podcast après un délai de saisie', async () => {
   const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true, data: [] }) });
 
-  render(<Home />);
+  renderHome();
   await waitFor(() => expect(global.fetch).toHaveBeenCalled());
   global.fetch.mockClear();
 
@@ -111,7 +123,7 @@ test('lit et met en pause l\'audio d\'une génération', async () => {
   window.HTMLMediaElement.prototype.pause = pauseMock;
 
   const user = userEvent.setup();
-  const { container } = render(<Home />);
+  const { container } = renderHome();
 
   await waitFor(() => expect(screen.getByText('Podcast test')).toBeInTheDocument());
 
@@ -140,7 +152,7 @@ test('affiche la progression de la génération pendant le sondage du statut', a
     return Promise.resolve({ ok: true, json: async () => ({ success: true, data: [] }) });
   });
 
-  render(<Home />);
+  renderHome();
   await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
   const input = screen.getByPlaceholderText('Tapez ici...');

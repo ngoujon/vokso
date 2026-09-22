@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import '../styles/globals.css';
 import '../styles/Dashboard.css';
 import { config } from '../config';
-import { useAuth } from '../AuthContext';
+import NavBar from '../components/NavBar';
+import Footer from '../components/Footer';
+import SovereigntySection from '../components/SovereigntySection';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import useJsonLd from '../hooks/useJsonLd';
@@ -19,7 +20,6 @@ export default function Home() {
     'QWAI Podcast — Générez et écoutez des podcasts',
     "QWAI Podcast permet de générer et d'écouter des épisodes de podcast à partir d'un sujet ou d'un texte."
   );
-  const { user, logout } = useAuth();
   const [subject, setSubject] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceMode, setSourceMode] = useState("text");
@@ -51,9 +51,8 @@ export default function Home() {
     queued: "En file d'attente...",
     transcription: "Transcription de l'audio...",
     text: "Génération du texte...",
-    image: "Génération de l'image...",
-    audio: "Génération de l'audio...",
-    category: "Classification...",
+    media: "Création de l'illustration et de la voix...",
+    finalizing: "Finalisation...",
     done: "Terminé",
   };
 
@@ -414,18 +413,11 @@ export default function Home() {
   });
 
   return (
-    <div className="container">
-      <div className="top-nav-auth">
-        {user ? (
-          <>
-            <Link to={user.role === 'admin' ? '/admin' : '/dashboard'}>
-              {user.role === 'admin' ? 'Espace admin' : 'Mon espace'}
-            </Link>
-            <button onClick={logout}>Déconnexion</button>
-          </>
-        ) : (
-          <Link to="/login">Se connecter</Link>
-        )}
+    <>
+      <NavBar />
+      <div className="container">
+      <div className="hero">
+        <span className="badge-sovereign"><i className="bi bi-shield-lock"></i> Hébergé en Europe</span>
       </div>
       <div className="form-container">
         <h1>Générer un podcast</h1>
@@ -611,9 +603,10 @@ export default function Home() {
           <p className="no-generations">Aucune génération disponible</p>
         )}
       </div>
-      <footer style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-        <Link to="/politique-de-confidentialite">Politique de confidentialité</Link>
-      </footer>
-    </div>
+
+      <SovereigntySection />
+      </div>
+      <Footer />
+    </>
   );
 } 
