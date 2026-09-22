@@ -1,0 +1,41 @@
+name: Déploiement production
+
+# Se déclenche une fois que le workflow CI est passé avec succès sur la
+# branche production (jamais avant : on ne déploie pas un build cassé).
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [production]
+
+jobs:
+  deploy:
+    name: Déploie sur le serveur de production
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Vérifie que les secrets de déploiement sont configurés
+        id: check
+        run: |
+          if [ -n "${{ secrets.DEPLOY_SSH_HOST }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Ignore le déploiement (secrets non configurés)
+        if: steps.check.outputs.configured == 'false'
+        run: |
+          echo "::notice::Secrets de déploiement (DEPLOY_SSH_HOST, DEPLOY_SSH_USER, DEPLOY_SSH_KEY, DEPLOY_PATH) non configurés dans les paramètres du dépôt — déploiement automatique ignoré. Voir docs/DEPLOIEMENT.md pour les activer une fois l'hébergement de production choisi."
+
+      - name: Déploie via SSH (exécute scripts/deploy.sh sur le serveur)
+        if: steps.check.outputs.configured == 'true'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+            ./scripts/deploy.sh
