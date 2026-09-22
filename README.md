@@ -1,10 +1,10 @@
-# QwaiPod - Générateur de Podcasts
+# Vokso - Générateur de Podcasts
 
 Une application web permettant de générer automatiquement des podcasts à partir de textes, en utilisant l'intelligence artificielle pour créer du contenu multimédia complet.
 
 ## Description
 
-QwaiPod est une application qui transforme du texte en podcasts complets, incluant :
+Vokso est une application qui transforme du texte en podcasts complets, incluant :
 - Un texte structuré en français
 - Une illustration générée par IA
 - Un fichier audio de synthèse vocale

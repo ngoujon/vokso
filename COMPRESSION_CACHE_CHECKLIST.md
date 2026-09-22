@@ -10,7 +10,7 @@
 - ✅ Images (SVG, PNG, WebP)
 - ✅ Exclusions : fichiers pré-compressés (GIF, JPG)
 
-**Fichier:** `apache-config/qwebty-podcast.conf`
+**Fichier:** `apache-config/vokso.conf`
 ```apache
 <IfModule mod_deflate.c>
     AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
@@ -34,7 +34,7 @@
 | Défaut | public | 24 heures | mod_headers/mod_expires |
 
 **Fichiers configurés:**
-1. `apache-config/qwebty-podcast.conf` (configuration principale)
+1. `apache-config/vokso.conf` (configuration principale)
 2. `webserver/site/.htaccess` (racine du site)
 3. `webserver/build/.htaccess` (application React)
 
@@ -56,12 +56,12 @@
 
 ```bash
 # Vérifier la compression
-curl -I -H "Accept-Encoding: gzip, deflate" https://qwaipod.fr/
+curl -I -H "Accept-Encoding: gzip, deflate" https://vokso.fr/
 
 # Vérifier les en-têtes de cache
-curl -I https://qwaipod.fr/index.html
-curl -I https://qwaipod.fr/app/index.html
-curl -I https://qwaipod.fr/static/image.webp
+curl -I https://vokso.fr/index.html
+curl -I https://vokso.fr/app/index.html
+curl -I https://vokso.fr/static/image.webp
 ```
 
 ### En-têtes attendus:

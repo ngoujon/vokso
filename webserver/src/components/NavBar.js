@@ -15,7 +15,7 @@ export default function NavBar() {
           <span className="navbar-logo-mark" aria-hidden="true">
             <i className="bi bi-soundwave"></i>
           </span>
-          QwaiPod
+          Vokso
         </Link>
         <div className="navbar-links">
           <Link to="/" className={isActive('/') ? 'active' : ''}>Accueil</Link>

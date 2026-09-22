@@ -30,7 +30,7 @@ export default function SovereigntySection() {
         <span className="badge-sovereign"><i className="bi bi-shield-lock"></i> Souverain par conception</span>
         <h2>Une IA de confiance, hébergée en Europe</h2>
         <p>
-          QwaiPod est pensé pour rester indépendant des grands acteurs non-européens du cloud et de l'IA :
+          Vokso est pensé pour rester indépendant des grands acteurs non-européens du cloud et de l'IA :
           hébergement européen, modèles ouverts et aucune revente de vos données.
         </p>
       </div>

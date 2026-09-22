@@ -17,8 +17,8 @@ if (!config.apiUrl || !config.staticUrl) {
 export default function Home() {
   useCanonical();
   useDocumentMeta(
-    'QWAI Podcast — Générez et écoutez des podcasts',
-    "QWAI Podcast permet de générer et d'écouter des épisodes de podcast à partir d'un sujet ou d'un texte."
+    'Vokso — Générez et écoutez des podcasts',
+    "Vokso permet de générer et d'écouter des épisodes de podcast à partir d'un sujet ou d'un texte."
   );
   const [subject, setSubject] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -386,7 +386,7 @@ export default function Home() {
     '@graph': [
       {
         '@type': 'WebSite',
-        name: 'QWAI Podcast',
+        name: 'Vokso',
         url: window.location.origin,
       },
       ...(generations.length > 0

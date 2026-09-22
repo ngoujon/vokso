@@ -11,8 +11,8 @@ import '../styles/Dashboard.css';
 export default function Login() {
   useCanonical();
   useDocumentMeta(
-    'Connexion — QWAI Podcast',
-    'Connectez-vous ou créez un compte QWAI Podcast pour générer et gérer vos épisodes.'
+    'Connexion — Vokso',
+    'Connectez-vous ou créez un compte Vokso pour générer et gérer vos épisodes.'
   );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

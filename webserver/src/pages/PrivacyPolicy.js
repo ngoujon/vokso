@@ -9,8 +9,8 @@ import useDocumentMeta from '../hooks/useDocumentMeta';
 export default function PrivacyPolicy() {
   useCanonical();
   useDocumentMeta(
-    'Politique de confidentialité — QWAI Podcast',
-    'Comment QWAI Podcast collecte et traite vos données personnelles : compte utilisateur, contenus générés par IA, newsletter.'
+    'Politique de confidentialité — Vokso',
+    'Comment Vokso collecte et traite vos données personnelles : compte utilisateur, contenus générés par IA, newsletter.'
   );
 
   return (
@@ -20,7 +20,7 @@ export default function PrivacyPolicy() {
       <p><Link to="/">&larr; Retour à l'accueil</Link></p>
       <h1>Politique de confidentialité</h1>
       <p>
-        Cette page explique quelles données personnelles QWAI Podcast collecte lorsque vous
+        Cette page explique quelles données personnelles Vokso collecte lorsque vous
         utilisez le site, pourquoi, et avec qui elles sont partagées.
       </p>
 
@@ -34,7 +34,7 @@ export default function PrivacyPolicy() {
       </ul>
 
       <h2>2. Services utilisés pour traiter vos données</h2>
-      <p>Pour fonctionner, QWAI Podcast fait appel aux prestataires suivants :</p>
+      <p>Pour fonctionner, Vokso fait appel aux prestataires suivants :</p>
       <ul>
         <li>
           <strong>Génération de texte et d'images</strong> : le sujet ou texte que vous fournissez est envoyé à
@@ -59,7 +59,7 @@ export default function PrivacyPolicy() {
       <p>
         Ces prestataires ne reçoivent que les données strictement nécessaires à l'exécution de la tâche demandée
         (le texte ou l'audio à traiter) et ne sont pas autorisés à les utiliser à d'autres fins que la fourniture
-        du service à QWAI Podcast.
+        du service à Vokso.
       </p>
 
       <h2>3. Pourquoi ces données sont traitées</h2>

@@ -28,8 +28,8 @@ function downloadText(title, text) {
 export default function UserDashboard() {
   useCanonical();
   useDocumentMeta(
-    'Mon espace — QWAI Podcast',
-    'Retrouvez et gérez vos épisodes de podcast générés sur QWAI.'
+    'Mon espace — Vokso',
+    'Retrouvez et gérez vos épisodes de podcast générés sur Vokso.'
   );
   const { user, logout } = useAuth();
   const [podcasts, setPodcasts] = useState([]);

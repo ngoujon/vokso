@@ -67,16 +67,16 @@ const FAQ = [
     a: 'Oui, vous pouvez passer à une formule supérieure ou inférieure depuis votre espace, sans engagement de durée.',
   },
   {
-    q: 'Le nom du produit va-t-il changer ?',
-    a: "QwaiPod est un nom de travail : le nom et le nom de domaine définitifs seront annoncés avant le lancement commercial.",
+    q: 'La formule Studio est-elle facturable à une entreprise ?',
+    a: "Oui, une facture avec TVA est disponible pour les formules Créateur et Studio depuis votre espace.",
   },
 ];
 
 export default function Pricing() {
   useCanonical();
   useDocumentMeta(
-    'Tarifs — QwaiPod',
-    'Découvrez les formules QwaiPod pour générer vos podcasts par IA, hébergés en Europe.'
+    'Tarifs — Vokso',
+    'Découvrez les formules Vokso pour générer vos podcasts par IA, hébergés en Europe.'
   );
 
   return (

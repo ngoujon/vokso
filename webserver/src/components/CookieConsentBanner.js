@@ -18,7 +18,7 @@ export default function CookieConsentBanner() {
   return (
     <div className="cookie-banner" role="dialog" aria-live="polite" aria-label="Consentement aux cookies">
       <p className="cookie-banner__text">
-        QWAI Podcast n'utilise aucun cookie de mesure d'audience ou de publicité pour l'instant.
+        Vokso n'utilise aucun cookie de mesure d'audience ou de publicité pour l'instant.
         Si ce type d'outil est ajouté un jour, il ne sera activé qu'avec votre accord.
         En savoir plus : <Link to="/politique-de-confidentialite">politique de confidentialité</Link>.
       </p>

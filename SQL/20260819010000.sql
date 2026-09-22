@@ -42,4 +42,4 @@ ALTER TABLE `generation_jobs`
 -- Compte admin de démarrage. Mot de passe temporaire "ChangeMoi123!" (hash
 -- bcrypt ci-dessous) : à changer dès la première connexion.
 INSERT IGNORE INTO `users` (`email`, `password_hash`, `role`, `status`)
-VALUES ('admin@qwaipod.fr', '*** empreinte supprimée : créer les comptes avec php artisan vokso:create-admin ***', 'admin', 'active');
+VALUES ('admin@vokso.fr', '*** empreinte supprimée : créer les comptes avec php artisan vokso:create-admin ***', 'admin', 'active');

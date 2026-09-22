@@ -6,9 +6,9 @@ use App\Utils\Logger;
 
 /**
  * Client SMTP minimal, sans authentification : suffisant pour parler à
- * MailHog en local (voir docker-compose.yml). Le nom de domaine définitif et
- * un vrai fournisseur SMTP (avec authentification) restent à choisir avant
- * la mise en production.
+ * MailHog en local (voir docker-compose.yml). Un vrai fournisseur SMTP (avec
+ * authentification) reste à choisir avant la mise en production sur
+ * vokso.fr.
  */
 class MailerService
 {
@@ -16,7 +16,7 @@ class MailerService
         private string $host,
         private int $port,
         private string $fromAddress,
-        private string $fromName = 'QwaiPod'
+        private string $fromName = 'Vokso'
     ) {
     }
 

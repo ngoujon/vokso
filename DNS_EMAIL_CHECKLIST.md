@@ -10,7 +10,7 @@ Le projet **envoie des emails** via la classe `MailerService` (newsletters, conf
 - Service: MailHog (via Docker)
 - Host: `mailhog`
 - Port: `1025`
-- From: `contact@qwaipod.local`
+- From: `contact@vokso.fr`
 
 ## À Implémenter avant Production
 
@@ -20,12 +20,12 @@ Le projet **envoie des emails** via la classe `MailerService` (newsletters, conf
 
 **Enregistrement DNS requis:**
 ```dns
-qwaipod.fr TXT "v=spf1 mx ~all"
+vokso.fr TXT "v=spf1 mx ~all"
 ```
 
 ou si SMTP provider externe (ex: SendGrid, Mailgun):
 ```dns
-qwaipod.fr TXT "v=spf1 include:sendgrid.net ~all"
+vokso.fr TXT "v=spf1 include:sendgrid.net ~all"
 ```
 
 **À choisir avant implémentation:**
@@ -38,7 +38,7 @@ qwaipod.fr TXT "v=spf1 include:sendgrid.net ~all"
 
 **Processus (simplifié):**
 1. Générer une paire de clés RSA (2048+ bits)
-2. Publier la clé publique en DNS: `default._domainkey.qwaipod.fr TXT "v=DKIM1; k=rsa; p=<public-key>"`
+2. Publier la clé publique en DNS: `default._domainkey.vokso.fr TXT "v=DKIM1; k=rsa; p=<public-key>"`
 3. Configurer le serveur SMTP pour signer les emails avec la clé privée
 
 **Fichier de configuration:**
@@ -51,7 +51,7 @@ qwaipod.fr TXT "v=spf1 include:sendgrid.net ~all"
 
 **Enregistrement DNS minimal:**
 ```dns
-_dmarc.qwaipod.fr TXT "v=DMARC1; p=none; rua=mailto:dmarc@qwaipod.fr"
+_dmarc.vokso.fr TXT "v=DMARC1; p=none; rua=mailto:dmarc@vokso.fr"
 ```
 
 **Recommandation progressive:**
@@ -85,7 +85,7 @@ _dmarc.qwaipod.fr TXT "v=DMARC1; p=none; rua=mailto:dmarc@qwaipod.fr"
 - [ ] Tester délivrabilité (outils: MXToolbox, mail-tester.com)
 
 ### Phase 3 (Post-lancement)
-- [ ] Monitorer rapports DMARC à `dmarc@qwaipod.fr`
+- [ ] Monitorer rapports DMARC à `dmarc@vokso.fr`
 - [ ] Progresser `p=none` → `p=quarantine` → `p=reject`
 - [ ] Mettre en place alertes sur délivrabilité
 
@@ -103,8 +103,8 @@ _dmarc.qwaipod.fr TXT "v=DMARC1; p=none; rua=mailto:dmarc@qwaipod.fr"
 - Rotation recommandée chaque 1-2 ans
 
 ⚠️ **Domaine de bounce:**
-- Considérer un sous-domaine pour bounces (ex: `bounce.qwaipod.fr`)
-- Évite polluer la boîte `contact@qwaipod.fr`
+- Considérer un sous-domaine pour bounces (ex: `bounce.vokso.fr`)
+- Évite polluer la boîte `contact@vokso.fr`
 
 ## Références
 

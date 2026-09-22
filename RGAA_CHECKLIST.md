@@ -2,7 +2,7 @@
 
 ## Constat
 
-QwaiPod est une application personnelle (générateur de podcasts par IA), éditée par un particulier. Ce n'est :
+Vokso est une application personnelle (générateur de podcasts par IA), éditée par un particulier. Ce n'est :
 - ni un organisme public (État, collectivité, établissement public, etc.),
 - ni une entreprise privée française dont le chiffre d'affaires dépasse 250 millions d'euros.
 

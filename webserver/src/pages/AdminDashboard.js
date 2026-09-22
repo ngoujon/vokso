@@ -261,8 +261,8 @@ function PodcastsSection() {
 export default function AdminDashboard() {
   useCanonical();
   useDocumentMeta(
-    'Administration — QWAI Podcast',
-    "Espace d'administration QWAI Podcast : gestion des utilisateurs et suivi de l'activité."
+    'Administration — Vokso',
+    "Espace d'administration Vokso : gestion des utilisateurs et suivi de l'activité."
   );
   const { user, logout } = useAuth();
 

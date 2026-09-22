@@ -68,12 +68,12 @@ class NewsletterController
         $mailer = new MailerService(
             $_ENV['SMTP_HOST'] ?? 'mailhog',
             (int) ($_ENV['SMTP_PORT'] ?? 1025),
-            $_ENV['MAIL_FROM'] ?? 'contact@qwaipod.local'
+            $_ENV['MAIL_FROM'] ?? 'contact@vokso.fr'
         );
         $mailer->send(
             $email,
-            'Bienvenue sur QwaiPod',
-            "Merci de votre inscription !\n\nVous serez prévenu par mail des nouveautés de QwaiPod (nouveaux modes, nouvelles voix).\n\nÀ bientôt,\nL'équipe QwaiPod"
+            'Bienvenue sur Vokso',
+            "Merci de votre inscription !\n\nVous serez prévenu par mail des nouveautés de Vokso (nouveaux modes, nouvelles voix).\n\nÀ bientôt,\nL'équipe Vokso"
         );
 
         echo json_encode(['message' => 'Inscription confirmée, vérifiez vos mails']);
