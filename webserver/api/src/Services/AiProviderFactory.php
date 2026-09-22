@@ -9,12 +9,14 @@ use Exception;
  *
  * Le texte peut passer par Mistral, OpenAI ou Ollama Cloud (API compatible
  * OpenAI). La transcription peut passer par Mistral (Voxtral), OpenAI ou
- * rester locale (Whisper self-hosted). L'image reste sur OpenAI : ni Ollama
- * Cloud ni l'API REST de Mistral n'exposent de génération d'image simple.
- * La synthèse vocale peut rester locale (TTS) ou passer par OpenAI.
+ * rester locale (Whisper self-hosted). La synthèse vocale peut rester locale
+ * (TTS) ou passer par Mistral/OpenAI. L'image passe par Mistral (agent doté
+ * de l'outil "image_generation" + API Conversations, pas de route REST
+ * unique comme chez OpenAI, voir MistralImageProvider) ou par OpenAI.
  *
  *   AI_TEXT_PROVIDER=mistral|openai|ollama
- *   AI_SPEECH_PROVIDER=openai|local
+ *   AI_IMAGE_PROVIDER=mistral|openai
+ *   AI_SPEECH_PROVIDER=mistral|openai|local
  *   AI_TRANSCRIPTION_PROVIDER=mistral|openai|whisper
  */
 class AiProviderFactory
@@ -39,7 +41,11 @@ class AiProviderFactory
 
     public function imageGenerator(): ImageGeneratorInterface
     {
-        return $this->instances['image'] ??= new OpenAiProvider($this->openAiConfig());
+        return $this->instances['image'] ??= match ($this->choice('AI_IMAGE_PROVIDER', 'mistral')) {
+            'mistral' => new MistralImageProvider($this->mistralImageConfig()),
+            'openai' => new OpenAiProvider($this->openAiConfig()),
+            default => throw new Exception('AI_IMAGE_PROVIDER invalide (attendu : mistral ou openai).'),
+        };
     }
 
     public function speechSynthesizer(): SpeechSynthesizerInterface
@@ -104,6 +110,22 @@ class AiProviderFactory
         ], fn ($value) => $value !== null);
     }
 
+    /**
+     * L'image Mistral passe par un agent doté de l'outil "image_generation" +
+     * l'API Conversations, pas par un endpoint REST direct (voir
+     * MistralImageProvider) : sa config n'a donc rien à voir avec celle du
+     * texte/de la transcription (image_model, pas de transcription_model...).
+     */
+    private function mistralImageConfig(): array
+    {
+        return array_filter([
+            'api_key' => $this->get('MISTRAL_API_KEY'),
+            'base_url' => $this->get('MISTRAL_BASE_URL'),
+            'image_model' => $this->get('MISTRAL_IMAGE_MODEL'),
+            'image_agent_id' => $this->get('MISTRAL_IMAGE_AGENT_ID'),
+        ], fn ($value) => $value !== null);
+    }
+
     /** Ollama Cloud expose une API de chat compatible OpenAI (texte uniquement). */
     private function ollamaConfig(): array
     {
@@ -114,10 +136,10 @@ class AiProviderFactory
         ], fn ($value) => $value !== null);
     }
 
-    /** Valeur d'environnement normalisée en minuscules, "openai" par défaut. */
-    private function choice(string $key): string
+    /** Valeur d'environnement normalisée en minuscules. */
+    private function choice(string $key, string $default = 'openai'): string
     {
-        return strtolower(trim((string) ($this->env[$key] ?? 'openai')));
+        return strtolower(trim((string) ($this->env[$key] ?? $default)));
     }
 
     private function get(string $key): ?string

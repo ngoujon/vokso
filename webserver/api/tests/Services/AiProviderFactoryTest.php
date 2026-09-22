@@ -3,6 +3,7 @@
 namespace Tests\Services;
 
 use App\Services\AiProviderFactory;
+use App\Services\MistralImageProvider;
 use App\Services\OpenAiProvider;
 use App\Services\OpenAiCompatibleSpeechProvider;
 use App\Services\WhisperTranscriptionProvider;
@@ -13,7 +14,10 @@ class AiProviderFactoryTest extends TestCase
 {
     private function factory(array $env): AiProviderFactory
     {
-        return new AiProviderFactory(array_merge(['OPENAI_API_KEY' => 'sk-test'], $env));
+        return new AiProviderFactory(array_merge(
+            ['OPENAI_API_KEY' => 'sk-test', 'MISTRAL_API_KEY' => 'mistral-test'],
+            $env
+        ));
     }
 
     public function testTextGeneratorDefaultsToOpenAi(): void
@@ -22,10 +26,23 @@ class AiProviderFactoryTest extends TestCase
         $this->assertInstanceOf(OpenAiProvider::class, $provider);
     }
 
-    public function testImageGeneratorUsesOpenAi(): void
+    public function testImageGeneratorDefaultsToMistral(): void
     {
         $provider = $this->factory([])->imageGenerator();
+        $this->assertInstanceOf(MistralImageProvider::class, $provider);
+    }
+
+    public function testImageGeneratorRoutesToOpenAi(): void
+    {
+        $provider = $this->factory(['AI_IMAGE_PROVIDER' => 'openai'])->imageGenerator();
         $this->assertInstanceOf(OpenAiProvider::class, $provider);
+    }
+
+    public function testImageGeneratorRejectsInvalidProvider(): void
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('AI_IMAGE_PROVIDER invalide');
+        $this->factory(['AI_IMAGE_PROVIDER' => 'bogus'])->imageGenerator();
     }
 
     public function testTextGeneratorRoutesToOllama(): void

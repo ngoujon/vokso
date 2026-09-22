@@ -82,7 +82,7 @@ class PodcastGenerator
 
             $imageFileName = $this->storeOutput('images', 'image_' . $this->getCurrentDateTime() . '.png', $imageContent);
             $this->convertImageToWebP($imageFileName);
-            $costImage = CostEstimator::imageCost($_ENV['OPENAI_IMAGE_MODEL'] ?? 'dall-e-3');
+            $costImage = CostEstimator::imageCost($this->imageModel());
 
             $audioFileName = $this->storeOutput(
                 'audios',
@@ -391,6 +391,19 @@ class PodcastGenerator
             'ollama' => (string) ($_ENV['OLLAMA_TEXT_MODEL'] ?? ''),
             'mistral' => (string) ($_ENV['MISTRAL_TEXT_MODEL'] ?? 'mistral-small-latest'),
             default => (string) ($_ENV['OPENAI_TEXT_MODEL'] ?? 'gpt-4o-mini'),
+        };
+    }
+
+    private function imageProvider(): string
+    {
+        return strtolower(trim((string) ($_ENV['AI_IMAGE_PROVIDER'] ?? 'mistral')));
+    }
+
+    private function imageModel(): string
+    {
+        return match ($this->imageProvider()) {
+            'openai' => (string) ($_ENV['OPENAI_IMAGE_MODEL'] ?? 'dall-e-3'),
+            default => (string) ($_ENV['MISTRAL_IMAGE_MODEL'] ?? 'mistral-medium-latest'),
         };
     }
 

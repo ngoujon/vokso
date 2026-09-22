@@ -26,6 +26,9 @@ class CostEstimator
     private const IMAGE_MODEL_PRICES = [
         'dall-e-3' => 0.040,
         'dall-e-2' => 0.020,
+        // 100 $ / 1000 images (tarif public Mistral, outil "image_generation").
+        'mistral-medium-latest' => 0.10,
+        'mistral-large-latest' => 0.10,
     ];
     private const DEFAULT_IMAGE_PRICE = 0.040;
 
