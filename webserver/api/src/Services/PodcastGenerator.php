@@ -18,6 +18,12 @@ class PodcastGenerator
 {
     private const MAX_INPUT_LENGTH = 300;
 
+    // DALL-E 3 refuse tout prompt au-delà de 4000 caractères, et un prompt
+    // trop long (texte intégral du podcast) noie le sujet visuel dans le
+    // récit : la vignette n'a besoin que d'un aperçu du texte, pas du script
+    // complet.
+    private const IMAGE_PROMPT_EXCERPT_LENGTH = 400;
+
     public function __construct(
         private PDO $db,
         private AiProviderFactory $ai,
@@ -238,7 +244,7 @@ class PodcastGenerator
      */
     private function generateImageAndAudio(string $generatedText): array
     {
-        $imagePrompt = str_replace('###REPLACE###', $generatedText, $this->getPrompt('image'));
+        $imagePrompt = str_replace('###REPLACE###', $this->imagePromptExcerpt($generatedText), $this->getPrompt('image'));
         $synthesizer = $this->ai->speechSynthesizer();
 
         $results = PromiseUtils::settle([
@@ -254,6 +260,23 @@ class PodcastGenerator
         }
 
         return [$results['image']['value'], $results['audio']['value'], $synthesizer->audioExtension()];
+    }
+
+    /** Aperçu du texte généré, coupé sur un mot entier, pour servir de base au prompt visuel. */
+    private function imagePromptExcerpt(string $generatedText): string
+    {
+        $excerpt = trim($generatedText);
+        if (mb_strlen($excerpt) <= self::IMAGE_PROMPT_EXCERPT_LENGTH) {
+            return $excerpt;
+        }
+
+        $truncated = mb_substr($excerpt, 0, self::IMAGE_PROMPT_EXCERPT_LENGTH);
+        $lastSpace = mb_strrpos($truncated, ' ');
+        if ($lastSpace !== false) {
+            $truncated = mb_substr($truncated, 0, $lastSpace);
+        }
+
+        return trim($truncated);
     }
 
     private function toException(mixed $reason): Exception
