@@ -11,11 +11,14 @@ namespace App\Utils;
  */
 class CostEstimator
 {
-    // $ pour 1 million de tokens (entrée / sortie), grille publique OpenAI.
+    // $ pour 1 million de tokens (entrée / sortie), grilles publiques OpenAI et Mistral.
     private const TEXT_MODEL_PRICES = [
         'gpt-4o-mini' => ['in' => 0.15, 'out' => 0.60],
         'gpt-4o' => ['in' => 2.50, 'out' => 10.00],
         'gpt-4.1-mini' => ['in' => 0.40, 'out' => 1.60],
+        'mistral-small-latest' => ['in' => 0.15, 'out' => 0.60],
+        'mistral-medium-latest' => ['in' => 1.50, 'out' => 7.50],
+        'mistral-large-latest' => ['in' => 0.50, 'out' => 1.50],
     ];
     private const DEFAULT_TEXT_PRICE = ['in' => 0.15, 'out' => 0.60];
 
@@ -30,15 +33,18 @@ class CostEstimator
     private const SPEECH_MODEL_PRICES = [
         'tts-1' => 15.00,
         'tts-1-hd' => 30.00,
+        // 0,016 $ / 1 000 caractères (tarif public Mistral, Voxtral TTS).
+        'voxtral-mini-tts-2603' => 16.00,
+        'voxtral-mini-tts-latest' => 16.00,
     ];
     private const DEFAULT_SPEECH_PRICE = 30.00;
 
     // Fournisseurs auto-hébergés (Ollama Cloud, TTS/Whisper locaux) : pas de
     // coût direct à l'appel (infra déjà payée), on ne compte que ce qui
-    // passe réellement par OpenAI.
+    // passe réellement par un fournisseur facturé à l'usage (OpenAI, Mistral).
     public static function textCost(string $provider, string $model, string $inputText, string $outputText): float
     {
-        if ($provider !== 'openai') {
+        if ($provider !== 'openai' && $provider !== 'mistral') {
             return 0.0;
         }
 
@@ -56,7 +62,7 @@ class CostEstimator
 
     public static function speechCost(string $provider, string $model, string $text): float
     {
-        if ($provider !== 'openai') {
+        if ($provider !== 'openai' && $provider !== 'mistral') {
             return 0.0;
         }
 

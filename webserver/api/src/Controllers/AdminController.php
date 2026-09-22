@@ -193,7 +193,7 @@ class AdminController
         $where = "g.statut = 'on'";
         $params = [];
         if ($search !== '') {
-            $where .= ' AND (g.text_content LIKE :search OR u.email LIKE :search)';
+            $where .= ' AND (g.title LIKE :search OR g.text_content LIKE :search OR u.email LIKE :search)';
             $params[':search'] = '%' . $search . '%';
         }
 
@@ -204,7 +204,7 @@ class AdminController
         $total = (int) $countStmt->fetchColumn();
 
         $stmt = $this->db->prepare(
-            "SELECT g.generation_id, g.text_content AS title, g.text_content AS description,
+            "SELECT g.generation_id, g.title, g.text_content AS description,
                     g.image_url, g.audio_url, g.created_at,
                     g.cost_text, g.cost_image, g.cost_audio, g.cost_total,
                     c.label AS category, u.email AS user_email

@@ -55,13 +55,13 @@ class PodcastGenerator
             $stmt->execute([':input' => $userInput, ':job_id' => $jobId]);
         }
 
-        // Le texte et la catégorie ne dépendent que du sujet d'entrée (pas l'un
-        // de l'autre) : les lancer en parallèle via des promesses Guzzle
-        // économise un aller-retour réseau complet par rapport à deux appels
-        // séquentiels.
+        // Le texte, la catégorie et le titre ne dépendent que du sujet
+        // d'entrée (pas l'un de l'autre) : les lancer en parallèle via des
+        // promesses Guzzle économise des allers-retours réseau par rapport à
+        // des appels séquentiels.
         $this->updateJob($jobId, 'processing', 'text', 10);
         try {
-            [$generatedText, $categoryKeyword] = $this->generateTextAndCategory($userInput);
+            [$generatedText, $categoryKeyword, $title] = $this->generateTextCategoryAndTitle($userInput);
             $this->storeOutput('responses', 'response_' . $this->getCurrentDateTime() . '.txt', $generatedText);
             $costText = CostEstimator::textCost(
                 $this->textProvider(),
@@ -99,7 +99,7 @@ class PodcastGenerator
         $idcategorie = $this->saveOrGetCategory($categoryKeyword);
 
         $generationId = $this->saveGeneration(
-            $userInput,
+            $title,
             $generatedText,
             $imageFileName,
             $audioFileName,
@@ -179,13 +179,14 @@ class PodcastGenerator
     }
 
     /**
-     * Lance en parallèle la génération du texte principal et celle de la
-     * catégorie (deux appels indépendants au même modèle de texte, tous deux
-     * fonction du seul sujet d'entrée) et attend les deux résultats.
+     * Lance en parallèle la génération du texte principal, celle de la
+     * catégorie et celle du titre (trois appels indépendants au même modèle
+     * de texte, tous fonction du seul sujet d'entrée) et attend les trois
+     * résultats.
      *
-     * @return array{0: string, 1: string} [texte généré, mot-clé de catégorie]
+     * @return array{0: string, 1: string, 2: string} [texte généré, mot-clé de catégorie, titre]
      */
-    private function generateTextAndCategory(string $userInput): array
+    private function generateTextCategoryAndTitle(string $userInput): array
     {
         $textPrompt = $this->getPrompt('texte');
         if ($textPrompt === '') {
@@ -202,6 +203,11 @@ class PodcastGenerator
             throw new Exception('Le prompt de type "keyword" est introuvable dans la base de données.');
         }
 
+        $titlePrompt = $this->getPrompt('titre');
+        if ($titlePrompt === '') {
+            throw new Exception('Le prompt de type "titre" est introuvable dans la base de données.');
+        }
+
         $generator = $this->ai->textGenerator();
         $results = PromiseUtils::settle([
             'text' => $generator->generateTextAsync(
@@ -212,6 +218,10 @@ class PodcastGenerator
                 'Répondez avec un seul mot décrivant la catégorie d\'activité ou le domaine correspondant au sujet donné.',
                 str_replace('###REPLACE###', $userInput, $keywordPrompt)
             ),
+            'title' => $generator->generateTextAsync(
+                $injectionPrompt,
+                str_replace('###REPLACE###', $userInput, $titlePrompt)
+            ),
         ])->wait();
 
         if ($results['text']['state'] !== 'fulfilled') {
@@ -220,8 +230,29 @@ class PodcastGenerator
         if ($results['category']['state'] !== 'fulfilled') {
             throw $this->toException($results['category']['reason']);
         }
+        if ($results['title']['state'] !== 'fulfilled') {
+            throw $this->toException($results['title']['reason']);
+        }
 
-        return [$results['text']['value'], $this->sanitizeCategory($results['category']['value'])];
+        return [
+            $results['text']['value'],
+            $this->sanitizeCategory($results['category']['value']),
+            $this->sanitizeTitle($results['title']['value'], $userInput),
+        ];
+    }
+
+    /** Titre nettoyé (une ligne, sans guillemets, borné) ; retombe sur le sujet brut si le modèle ne renvoie rien d'exploitable. */
+    private function sanitizeTitle(string $rawTitle, string $fallback): string
+    {
+        $title = trim($rawTitle, " \t\n\r\0\x0B\"'“”«»");
+        $title = preg_replace('/\s+/', ' ', $title);
+        $title = trim($title);
+
+        if ($title === '') {
+            $title = $fallback;
+        }
+
+        return mb_substr($title, 0, 255);
     }
 
     private function sanitizeCategory(string $rawCategory): string
@@ -299,25 +330,25 @@ class PodcastGenerator
         return $fileName;
     }
 
-    private function saveOrGetCategory(string $categoryKeyword)
+    private function saveOrGetCategory(string $categoryLabel)
     {
-        $stmt = $this->db->prepare('SELECT idcategorie FROM categorie WHERE keyword = :keyword');
-        $stmt->execute([':keyword' => $categoryKeyword]);
+        $stmt = $this->db->prepare('SELECT idcategorie FROM categorie WHERE label = :label');
+        $stmt->execute([':label' => $categoryLabel]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($row) {
             return $row['idcategorie'];
         }
 
-        $stmt = $this->db->prepare('INSERT INTO categorie (keyword) VALUES (:keyword)');
-        $stmt->execute([':keyword' => $categoryKeyword]);
+        $stmt = $this->db->prepare('INSERT INTO categorie (label) VALUES (:label)');
+        $stmt->execute([':label' => $categoryLabel]);
 
         return $this->db->lastInsertId();
     }
 
     private function saveGeneration(
         $title,
-        $description,
+        $textContent,
         $imageUrl,
         $audioUrl,
         $idcategorie,
@@ -329,14 +360,14 @@ class PodcastGenerator
         $generationId = 'gen_' . uniqid();
         $stmt = $this->db->prepare(
             'INSERT INTO generations
-                (generation_id, title, description, image_url, audio_url, idcategorie, user_id, cost_text, cost_image, cost_audio, cost_total)
+                (generation_id, title, text_content, image_url, audio_url, idcategorie, user_id, cost_text, cost_image, cost_audio, cost_total)
              VALUES
-                (:generation_id, :title, :description, :image_url, :audio_url, :idcategorie, :user_id, :cost_text, :cost_image, :cost_audio, :cost_total)'
+                (:generation_id, :title, :text_content, :image_url, :audio_url, :idcategorie, :user_id, :cost_text, :cost_image, :cost_audio, :cost_total)'
         );
         $stmt->execute([
             ':generation_id' => $generationId,
             ':title' => $title,
-            ':description' => $description,
+            ':text_content' => $textContent,
             ':image_url' => $imageUrl,
             ':audio_url' => $audioUrl,
             ':idcategorie' => $idcategorie,
@@ -356,9 +387,11 @@ class PodcastGenerator
 
     private function textModel(): string
     {
-        return $this->textProvider() === 'ollama'
-            ? (string) ($_ENV['OLLAMA_TEXT_MODEL'] ?? '')
-            : (string) ($_ENV['OPENAI_TEXT_MODEL'] ?? 'gpt-4o-mini');
+        return match ($this->textProvider()) {
+            'ollama' => (string) ($_ENV['OLLAMA_TEXT_MODEL'] ?? ''),
+            'mistral' => (string) ($_ENV['MISTRAL_TEXT_MODEL'] ?? 'mistral-small-latest'),
+            default => (string) ($_ENV['OPENAI_TEXT_MODEL'] ?? 'gpt-4o-mini'),
+        };
     }
 
     private function speechProvider(): string
@@ -368,7 +401,11 @@ class PodcastGenerator
 
     private function speechModel(): string
     {
-        return (string) ($_ENV['OPENAI_SPEECH_MODEL'] ?? 'tts-1-hd');
+        return match ($this->speechProvider()) {
+            'mistral' => (string) ($_ENV['MISTRAL_SPEECH_MODEL'] ?? 'voxtral-mini-tts-latest'),
+            'local' => (string) ($_ENV['TTS_MODEL'] ?? ''),
+            default => (string) ($_ENV['OPENAI_SPEECH_MODEL'] ?? 'tts-1-hd'),
+        };
     }
 
     private function getPrompt(string $type): string

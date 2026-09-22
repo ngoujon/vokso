@@ -7,15 +7,15 @@ use Exception;
 /**
  * Construit les fournisseurs d'IA à partir des variables d'environnement.
  *
- * Le texte peut passer par OpenAI ou par Ollama Cloud (API compatible
- * OpenAI). L'image reste sur OpenAI : Ollama Cloud n'expose aucun modèle de
- * génération d'image. La synthèse vocale et la transcription peuvent rester
- * locales (TTS + Whisper), Whisper servant à transcrire la voix de
- * l'utilisateur pour remplacer la saisie au clavier.
+ * Le texte peut passer par Mistral, OpenAI ou Ollama Cloud (API compatible
+ * OpenAI). La transcription peut passer par Mistral (Voxtral), OpenAI ou
+ * rester locale (Whisper self-hosted). L'image reste sur OpenAI : ni Ollama
+ * Cloud ni l'API REST de Mistral n'exposent de génération d'image simple.
+ * La synthèse vocale peut rester locale (TTS) ou passer par OpenAI.
  *
- *   AI_TEXT_PROVIDER=openai|ollama
+ *   AI_TEXT_PROVIDER=mistral|openai|ollama
  *   AI_SPEECH_PROVIDER=openai|local
- *   AI_TRANSCRIPTION_PROVIDER=openai|whisper
+ *   AI_TRANSCRIPTION_PROVIDER=mistral|openai|whisper
  */
 class AiProviderFactory
 {
@@ -30,9 +30,10 @@ class AiProviderFactory
     public function textGenerator(): TextGeneratorInterface
     {
         return $this->instances['text'] ??= match ($this->choice('AI_TEXT_PROVIDER')) {
+            'mistral' => new OpenAiProvider($this->mistralConfig()),
             'ollama' => new OpenAiProvider($this->ollamaConfig()),
             'openai' => new OpenAiProvider($this->openAiConfig()),
-            default => throw new Exception('AI_TEXT_PROVIDER invalide (attendu : openai ou ollama).'),
+            default => throw new Exception('AI_TEXT_PROVIDER invalide (attendu : mistral, openai ou ollama).'),
         };
     }
 
@@ -50,8 +51,9 @@ class AiProviderFactory
                 'voice' => $this->get('TTS_VOICE'),
                 'format' => $this->get('TTS_FORMAT'),
             ]),
+            'mistral' => new OpenAiProvider($this->mistralConfig()),
             'openai' => new OpenAiProvider($this->openAiConfig()),
-            default => throw new Exception('AI_SPEECH_PROVIDER invalide (attendu : openai ou local).'),
+            default => throw new Exception('AI_SPEECH_PROVIDER invalide (attendu : mistral, openai ou local).'),
         };
     }
 
@@ -63,8 +65,9 @@ class AiProviderFactory
                 'model' => $this->get('WHISPER_MODEL'),
                 'language' => $this->get('WHISPER_LANGUAGE'),
             ]),
+            'mistral' => new OpenAiProvider($this->mistralConfig()),
             'openai' => new OpenAiProvider($this->openAiConfig()),
-            default => throw new Exception('AI_TRANSCRIPTION_PROVIDER invalide (attendu : openai ou whisper).'),
+            default => throw new Exception('AI_TRANSCRIPTION_PROVIDER invalide (attendu : mistral, openai ou whisper).'),
         };
     }
 
@@ -77,6 +80,27 @@ class AiProviderFactory
             'image_model' => $this->get('OPENAI_IMAGE_MODEL'),
             'speech_model' => $this->get('OPENAI_SPEECH_MODEL'),
             'transcription_model' => $this->get('OPENAI_TRANSCRIPTION_MODEL'),
+        ], fn ($value) => $value !== null);
+    }
+
+    /**
+     * L'API Mistral (chat completions + transcription Voxtral) est
+     * compatible avec le format OpenAI : même client, seule la config change.
+     */
+    private function mistralConfig(): array
+    {
+        return array_filter([
+            'api_key' => $this->get('MISTRAL_API_KEY'),
+            'base_url' => $this->get('MISTRAL_BASE_URL'),
+            'text_model' => $this->get('MISTRAL_TEXT_MODEL'),
+            'transcription_model' => $this->get('MISTRAL_TRANSCRIPTION_MODEL'),
+            'speech_model' => $this->get('MISTRAL_SPEECH_MODEL'),
+            'speech_voice' => $this->get('MISTRAL_SPEECH_VOICE'),
+            // Contrairement à /v1/audio/speech d'OpenAI (audio brut en corps
+            // de réponse), celui de Mistral renvoie du JSON avec l'audio en
+            // base64 dans "audio_data" (vérifié par un appel réel le
+            // 22/09/2026, voir mémoire ai-provider-mistral-migration).
+            'speech_response_format' => 'json_base64',
         ], fn ($value) => $value !== null);
     }
 

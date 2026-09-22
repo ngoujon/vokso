@@ -5,6 +5,7 @@ import { config } from '../config';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import SovereigntySection from '../components/SovereigntySection';
+import { ReactComponent as VoksoMark } from '../assets/vokso-mark.svg';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import useJsonLd from '../hooks/useJsonLd';
@@ -36,6 +37,7 @@ export default function Home() {
   const [totalDurations, setTotalDurations] = useState([]);
   const [tooltipVisible, setTooltipVisible] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [expandedTextIndex, setExpandedTextIndex] = useState(null);
   
   // Références pour le cache et le debounce
   const cacheRef = useRef(new Map());
@@ -417,6 +419,9 @@ export default function Home() {
       <NavBar />
       <div className="container">
       <div className="hero">
+        <span className="hero-logo" aria-hidden="true">
+          <VoksoMark />
+        </span>
         <span className="badge-sovereign"><i className="bi bi-shield-lock"></i> Hébergé en Europe</span>
       </div>
       <div className="form-container">
@@ -480,7 +485,12 @@ export default function Home() {
 
         {loading && (
           <div className="job-progress">
-            <div className="loader"></div>
+            <div className="vokso-loader" role="status" aria-label="Génération en cours">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
             {jobProgress && (
               <>
                 <p className="job-progress-label">{STEP_LABELS[jobProgress.step] || "Traitement en cours..."}</p>
@@ -531,10 +541,29 @@ export default function Home() {
                   />
                 </div>
                 <div className="generation-info">
+                  {gen.category && (
+                    <span className="generation-category">{gen.category}</span>
+                  )}
                   <h3>{gen.title || 'Sans titre'}</h3>
                   <p className="generation-date">
                     {formatDate(gen.created_at)}
                   </p>
+                  {gen.description && (
+                    <>
+                      <button
+                        type="button"
+                        className="generation-text-toggle"
+                        onClick={() =>
+                          setExpandedTextIndex(expandedTextIndex === index ? null : index)
+                        }
+                      >
+                        {expandedTextIndex === index ? 'Masquer le texte' : 'Lire le texte'}
+                      </button>
+                      {expandedTextIndex === index && (
+                        <p className="generation-full-text">{gen.description}</p>
+                      )}
+                    </>
+                  )}
                 </div>
                 <div className="audio-player">
                   <audio

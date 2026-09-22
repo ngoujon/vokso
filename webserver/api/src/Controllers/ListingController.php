@@ -36,7 +36,12 @@ class ListingController
     public function getLastPodcasts()
     {
         // Récupérer les 3 derniers podcasts générés
-        $query = 'SELECT generation_id as id, text_content as title, image_url, audio_url, created_at FROM generations WHERE statut = "on" ORDER BY created_at DESC LIMIT 3';
+        $query = 'SELECT g.generation_id as id, g.title, g.text_content as description,
+                         g.image_url, g.audio_url, g.created_at, c.label as category
+                  FROM generations g
+                  LEFT JOIN categorie c ON c.idcategorie = g.idcategorie
+                  WHERE g.statut = "on"
+                  ORDER BY g.created_at DESC LIMIT 3';
         $stmt = $this->pdo->query($query);
         $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 

@@ -118,7 +118,12 @@ a {
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 1rem;
+  flex: none;
+}
+
+.navbar-logo-mark svg {
+  width: 62%;
+  height: 62%;
 }
 
 .navbar-links {
@@ -213,6 +218,24 @@ a {
 .hero {
   padding: 2.5rem 0 1rem;
   text-align: center;
+}
+
+.hero-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.25rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  color: #fff;
+  box-shadow: 0 12px 24px -8px var(--glow-color);
+}
+
+.hero-logo svg {
+  width: 60%;
+  height: 60%;
 }
 
 .hero h1 {
@@ -412,14 +435,31 @@ h1 {
 }
 
 /* Loader */
-.loader {
-  border: 3px solid var(--input-border);
-  border-top: 3px solid var(--primary-color);
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  animation: spin 1s linear infinite;
+.vokso-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
   margin: 1rem auto;
+}
+
+.vokso-loader span {
+  width: 6px;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background-color: var(--primary-color);
+  animation: vokso-loader-pulse 1s ease-in-out infinite;
+}
+
+.vokso-loader span:nth-child(1) { animation-delay: -0.36s; }
+.vokso-loader span:nth-child(2) { animation-delay: -0.24s; }
+.vokso-loader span:nth-child(3) { animation-delay: -0.12s; }
+.vokso-loader span:nth-child(4) { animation-delay: 0s; }
+
+@keyframes vokso-loader-pulse {
+  0%, 100% { transform: scaleY(0.3); opacity: 0.5; }
+  50% { transform: scaleY(1); opacity: 1; }
 }
 
 .job-progress {
@@ -433,11 +473,6 @@ h1 {
   font-size: 0.9rem;
   color: var(--text-secondary, #666);
   margin: 0.25rem 0 0.5rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
 
 /* Messages */
@@ -533,6 +568,44 @@ h2 {
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin: 0;
+}
+
+.generation-category {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-pill);
+  background-color: color-mix(in srgb, var(--primary-color) 14%, transparent);
+  color: var(--primary-color);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin: 0 0 0.35rem 0;
+}
+
+.generation-text-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  cursor: pointer;
+  text-align: left;
+}
+
+.generation-text-toggle:hover {
+  text-decoration: underline;
+}
+
+.generation-full-text {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0.35rem 0 0 0;
+  white-space: pre-line;
 }
 
 .audio-player {

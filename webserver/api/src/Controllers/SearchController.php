@@ -47,10 +47,12 @@ class SearchController
 
         try {
             // Préparer et exécuter la requête SQL
-            $query = 'SELECT generation_id as id, text_content as title, image_url, audio_url, created_at
-                      FROM generations
-                      WHERE text_content LIKE :searchQuery AND statut = "on"
-                      ORDER BY created_at DESC';
+            $query = 'SELECT g.generation_id as id, g.title, g.text_content as description,
+                             g.image_url, g.audio_url, g.created_at, c.label as category
+                      FROM generations g
+                      LEFT JOIN categorie c ON c.idcategorie = g.idcategorie
+                      WHERE (g.title LIKE :searchQuery OR g.text_content LIKE :searchQuery) AND g.statut = "on"
+                      ORDER BY g.created_at DESC';
 
             $stmt = $this->pdo->prepare($query);
             $stmt->execute(['searchQuery' => '%' . $searchQuery . '%']);

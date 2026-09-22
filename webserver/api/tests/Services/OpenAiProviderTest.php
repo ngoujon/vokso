@@ -72,6 +72,38 @@ class OpenAiProviderTest extends TestCase
         $this->assertSame('binary-audio', $result);
     }
 
+    public function testSynthesizeAsyncDecodesJsonBase64PayloadForMistral(): void
+    {
+        $handlerStack = HandlerStack::create(new MockHandler([
+            new Response(200, [], json_encode(['audio_data' => base64_encode('binary-audio')])),
+        ]));
+        $provider = new OpenAiProvider([
+            'api_key' => 'sk-test',
+            'handler' => $handlerStack,
+            'speech_response_format' => 'json_base64',
+        ]);
+
+        $result = $provider->synthesizeAsync('un texte')->wait();
+
+        $this->assertSame('binary-audio', $result);
+    }
+
+    public function testSynthesizeAsyncRejectsWhenJsonBase64PayloadIsMissingAudioData(): void
+    {
+        $handlerStack = HandlerStack::create(new MockHandler([
+            new Response(200, [], json_encode(['object' => 'error'])),
+        ]));
+        $provider = new OpenAiProvider([
+            'api_key' => 'sk-test',
+            'handler' => $handlerStack,
+            'speech_response_format' => 'json_base64',
+        ]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('audio_data');
+        $provider->synthesizeAsync('un texte')->wait();
+    }
+
     public function testTextAndCategoryPromisesRunConcurrentlyAndBothSettle(): void
     {
         $provider = $this->providerWithMockedResponses([

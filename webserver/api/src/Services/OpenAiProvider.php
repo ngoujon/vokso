@@ -19,6 +19,8 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
     private string $imageModel;
     private string $imageSize;
     private string $speechModel;
+    private string $speechVoice;
+    private string $speechResponseFormat;
     private string $transcriptionModel;
 
     public function __construct(array $config)
@@ -33,6 +35,8 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
         $this->imageModel = (string) ($config['image_model'] ?? 'dall-e-3');
         $this->imageSize = (string) ($config['image_size'] ?? '1024x1024');
         $this->speechModel = (string) ($config['speech_model'] ?? 'tts-1-hd');
+        $this->speechVoice = (string) ($config['speech_voice'] ?? '');
+        $this->speechResponseFormat = (string) ($config['speech_response_format'] ?? 'binary');
         $this->transcriptionModel = (string) ($config['transcription_model'] ?? 'whisper-1');
 
         $clientConfig = [
@@ -135,41 +139,73 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
 
     public function synthesize(string $text): string
     {
-        $voice = rand(0, 1) ? 'nova' : 'onyx';
-
         try {
             $response = $this->client->post($this->baseUrl . '/audio/speech', [
-                'json' => [
-                    'model' => $this->speechModel,
-                    'voice' => $voice,
-                    'input' => $text,
-                    'speed' => 1,
-                ],
+                'json' => $this->speechPayload($text),
             ]);
         } catch (Exception $e) {
             throw new Exception('Échec de la synthèse vocale OpenAI : ' . $e->getMessage());
         }
 
-        return (string) $response->getBody();
+        return $this->decodeSpeechResponse((string) $response->getBody());
     }
 
     public function synthesizeAsync(string $text): PromiseInterface
     {
-        $voice = rand(0, 1) ? 'nova' : 'onyx';
-
         return $this->client->requestAsync('POST', $this->baseUrl . '/audio/speech', [
-            'json' => [
-                'model' => $this->speechModel,
-                'voice' => $voice,
-                'input' => $text,
-                'speed' => 1,
-            ],
+            'json' => $this->speechPayload($text),
         ])->then(
-            fn ($response) => (string) $response->getBody(),
+            fn ($response) => $this->decodeSpeechResponse((string) $response->getBody()),
             function ($reason) {
                 throw new Exception('Échec de la synthèse vocale OpenAI : ' . $reason->getMessage());
             }
         );
+    }
+
+    /**
+     * Le paramètre "speed" est accepté par OpenAI mais rejeté (422
+     * "extra_forbidden") par l'API Mistral (Voxtral TTS) — vérifié par un
+     * appel réel le 22/09/2026 — d'où son omission pour tout ce qui n'est
+     * pas la forme binaire "à la OpenAI" de la réponse.
+     */
+    private function speechPayload(string $text): array
+    {
+        $payload = [
+            'model' => $this->speechModel,
+            'voice' => $this->speechVoice !== '' ? $this->speechVoice : 'nova',
+            'input' => $text,
+        ];
+
+        if ($this->speechResponseFormat !== 'json_base64') {
+            $payload['speed'] = 1;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * OpenAI renvoie l'audio brut dans le corps de la réponse. L'API Mistral
+     * (Voxtral TTS) renvoie elle du JSON avec l'audio encodé en base64 dans
+     * le champ "audio_data" — c'est la seule vraie différence de forme entre
+     * les deux, malgré un endpoint et des paramètres par ailleurs identiques.
+     */
+    private function decodeSpeechResponse(string $body): string
+    {
+        if ($this->speechResponseFormat !== 'json_base64') {
+            return $body;
+        }
+
+        $data = json_decode($body, true);
+        if (!isset($data['audio_data']) || !is_string($data['audio_data'])) {
+            throw new Exception('Réponse de synthèse vocale inattendue (champ "audio_data" absent).');
+        }
+
+        $binary = base64_decode($data['audio_data'], true);
+        if ($binary === false) {
+            throw new Exception('Audio de synthèse vocale illisible (base64 invalide).');
+        }
+
+        return $binary;
     }
 
     public function audioExtension(): string
