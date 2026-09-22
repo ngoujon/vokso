@@ -7,17 +7,19 @@ use Exception;
 /**
  * Construit les fournisseurs d'IA à partir des variables d'environnement.
  *
- * Le texte peut passer par Mistral, OpenAI ou Ollama Cloud (API compatible
- * OpenAI). La transcription peut passer par Mistral (Voxtral), OpenAI ou
- * rester locale (Whisper self-hosted). La synthèse vocale peut rester locale
- * (TTS) ou passer par Mistral/OpenAI. L'image passe par Mistral (agent doté
- * de l'outil "image_generation" + API Conversations, pas de route REST
- * unique comme chez OpenAI, voir MistralImageProvider) ou par OpenAI.
+ * OpenAI n'est plus utilisé (décision produit) : le texte passe par Mistral
+ * ou Ollama Cloud (API compatible OpenAI), la transcription par Mistral
+ * (Voxtral) ou reste locale (Whisper self-hosted), la synthèse vocale reste
+ * locale (TTS) ou passe par Mistral, et l'image passe par Mistral (agent
+ * doté de l'outil "image_generation" + API Conversations, pas de route REST
+ * unique comme chez OpenAI, voir MistralImageProvider). "openai" n'est donc
+ * plus une valeur valide pour ces réglages : un réglage manquant tombe sur
+ * Mistral par défaut (jamais sur un fournisseur nécessitant une clé absente).
  *
- *   AI_TEXT_PROVIDER=mistral|openai|ollama
- *   AI_IMAGE_PROVIDER=mistral|openai
- *   AI_SPEECH_PROVIDER=mistral|openai|local
- *   AI_TRANSCRIPTION_PROVIDER=mistral|openai|whisper
+ *   AI_TEXT_PROVIDER=mistral|ollama
+ *   AI_IMAGE_PROVIDER=mistral
+ *   AI_SPEECH_PROVIDER=mistral|local
+ *   AI_TRANSCRIPTION_PROVIDER=mistral|whisper
  */
 class AiProviderFactory
 {
@@ -34,17 +36,15 @@ class AiProviderFactory
         return $this->instances['text'] ??= match ($this->choice('AI_TEXT_PROVIDER')) {
             'mistral' => new OpenAiProvider($this->mistralConfig()),
             'ollama' => new OpenAiProvider($this->ollamaConfig()),
-            'openai' => new OpenAiProvider($this->openAiConfig()),
-            default => throw new Exception('AI_TEXT_PROVIDER invalide (attendu : mistral, openai ou ollama).'),
+            default => throw new Exception('AI_TEXT_PROVIDER invalide (attendu : mistral ou ollama).'),
         };
     }
 
     public function imageGenerator(): ImageGeneratorInterface
     {
-        return $this->instances['image'] ??= match ($this->choice('AI_IMAGE_PROVIDER', 'mistral')) {
+        return $this->instances['image'] ??= match ($this->choice('AI_IMAGE_PROVIDER')) {
             'mistral' => new MistralImageProvider($this->mistralImageConfig()),
-            'openai' => new OpenAiProvider($this->openAiConfig()),
-            default => throw new Exception('AI_IMAGE_PROVIDER invalide (attendu : mistral ou openai).'),
+            default => throw new Exception('AI_IMAGE_PROVIDER invalide (attendu : mistral).'),
         };
     }
 
@@ -58,8 +58,7 @@ class AiProviderFactory
                 'format' => $this->get('TTS_FORMAT'),
             ]),
             'mistral' => new OpenAiProvider($this->mistralConfig()),
-            'openai' => new OpenAiProvider($this->openAiConfig()),
-            default => throw new Exception('AI_SPEECH_PROVIDER invalide (attendu : mistral, openai ou local).'),
+            default => throw new Exception('AI_SPEECH_PROVIDER invalide (attendu : mistral ou local).'),
         };
     }
 
@@ -72,21 +71,8 @@ class AiProviderFactory
                 'language' => $this->get('WHISPER_LANGUAGE'),
             ]),
             'mistral' => new OpenAiProvider($this->mistralConfig()),
-            'openai' => new OpenAiProvider($this->openAiConfig()),
-            default => throw new Exception('AI_TRANSCRIPTION_PROVIDER invalide (attendu : mistral, openai ou whisper).'),
+            default => throw new Exception('AI_TRANSCRIPTION_PROVIDER invalide (attendu : mistral ou whisper).'),
         };
-    }
-
-    private function openAiConfig(): array
-    {
-        return array_filter([
-            'api_key' => $this->get('OPENAI_API_KEY'),
-            'base_url' => $this->get('OPENAI_BASE_URL'),
-            'text_model' => $this->get('OPENAI_TEXT_MODEL'),
-            'image_model' => $this->get('OPENAI_IMAGE_MODEL'),
-            'speech_model' => $this->get('OPENAI_SPEECH_MODEL'),
-            'transcription_model' => $this->get('OPENAI_TRANSCRIPTION_MODEL'),
-        ], fn ($value) => $value !== null);
     }
 
     /**
@@ -107,6 +93,7 @@ class AiProviderFactory
             // base64 dans "audio_data" (vérifié par un appel réel le
             // 22/09/2026, voir mémoire ai-provider-mistral-migration).
             'speech_response_format' => 'json_base64',
+            'api_key_env' => 'MISTRAL_API_KEY',
         ], fn ($value) => $value !== null);
     }
 
@@ -133,11 +120,12 @@ class AiProviderFactory
             'api_key' => $this->get('OLLAMA_API_KEY'),
             'base_url' => $this->get('OLLAMA_BASE_URL'),
             'text_model' => $this->get('OLLAMA_TEXT_MODEL'),
+            'api_key_env' => 'OLLAMA_API_KEY',
         ], fn ($value) => $value !== null);
     }
 
     /** Valeur d'environnement normalisée en minuscules. */
-    private function choice(string $key, string $default = 'openai'): string
+    private function choice(string $key, string $default = 'mistral'): string
     {
         return strtolower(trim((string) ($this->env[$key] ?? $default)));
     }

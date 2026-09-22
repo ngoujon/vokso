@@ -382,42 +382,32 @@ class PodcastGenerator
 
     private function textProvider(): string
     {
-        return strtolower(trim((string) ($_ENV['AI_TEXT_PROVIDER'] ?? 'openai')));
+        return strtolower(trim((string) ($_ENV['AI_TEXT_PROVIDER'] ?? 'mistral')));
     }
 
     private function textModel(): string
     {
         return match ($this->textProvider()) {
             'ollama' => (string) ($_ENV['OLLAMA_TEXT_MODEL'] ?? ''),
-            'mistral' => (string) ($_ENV['MISTRAL_TEXT_MODEL'] ?? 'mistral-small-latest'),
-            default => (string) ($_ENV['OPENAI_TEXT_MODEL'] ?? 'gpt-4o-mini'),
+            default => (string) ($_ENV['MISTRAL_TEXT_MODEL'] ?? 'mistral-small-latest'),
         };
-    }
-
-    private function imageProvider(): string
-    {
-        return strtolower(trim((string) ($_ENV['AI_IMAGE_PROVIDER'] ?? 'mistral')));
     }
 
     private function imageModel(): string
     {
-        return match ($this->imageProvider()) {
-            'openai' => (string) ($_ENV['OPENAI_IMAGE_MODEL'] ?? 'dall-e-3'),
-            default => (string) ($_ENV['MISTRAL_IMAGE_MODEL'] ?? 'mistral-medium-latest'),
-        };
+        return (string) ($_ENV['MISTRAL_IMAGE_MODEL'] ?? 'mistral-medium-latest');
     }
 
     private function speechProvider(): string
     {
-        return strtolower(trim((string) ($_ENV['AI_SPEECH_PROVIDER'] ?? 'openai')));
+        return strtolower(trim((string) ($_ENV['AI_SPEECH_PROVIDER'] ?? 'mistral')));
     }
 
     private function speechModel(): string
     {
         return match ($this->speechProvider()) {
-            'mistral' => (string) ($_ENV['MISTRAL_SPEECH_MODEL'] ?? 'voxtral-mini-tts-latest'),
             'local' => (string) ($_ENV['TTS_MODEL'] ?? ''),
-            default => (string) ($_ENV['OPENAI_SPEECH_MODEL'] ?? 'tts-1-hd'),
+            default => (string) ($_ENV['MISTRAL_SPEECH_MODEL'] ?? 'voxtral-mini-tts-latest'),
         };
     }
 

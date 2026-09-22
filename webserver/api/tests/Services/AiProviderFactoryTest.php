@@ -15,12 +15,12 @@ class AiProviderFactoryTest extends TestCase
     private function factory(array $env): AiProviderFactory
     {
         return new AiProviderFactory(array_merge(
-            ['OPENAI_API_KEY' => 'sk-test', 'MISTRAL_API_KEY' => 'mistral-test'],
+            ['MISTRAL_API_KEY' => 'mistral-test'],
             $env
         ));
     }
 
-    public function testTextGeneratorDefaultsToOpenAi(): void
+    public function testTextGeneratorDefaultsToMistral(): void
     {
         $provider = $this->factory([])->textGenerator();
         $this->assertInstanceOf(OpenAiProvider::class, $provider);
@@ -32,10 +32,11 @@ class AiProviderFactoryTest extends TestCase
         $this->assertInstanceOf(MistralImageProvider::class, $provider);
     }
 
-    public function testImageGeneratorRoutesToOpenAi(): void
+    public function testImageGeneratorRejectsOpenAi(): void
     {
-        $provider = $this->factory(['AI_IMAGE_PROVIDER' => 'openai'])->imageGenerator();
-        $this->assertInstanceOf(OpenAiProvider::class, $provider);
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('AI_IMAGE_PROVIDER invalide');
+        $this->factory(['AI_IMAGE_PROVIDER' => 'openai'])->imageGenerator();
     }
 
     public function testImageGeneratorRejectsInvalidProvider(): void
@@ -51,6 +52,13 @@ class AiProviderFactoryTest extends TestCase
         $this->assertInstanceOf(OpenAiProvider::class, $provider);
     }
 
+    public function testTextGeneratorRejectsOpenAi(): void
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('AI_TEXT_PROVIDER invalide');
+        $this->factory(['AI_TEXT_PROVIDER' => 'openai'])->textGenerator();
+    }
+
     public function testTextGeneratorRejectsInvalidProvider(): void
     {
         $this->expectException(Exception::class);
@@ -64,6 +72,13 @@ class AiProviderFactoryTest extends TestCase
         $this->assertInstanceOf(OpenAiCompatibleSpeechProvider::class, $provider);
     }
 
+    public function testSpeechSynthesizerRejectsOpenAi(): void
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('AI_SPEECH_PROVIDER invalide');
+        $this->factory(['AI_SPEECH_PROVIDER' => 'openai'])->speechSynthesizer();
+    }
+
     public function testSpeechSynthesizerRejectsInvalidProvider(): void
     {
         $this->expectException(Exception::class);
@@ -75,6 +90,13 @@ class AiProviderFactoryTest extends TestCase
     {
         $provider = $this->factory(['AI_TRANSCRIPTION_PROVIDER' => 'whisper'])->transcriber();
         $this->assertInstanceOf(WhisperTranscriptionProvider::class, $provider);
+    }
+
+    public function testTranscriberRejectsOpenAi(): void
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('AI_TRANSCRIPTION_PROVIDER invalide');
+        $this->factory(['AI_TRANSCRIPTION_PROVIDER' => 'openai'])->transcriber();
     }
 
     public function testTranscriberRejectsInvalidProvider(): void

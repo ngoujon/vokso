@@ -7,8 +7,10 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Promise\PromiseInterface;
 
 /**
- * Fournisseur OpenAI : texte (chat completions), image (DALL-E),
- * synthèse vocale (TTS) et transcription (Whisper).
+ * Client pour API compatibles OpenAI : texte (chat completions), image
+ * (DALL-E), synthèse vocale (TTS) et transcription (Whisper). OpenAI lui-même
+ * n'est plus utilisé (voir AiProviderFactory) ; sert aujourd'hui à parler à
+ * Mistral et Ollama Cloud, qui exposent tous deux une API compatible.
  */
 class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface, SpeechSynthesizerInterface, TranscriberInterface
 {
@@ -27,7 +29,8 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
     {
         $this->apiKey = (string) ($config['api_key'] ?? '');
         if ($this->apiKey === '') {
-            throw new Exception('OPENAI_API_KEY est absent des variables d\'environnement.');
+            $apiKeyEnv = (string) ($config['api_key_env'] ?? 'MISTRAL_API_KEY');
+            throw new Exception($apiKeyEnv . ' est absent des variables d\'environnement.');
         }
 
         $this->baseUrl = rtrim((string) ($config['base_url'] ?? 'https://api.openai.com/v1'), '/');
@@ -63,7 +66,7 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
         ]);
 
         if (!isset($data['choices'][0]['message']['content'])) {
-            throw new Exception('Réponse OpenAI inattendue pour la génération de texte.');
+            throw new Exception('Réponse de l\'API inattendue pour la génération de texte.');
         }
 
         return (string) $data['choices'][0]['message']['content'];
@@ -80,7 +83,7 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
             ],
         ])->then(function (array $data): string {
             if (!isset($data['choices'][0]['message']['content'])) {
-                throw new Exception('Réponse OpenAI inattendue pour la génération de texte.');
+                throw new Exception('Réponse de l\'API inattendue pour la génération de texte.');
             }
             return (string) $data['choices'][0]['message']['content'];
         });
@@ -99,7 +102,7 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
         if (isset($data['data'][0]['b64_json'])) {
             $binary = base64_decode($data['data'][0]['b64_json'], true);
             if ($binary === false) {
-                throw new Exception('Image OpenAI illisible (base64 invalide).');
+                throw new Exception('Image illisible (base64 invalide).');
             }
             return $binary;
         }
@@ -108,7 +111,7 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
             return (string) $this->client->get($data['data'][0]['url'])->getBody();
         }
 
-        throw new Exception('Réponse OpenAI inattendue pour la génération d\'image.');
+        throw new Exception('Réponse de l\'API inattendue pour la génération d\'image.');
     }
 
     public function generateImageAsync(string $prompt): PromiseInterface
@@ -122,7 +125,7 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
             if (isset($data['data'][0]['b64_json'])) {
                 $binary = base64_decode($data['data'][0]['b64_json'], true);
                 if ($binary === false) {
-                    throw new Exception('Image OpenAI illisible (base64 invalide).');
+                    throw new Exception('Image illisible (base64 invalide).');
                 }
                 return $binary;
             }
@@ -133,7 +136,7 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
                 );
             }
 
-            throw new Exception('Réponse OpenAI inattendue pour la génération d\'image.');
+            throw new Exception('Réponse de l\'API inattendue pour la génération d\'image.');
         });
     }
 
@@ -144,7 +147,7 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
                 'json' => $this->speechPayload($text),
             ]);
         } catch (Exception $e) {
-            throw new Exception('Échec de la synthèse vocale OpenAI : ' . $e->getMessage());
+            throw new Exception('Échec de la synthèse vocale : ' . $e->getMessage());
         }
 
         return $this->decodeSpeechResponse((string) $response->getBody());
@@ -157,7 +160,7 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
         ])->then(
             fn ($response) => $this->decodeSpeechResponse((string) $response->getBody()),
             function ($reason) {
-                throw new Exception('Échec de la synthèse vocale OpenAI : ' . $reason->getMessage());
+                throw new Exception('Échec de la synthèse vocale : ' . $reason->getMessage());
             }
         );
     }
@@ -227,12 +230,12 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
                 ],
             ]);
         } catch (Exception $e) {
-            throw new Exception('Échec de la transcription OpenAI : ' . $e->getMessage());
+            throw new Exception('Échec de la transcription : ' . $e->getMessage());
         }
 
         $data = json_decode((string) $response->getBody(), true);
         if (!isset($data['text'])) {
-            throw new Exception('Réponse OpenAI inattendue pour la transcription.');
+            throw new Exception('Réponse de l\'API inattendue pour la transcription.');
         }
 
         return (string) $data['text'];
@@ -244,15 +247,15 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
             $response = $this->client->request($method, $this->baseUrl . $path, ['json' => $payload]);
         } catch (\GuzzleHttp\Exception\GuzzleException $e) {
             $body = $e->getResponse() ? (string) $e->getResponse()->getBody() : '';
-            throw new Exception('Appel OpenAI en échec (' . $path . ') : ' . $e->getMessage() . ' ' . $body);
+            throw new Exception('Appel API en échec (' . $path . ') : ' . $e->getMessage() . ' ' . $body);
         }
 
         $data = json_decode((string) $response->getBody(), true);
         if (!is_array($data)) {
-            throw new Exception('Réponse OpenAI illisible (' . $path . ').');
+            throw new Exception('Réponse illisible (' . $path . ').');
         }
         if (isset($data['error'])) {
-            throw new Exception('Erreur OpenAI : ' . ($data['error']['message'] ?? 'inconnue'));
+            throw new Exception('Erreur API : ' . ($data['error']['message'] ?? 'inconnue'));
         }
 
         return $data;
@@ -265,10 +268,10 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
             function ($response) use ($path) {
                 $data = json_decode((string) $response->getBody(), true);
                 if (!is_array($data)) {
-                    throw new Exception('Réponse OpenAI illisible (' . $path . ').');
+                    throw new Exception('Réponse illisible (' . $path . ').');
                 }
                 if (isset($data['error'])) {
-                    throw new Exception('Erreur OpenAI : ' . ($data['error']['message'] ?? 'inconnue'));
+                    throw new Exception('Erreur API : ' . ($data['error']['message'] ?? 'inconnue'));
                 }
                 return $data;
             },
@@ -276,7 +279,7 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
                 $body = ($reason instanceof \GuzzleHttp\Exception\RequestException && $reason->getResponse())
                     ? (string) $reason->getResponse()->getBody()
                     : '';
-                throw new Exception('Appel OpenAI en échec (' . $path . ') : ' . $reason->getMessage() . ' ' . $body);
+                throw new Exception('Appel API en échec (' . $path . ') : ' . $reason->getMessage() . ' ' . $body);
             }
         );
     }

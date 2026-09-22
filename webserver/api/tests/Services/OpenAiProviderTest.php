@@ -15,8 +15,15 @@ class OpenAiProviderTest extends TestCase
     public function testConstructorRejectsMissingApiKey(): void
     {
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('OPENAI_API_KEY est absent');
+        $this->expectExceptionMessage('MISTRAL_API_KEY est absent');
         new OpenAiProvider([]);
+    }
+
+    public function testConstructorRejectsMissingApiKeyWithCustomEnvName(): void
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('OLLAMA_API_KEY est absent');
+        new OpenAiProvider(['api_key_env' => 'OLLAMA_API_KEY']);
     }
 
     public function testAudioExtensionIsMp3(): void
@@ -119,6 +126,6 @@ class OpenAiProviderTest extends TestCase
         $this->assertSame('fulfilled', $results['text']['state']);
         $this->assertSame('texte principal', $results['text']['value']);
         $this->assertSame('rejected', $results['category']['state']);
-        $this->assertStringContainsString('Appel OpenAI en échec', $results['category']['reason']->getMessage());
+        $this->assertStringContainsString('Appel API en échec', $results['category']['reason']->getMessage());
     }
 }
