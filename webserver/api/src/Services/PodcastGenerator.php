@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Utils\CostEstimator;
 use App\Utils\Logger;
 use Exception;
+use GuzzleHttp\Promise\Utils as PromiseUtils;
 use PDO;
 
 /**
@@ -48,10 +49,13 @@ class PodcastGenerator
             $stmt->execute([':input' => $userInput, ':job_id' => $jobId]);
         }
 
+        // Le texte et la catégorie ne dépendent que du sujet d'entrée (pas l'un
+        // de l'autre) : les lancer en parallèle via des promesses Guzzle
+        // économise un aller-retour réseau complet par rapport à deux appels
+        // séquentiels.
         $this->updateJob($jobId, 'processing', 'text', 10);
-
         try {
-            $generatedText = $this->generatePodcastText($userInput);
+            [$generatedText, $categoryKeyword] = $this->generateTextAndCategory($userInput);
             $this->storeOutput('responses', 'response_' . $this->getCurrentDateTime() . '.txt', $generatedText);
             $costText = CostEstimator::textCost(
                 $this->textProvider(),
@@ -64,41 +68,29 @@ class PodcastGenerator
             return;
         }
 
-        $this->updateJob($jobId, 'processing', 'image', 35);
+        // Idem pour l'image et l'audio : toutes deux ne dépendent que du texte
+        // généré, jamais l'une de l'autre, donc autant les lancer de front.
+        $this->updateJob($jobId, 'processing', 'media', 45);
         try {
-            $imagePrompt = str_replace('###REPLACE###', $generatedText, $this->getPrompt('image'));
-            $imageContent = $this->ai->imageGenerator()->generateImage($imagePrompt);
+            [$imageContent, $audioContent, $audioExtension] = $this->generateImageAndAudio($generatedText);
+
             $imageFileName = $this->storeOutput('images', 'image_' . $this->getCurrentDateTime() . '.png', $imageContent);
             $this->convertImageToWebP($imageFileName);
             $costImage = CostEstimator::imageCost($_ENV['OPENAI_IMAGE_MODEL'] ?? 'dall-e-3');
-        } catch (Exception $e) {
-            $this->failJob($jobId, 'Erreur lors de la génération de l\'image', $e);
-            return;
-        }
 
-        $this->updateJob($jobId, 'processing', 'audio', 65);
-        try {
-            $synthesizer = $this->ai->speechSynthesizer();
-            $audioContent = $synthesizer->synthesize($generatedText);
             $audioFileName = $this->storeOutput(
                 'audios',
-                'audio_' . $this->getCurrentDateTime() . '.' . $synthesizer->audioExtension(),
+                'audio_' . $this->getCurrentDateTime() . '.' . $audioExtension,
                 $audioContent
             );
             $costAudio = CostEstimator::speechCost($this->speechProvider(), $this->speechModel(), $generatedText);
         } catch (Exception $e) {
-            $this->failJob($jobId, 'Erreur lors de la génération de l\'audio', $e);
+            $this->failJob($jobId, $e->getMessage(), $e);
             return;
         }
 
-        $this->updateJob($jobId, 'processing', 'category', 90);
-        try {
-            $categoryKeyword = $this->generateCategory($userInput);
-            $idcategorie = $this->saveOrGetCategory($categoryKeyword);
-        } catch (Exception $e) {
-            $this->failJob($jobId, 'Erreur lors de la catégorisation', $e);
-            return;
-        }
+        $this->updateJob($jobId, 'processing', 'finalizing', 90);
+        $idcategorie = $this->saveOrGetCategory($categoryKeyword);
 
         $generationId = $this->saveGeneration(
             $userInput,
@@ -180,7 +172,14 @@ class PodcastGenerator
         $stmt->execute([':error' => $message, ':job_id' => $jobId]);
     }
 
-    private function generatePodcastText(string $userInput): string
+    /**
+     * Lance en parallèle la génération du texte principal et celle de la
+     * catégorie (deux appels indépendants au même modèle de texte, tous deux
+     * fonction du seul sujet d'entrée) et attend les deux résultats.
+     *
+     * @return array{0: string, 1: string} [texte généré, mot-clé de catégorie]
+     */
+    private function generateTextAndCategory(string $userInput): array
     {
         $textPrompt = $this->getPrompt('texte');
         if ($textPrompt === '') {
@@ -192,31 +191,74 @@ class PodcastGenerator
             throw new Exception('Le prompt de protection contre les injections est introuvable dans la base de données.');
         }
 
-        return $this->ai->textGenerator()->generateText(
-            $injectionPrompt,
-            str_replace('###REPLACE###', $userInput, $textPrompt)
-        );
-    }
-
-    private function generateCategory(string $userInput): string
-    {
         $keywordPrompt = $this->getPrompt('keyword');
         if ($keywordPrompt === '') {
             throw new Exception('Le prompt de type "keyword" est introuvable dans la base de données.');
         }
 
-        $category = $this->ai->textGenerator()->generateText(
-            'Répondez avec un seul mot décrivant la catégorie d\'activité ou le domaine correspondant au sujet donné.',
-            str_replace('###REPLACE###', $userInput, $keywordPrompt)
-        );
+        $generator = $this->ai->textGenerator();
+        $results = PromiseUtils::settle([
+            'text' => $generator->generateTextAsync(
+                $injectionPrompt,
+                str_replace('###REPLACE###', $userInput, $textPrompt)
+            ),
+            'category' => $generator->generateTextAsync(
+                'Répondez avec un seul mot décrivant la catégorie d\'activité ou le domaine correspondant au sujet donné.',
+                str_replace('###REPLACE###', $userInput, $keywordPrompt)
+            ),
+        ])->wait();
 
-        $category = trim(preg_replace('/[^\p{L}\p{N}\- ]/u', '', $category));
+        if ($results['text']['state'] !== 'fulfilled') {
+            throw $this->toException($results['text']['reason']);
+        }
+        if ($results['category']['state'] !== 'fulfilled') {
+            throw $this->toException($results['category']['reason']);
+        }
+
+        return [$results['text']['value'], $this->sanitizeCategory($results['category']['value'])];
+    }
+
+    private function sanitizeCategory(string $rawCategory): string
+    {
+        $category = trim(preg_replace('/[^\p{L}\p{N}\- ]/u', '', $rawCategory));
         $category = explode(' ', trim($category))[0] ?? '';
         if ($category === '') {
             throw new Exception('Aucune catégorie exploitable n\'a été renvoyée par le modèle.');
         }
 
         return mb_substr($category, 0, 50);
+    }
+
+    /**
+     * Lance en parallèle la génération de l'image et celle de l'audio (deux
+     * appels indépendants, tous deux fonction du seul texte déjà généré) et
+     * attend les deux résultats.
+     *
+     * @return array{0: string, 1: string, 2: string} [image binaire, audio binaire, extension audio]
+     */
+    private function generateImageAndAudio(string $generatedText): array
+    {
+        $imagePrompt = str_replace('###REPLACE###', $generatedText, $this->getPrompt('image'));
+        $synthesizer = $this->ai->speechSynthesizer();
+
+        $results = PromiseUtils::settle([
+            'image' => $this->ai->imageGenerator()->generateImageAsync($imagePrompt),
+            'audio' => $synthesizer->synthesizeAsync($generatedText),
+        ])->wait();
+
+        if ($results['image']['state'] !== 'fulfilled') {
+            throw new Exception('Erreur lors de la génération de l\'image : ' . $this->toException($results['image']['reason'])->getMessage());
+        }
+        if ($results['audio']['state'] !== 'fulfilled') {
+            throw new Exception('Erreur lors de la génération de l\'audio : ' . $this->toException($results['audio']['reason'])->getMessage());
+        }
+
+        return [$results['image']['value'], $results['audio']['value'], $synthesizer->audioExtension()];
+    }
+
+    private function toException(mixed $reason): Exception
+    {
+        return $reason instanceof Exception ? $reason : new Exception((string) $reason);
     }
 
     /** Écrit un fichier de sortie et retourne son nom. */

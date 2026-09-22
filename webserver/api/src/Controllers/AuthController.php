@@ -2,7 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Services\MailerService;
 use App\Utils\Auth;
+use App\Utils\Logger;
 use Dotenv\Dotenv;
 use PDO;
 
@@ -55,12 +57,37 @@ class AuthController
         $stmt->execute([':email' => $email, ':password_hash' => password_hash($password, PASSWORD_BCRYPT)]);
         $userId = (int) $this->db->lastInsertId();
 
+        $this->sendWelcomeEmail($email);
+
         $token = Auth::createToken($this->db, $userId);
         http_response_code(201);
         echo json_encode([
             'token' => $token,
             'user' => ['id' => $userId, 'email' => $email, 'role' => 'user'],
         ]);
+    }
+
+    /** Un échec d'envoi ne doit jamais bloquer la création du compte. */
+    private function sendWelcomeEmail(string $email): void
+    {
+        try {
+            $mailer = new MailerService(
+                $_ENV['SMTP_HOST'] ?? 'mailhog',
+                (int) ($_ENV['SMTP_PORT'] ?? 1025),
+                $_ENV['MAIL_FROM'] ?? 'contact@qwaipod.local'
+            );
+            $mailer->send(
+                $email,
+                'Bienvenue sur QwaiPod',
+                "Votre compte QwaiPod est créé.\n\n"
+                . "Vos podcasts sont générés sur une infrastructure hébergée en Europe, "
+                . "avec des modèles ouverts : vos données ne servent jamais à entraîner un modèle tiers.\n\n"
+                . "Vous pouvez dès maintenant générer votre premier épisode depuis votre espace.\n\n"
+                . "À bientôt,\nL'équipe QwaiPod"
+            );
+        } catch (\Throwable $e) {
+            Logger::get()->error($e->getMessage(), ['controller' => 'auth', 'action' => 'welcome-email', 'exception' => get_class($e)]);
+        }
     }
 
     public function login()

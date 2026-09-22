@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Promise\PromiseInterface;
 
 /**
  * Synthèse vocale locale via un serveur exposant la route OpenAI
@@ -43,6 +44,23 @@ class OpenAiCompatibleSpeechProvider implements SpeechSynthesizerInterface
         }
 
         return (string) $response->getBody();
+    }
+
+    public function synthesizeAsync(string $text): PromiseInterface
+    {
+        return $this->client->requestAsync('POST', $this->baseUrl . '/audio/speech', [
+            'json' => [
+                'model' => $this->model,
+                'voice' => $this->voice,
+                'input' => $text,
+                'response_format' => $this->format,
+            ],
+        ])->then(
+            fn ($response) => (string) $response->getBody(),
+            function ($reason) {
+                throw new Exception('Appel TTS local en échec : ' . $reason->getMessage());
+            }
+        );
     }
 
     public function audioExtension(): string

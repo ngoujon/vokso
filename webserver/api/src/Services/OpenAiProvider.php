@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Promise\PromiseInterface;
 
 /**
  * Fournisseur OpenAI : texte (chat completions), image (DALL-E),
@@ -34,10 +35,16 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
         $this->speechModel = (string) ($config['speech_model'] ?? 'tts-1-hd');
         $this->transcriptionModel = (string) ($config['transcription_model'] ?? 'whisper-1');
 
-        $this->client = new Client([
+        $clientConfig = [
             'timeout' => (float) ($config['timeout'] ?? 180),
             'headers' => ['Authorization' => 'Bearer ' . $this->apiKey],
-        ]);
+        ];
+        // Permet d'injecter un handler Guzzle (MockHandler) dans les tests ;
+        // absent en production, Guzzle choisit alors son handler par défaut.
+        if (isset($config['handler'])) {
+            $clientConfig['handler'] = $config['handler'];
+        }
+        $this->client = new Client($clientConfig);
     }
 
     public function generateText(string $systemPrompt, string $userPrompt): string
@@ -56,6 +63,23 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
         }
 
         return (string) $data['choices'][0]['message']['content'];
+    }
+
+    public function generateTextAsync(string $systemPrompt, string $userPrompt): PromiseInterface
+    {
+        return $this->requestJsonAsync('POST', '/chat/completions', [
+            'model' => $this->textModel,
+            'temperature' => 0.2,
+            'messages' => [
+                ['role' => 'system', 'content' => $systemPrompt],
+                ['role' => 'user', 'content' => $userPrompt],
+            ],
+        ])->then(function (array $data): string {
+            if (!isset($data['choices'][0]['message']['content'])) {
+                throw new Exception('Réponse OpenAI inattendue pour la génération de texte.');
+            }
+            return (string) $data['choices'][0]['message']['content'];
+        });
     }
 
     public function generateImage(string $prompt): string
@@ -83,6 +107,32 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
         throw new Exception('Réponse OpenAI inattendue pour la génération d\'image.');
     }
 
+    public function generateImageAsync(string $prompt): PromiseInterface
+    {
+        return $this->requestJsonAsync('POST', '/images/generations', [
+            'model' => $this->imageModel,
+            'prompt' => $prompt,
+            'n' => 1,
+            'size' => $this->imageSize,
+        ])->then(function (array $data) {
+            if (isset($data['data'][0]['b64_json'])) {
+                $binary = base64_decode($data['data'][0]['b64_json'], true);
+                if ($binary === false) {
+                    throw new Exception('Image OpenAI illisible (base64 invalide).');
+                }
+                return $binary;
+            }
+
+            if (isset($data['data'][0]['url'])) {
+                return $this->client->getAsync($data['data'][0]['url'])->then(
+                    fn ($response) => (string) $response->getBody()
+                );
+            }
+
+            throw new Exception('Réponse OpenAI inattendue pour la génération d\'image.');
+        });
+    }
+
     public function synthesize(string $text): string
     {
         $voice = rand(0, 1) ? 'nova' : 'onyx';
@@ -101,6 +151,25 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
         }
 
         return (string) $response->getBody();
+    }
+
+    public function synthesizeAsync(string $text): PromiseInterface
+    {
+        $voice = rand(0, 1) ? 'nova' : 'onyx';
+
+        return $this->client->requestAsync('POST', $this->baseUrl . '/audio/speech', [
+            'json' => [
+                'model' => $this->speechModel,
+                'voice' => $voice,
+                'input' => $text,
+                'speed' => 1,
+            ],
+        ])->then(
+            fn ($response) => (string) $response->getBody(),
+            function ($reason) {
+                throw new Exception('Échec de la synthèse vocale OpenAI : ' . $reason->getMessage());
+            }
+        );
     }
 
     public function audioExtension(): string
@@ -151,5 +220,28 @@ class OpenAiProvider implements TextGeneratorInterface, ImageGeneratorInterface,
         }
 
         return $data;
+    }
+
+    /** Variante asynchrone de requestJson(), la promesse se résout avec le tableau décodé. */
+    private function requestJsonAsync(string $method, string $path, array $payload): PromiseInterface
+    {
+        return $this->client->requestAsync($method, $this->baseUrl . $path, ['json' => $payload])->then(
+            function ($response) use ($path) {
+                $data = json_decode((string) $response->getBody(), true);
+                if (!is_array($data)) {
+                    throw new Exception('Réponse OpenAI illisible (' . $path . ').');
+                }
+                if (isset($data['error'])) {
+                    throw new Exception('Erreur OpenAI : ' . ($data['error']['message'] ?? 'inconnue'));
+                }
+                return $data;
+            },
+            function ($reason) use ($path) {
+                $body = ($reason instanceof \GuzzleHttp\Exception\RequestException && $reason->getResponse())
+                    ? (string) $reason->getResponse()->getBody()
+                    : '';
+                throw new Exception('Appel OpenAI en échec (' . $path . ') : ' . $reason->getMessage() . ' ' . $body);
+            }
+        );
     }
 }
