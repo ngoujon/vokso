@@ -77,11 +77,7 @@ class AuthController
     private function sendWelcomeEmail(string $email): void
     {
         try {
-            $mailer = new MailerService(
-                $_ENV['SMTP_HOST'] ?? 'mailhog',
-                (int) ($_ENV['SMTP_PORT'] ?? 1025),
-                $_ENV['MAIL_FROM'] ?? 'contact@vokso.fr'
-            );
+            $mailer = MailerService::fromEnv();
             $mailer->send(
                 $email,
                 'Bienvenue sur Vokso',

@@ -22,12 +22,15 @@
   color: var(--text-secondary);
 }
 
-.auth-form input {
+.auth-form input,
+.auth-form textarea {
   padding: 0.7rem 0.9rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--input-border);
   background-color: var(--input-bg);
   color: var(--text-primary);
+  font-family: inherit;
+  resize: vertical;
 }
 
 .auth-form button {
