@@ -35,6 +35,7 @@ $routes = [
     'generation-audio' => ['App\Controllers\GenerationController', 'generateFromAudio'],
     'generation-status' => ['App\Controllers\GenerationController', 'status'],
     'listing' => ['App\Controllers\ListingController', 'getLastPodcasts'],
+    'categories' => ['App\Controllers\CategoryController', 'list'],
     'search' => ['App\Controllers\SearchController', 'searchPodcasts'],
     'newsletter' => ['App\Controllers\NewsletterController', 'subscribe'],
     'auth-register' => ['App\Controllers\AuthController', 'register'],

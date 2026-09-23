@@ -32,6 +32,8 @@ export default function Home() {
   const [duration, setDuration] = useState(null);
   const [jobProgress, setJobProgress] = useState(null);
   const [generations, setGenerations] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [audioPlayingIndex, setAudioPlayingIndex] = useState(null);
   const [currentTimes, setCurrentTimes] = useState([]);
   const [totalDurations, setTotalDurations] = useState([]);
@@ -116,6 +118,26 @@ export default function Home() {
     }
   };
 
+  const listingUrl = (category) => {
+    const params = new URLSearchParams({ limit: category ? '12' : '9' });
+    if (category) {
+      params.set('category', category);
+    }
+    return `${config.apiUrl}/listing?${params.toString()}`;
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(`${config.apiUrl}/categories`);
+      const data = await response.json();
+      if (response.ok && data.success && Array.isArray(data.data)) {
+        setCategories(data.data);
+      }
+    } catch (err) {
+      // Navigation par catégorie non bloquante : une erreur ici ne doit pas empêcher d'afficher les générations.
+    }
+  };
+
   const pollJobStatus = (jobId, startTime) => {
     pollTimerRef.current = setInterval(async () => {
       try {
@@ -134,7 +156,8 @@ export default function Home() {
           setDuration(durationInSeconds);
           setLoading(false);
           setJobProgress(null);
-          await fetchGenerations(`${config.apiUrl}/listing`, true);
+          await fetchGenerations(listingUrl(selectedCategory), true);
+          await fetchCategories();
         } else if (data.status === "error") {
           clearInterval(pollTimerRef.current);
           setError(data.error || "La génération a échoué.");
@@ -237,17 +260,21 @@ export default function Home() {
     };
   }, []);
 
+  // Recherche texte (avec debounce) et navigation par catégorie partagent le
+  // même effet : sélectionner une catégorie doit se comporter comme un
+  // retour à la liste (recherche vidée côté affichage), pas comme une
+  // recherche.
   useEffect(() => {
     let isMounted = true;
 
-    const searchPodcasts = async () => {
+    const loadGenerations = async () => {
       try {
         if (searchQuery.length >= 3) {
           setIsSearching(true);
           await fetchGenerations(`${config.apiUrl}/search?query=${encodeURIComponent(searchQuery)}`);
         } else if (searchQuery.length === 0) {
           setIsSearching(false);
-          await fetchGenerations(`${config.apiUrl}/listing`);
+          await fetchGenerations(listingUrl(selectedCategory));
         }
       } catch (err) {
         if (isMounted) {
@@ -255,40 +282,26 @@ export default function Home() {
         }
       }
     };
-  
-    // Nettoyer le timer précédent
+
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
-    // Mettre en place un nouveau timer
-    debounceTimerRef.current = setTimeout(() => {
-      searchPodcasts();
-    }, 2000);
-  
+    // Pas de debounce nécessaire pour un changement de catégorie (pas de
+    // frappe en rafale à absorber, contrairement à la recherche texte).
+    debounceTimerRef.current = setTimeout(loadGenerations, searchQuery.length >= 3 ? 2000 : 0);
+
     return () => {
       isMounted = false;
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [searchQuery]);
+  }, [searchQuery, selectedCategory]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchInitialData = async () => {
-      if (isMounted && searchQuery.length === 0) {
-        await fetchGenerations(`${config.apiUrl}/listing`);
-      }
-    };
-
-    fetchInitialData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []); // Dépendance vide pour ne s'exécuter qu'une fois au montage
+    fetchCategories();
+  }, []);
 
   const handleLoadedMetadata = (index) => {
     const audio = audioRefs.current[index];
@@ -528,7 +541,49 @@ export default function Home() {
             <i className="bi bi-x-lg"></i>
           </button>
         </div>
-        <h2>{isSearching ? "Résultats" : "Les 3 dernières générations"}</h2>
+        {categories.length > 1 && !isSearching && (
+          <div className="category-nav" role="tablist" aria-label="Filtrer par catégorie">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={selectedCategory === ''}
+              className={`category-pill ${selectedCategory === '' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory('')}
+            >
+              <span className="category-pill-icon">
+                <i className="bi bi-grid-fill"></i>
+              </span>
+              Toutes
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                role="tab"
+                aria-selected={selectedCategory === cat.label}
+                className={`category-pill ${selectedCategory === cat.label ? 'active' : ''}`}
+                onClick={() => setSelectedCategory(cat.label)}
+              >
+                <span
+                  className={`category-pill-icon ${cat.cover_image ? 'has-cover' : ''}`}
+                  style={cat.cover_image ? {
+                    backgroundImage: `url(${config.staticUrl}/static/images/${cat.cover_image})`,
+                  } : undefined}
+                >
+                  <i className={`bi bi-${cat.icon || 'soundwave'}`}></i>
+                </span>
+                {cat.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <h2>
+          {isSearching
+            ? "Résultats"
+            : selectedCategory
+              ? `Catégorie : ${selectedCategory}`
+              : "Dernières générations"}
+        </h2>
         {generations.length > 0 ? (
           <div className="generations-list">
             {generations.map((gen, index) => (
@@ -539,11 +594,14 @@ export default function Home() {
                     alt={`Image pour ${gen.title || 'Génération'}`}
                     loading="lazy"
                   />
+                  {gen.category && (
+                    <span className="generation-category">
+                      <i className={`bi bi-${gen.category_icon || 'soundwave'}`}></i>
+                      {gen.category}
+                    </span>
+                  )}
                 </div>
                 <div className="generation-info">
-                  {gen.category && (
-                    <span className="generation-category">{gen.category}</span>
-                  )}
                   <h3>{gen.title || 'Sans titre'}</h3>
                   <p className="generation-date">
                     {formatDate(gen.created_at)}

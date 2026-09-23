@@ -3,6 +3,7 @@
 namespace Tests\Services;
 
 use App\Services\AiProviderFactory;
+use App\Services\MistralAgentTextProvider;
 use App\Services\MistralImageProvider;
 use App\Services\OpenAiProvider;
 use App\Services\OpenAiCompatibleSpeechProvider;
@@ -110,5 +111,25 @@ class AiProviderFactoryTest extends TestCase
     {
         $factory = $this->factory([]);
         $this->assertSame($factory->textGenerator(), $factory->textGenerator());
+    }
+
+    public function testResearchTextGeneratorDefaultsToMistralAgent(): void
+    {
+        $provider = $this->factory([])->researchTextGenerator();
+        $this->assertInstanceOf(MistralAgentTextProvider::class, $provider);
+    }
+
+    public function testResearchTextGeneratorFallsBackToPlainTextGeneratorOnOllama(): void
+    {
+        $factory = $this->factory(['AI_TEXT_PROVIDER' => 'ollama', 'OLLAMA_API_KEY' => 'ollama-test']);
+        $this->assertInstanceOf(OpenAiProvider::class, $factory->researchTextGenerator());
+        $this->assertSame($factory->textGenerator(), $factory->researchTextGenerator());
+    }
+
+    public function testResearchTextGeneratorRejectsInvalidProvider(): void
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('AI_TEXT_PROVIDER invalide');
+        $this->factory(['AI_TEXT_PROVIDER' => 'bogus'])->researchTextGenerator();
     }
 }

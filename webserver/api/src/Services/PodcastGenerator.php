@@ -210,7 +210,11 @@ class PodcastGenerator
 
         $generator = $this->ai->textGenerator();
         $results = PromiseUtils::settle([
-            'text' => $generator->generateTextAsync(
+            // La narration principale seule passe par le générateur "recherche"
+            // (outil web_search côté Mistral) : titre et catégorie n'ont pas
+            // besoin de vérifier des faits, autant garder ces deux appels
+            // rapides et sans outil.
+            'text' => $this->ai->researchTextGenerator()->generateTextAsync(
                 $injectionPrompt,
                 str_replace('###REPLACE###', $userInput, $textPrompt)
             ),
@@ -241,10 +245,23 @@ class PodcastGenerator
         ];
     }
 
-    /** Titre nettoyé (une ligne, sans guillemets, borné) ; retombe sur le sujet brut si le modèle ne renvoie rien d'exploitable. */
+    /**
+     * Titre nettoyé (une ligne, sans guillemets, sans Markdown, borné) ;
+     * retombe sur le sujet brut si le modèle ne renvoie rien d'exploitable.
+     * Le prompt "titre" interdit déjà le Markdown, mais le titre est affiché
+     * tel quel côté front (pas de rendu Markdown) : on le nettoie aussi ici,
+     * en filet de sécurité, au cas où le modèle l'ignorerait.
+     */
     private function sanitizeTitle(string $rawTitle, string $fallback): string
     {
         $title = trim($rawTitle, " \t\n\r\0\x0B\"'“”«»");
+        // Titres/emphases Markdown ("# ", "**gras**", "_italique_", "`code`")
+        // et tirets de liste en tête de ligne.
+        $title = preg_replace('/^#{1,6}\s+/', '', $title);
+        $title = preg_replace('/^[-*+]\s+/', '', $title);
+        $title = preg_replace('/(\*\*|__)(.*?)\1/', '$2', $title);
+        $title = preg_replace('/(\*|_|`)(.*?)\1/', '$2', $title);
+        $title = str_replace(['*', '#', '`'], '', $title);
         $title = preg_replace('/\s+/', ' ', $title);
         $title = trim($title);
 
@@ -330,6 +347,30 @@ class PodcastGenerator
         return $fileName;
     }
 
+    /**
+     * Icônes Bootstrap Icons valides proposées au modèle pour habiller une
+     * catégorie (voir le prompt "categorie_icone" en base) : liste fermée,
+     * revalidée ici après réponse, pour ne jamais écrire en base une classe
+     * CSS inventée par le modèle. "soundwave" sert de repli neutre (thème
+     * podcast) si la réponse ne correspond à aucune entrée connue.
+     */
+    private const CATEGORY_ICONS = [
+        'cpu', 'laptop', 'flask', 'heart-pulse', 'hourglass-split', 'bank',
+        'music-note-beamed', 'trophy', 'egg-fried', 'graph-up-arrow', 'cash-coin',
+        'airplane', 'tree', 'palette', 'mortarboard', 'people', 'camera-reels',
+        'book', 'rocket', 'controller', 'briefcase', 'emoji-smile', 'lightbulb',
+        'moon-stars', 'car-front', 'bag', 'globe', 'newspaper', 'film', 'gear',
+        'house', 'cup-hot', 'joystick', 'umbrella', 'compass', 'map', 'calculator',
+        'code-slash', 'star', 'building', 'flag', 'puzzle', 'chat-dots', 'soundwave',
+    ];
+    private const CATEGORY_DEFAULT_ICON = 'soundwave';
+
+    /**
+     * Retourne l'id de la catégorie, en la créant si besoin. Une catégorie
+     * nouvellement créée reçoit en plus une icône et une image de couverture
+     * générées par IA (une seule fois : les créations suivantes du même
+     * podcast la réutilisent via le SELECT ci-dessus, sans nouvel appel IA).
+     */
     private function saveOrGetCategory(string $categoryLabel)
     {
         $stmt = $this->db->prepare('SELECT idcategorie FROM categorie WHERE label = :label');
@@ -342,8 +383,91 @@ class PodcastGenerator
 
         $stmt = $this->db->prepare('INSERT INTO categorie (label) VALUES (:label)');
         $stmt->execute([':label' => $categoryLabel]);
+        $idcategorie = $this->db->lastInsertId();
 
-        return $this->db->lastInsertId();
+        $this->ensureCategoryAssets($idcategorie, $categoryLabel);
+
+        return $idcategorie;
+    }
+
+    /**
+     * Choisit une icône et génère une image de couverture pour une catégorie
+     * tout juste créée. Best-effort : un échec ici (icône/couverture
+     * manquante) ne doit jamais faire échouer toute la génération du
+     * podcast, la catégorie reste utilisable sans ces habillages visuels.
+     */
+    private function ensureCategoryAssets(string $idcategorie, string $categoryLabel): void
+    {
+        $icon = self::CATEGORY_DEFAULT_ICON;
+        try {
+            $iconPrompt = $this->getPrompt('categorie_icone');
+            if ($iconPrompt !== '') {
+                $rawIcon = $this->ai->textGenerator()->generateText(
+                    'Tu réponds uniquement avec le nom d\'icône demandé, sans aucun autre texte.',
+                    str_replace('###REPLACE###', $categoryLabel, $iconPrompt)
+                );
+                $icon = $this->sanitizeIcon($rawIcon);
+            }
+        } catch (Exception $e) {
+            Logger::get()->error('Erreur lors du choix de l\'icône de catégorie', [
+                'service' => 'generation-worker',
+                'category' => $categoryLabel,
+                'exception' => get_class($e),
+                'reason' => $e->getMessage(),
+            ]);
+        }
+
+        $coverFileName = null;
+        try {
+            $coverPrompt = $this->getPrompt('categorie_cover');
+            if ($coverPrompt !== '') {
+                $coverContent = $this->ai->imageGenerator()->generateImage(
+                    str_replace('###REPLACE###', $categoryLabel, $coverPrompt)
+                );
+                $coverFileName = $this->storeOutput('images', 'category_' . $idcategorie . '_' . $this->getCurrentDateTime() . '.png', $coverContent);
+                $this->convertImageToWebP($coverFileName);
+            }
+        } catch (Exception $e) {
+            Logger::get()->error('Erreur lors de la génération de la couverture de catégorie', [
+                'service' => 'generation-worker',
+                'category' => $categoryLabel,
+                'exception' => get_class($e),
+                'reason' => $e->getMessage(),
+            ]);
+        }
+
+        // Comme les deux blocs précédents : best-effort. En particulier, si le
+        // déploiement du code précède l'application de la migration SQL qui
+        // ajoute ces colonnes (scripts/deploy.sh ne rejoue jamais SQL/, voir
+        // son en-tête), cette requête échoue avec "colonne inconnue" — la
+        // catégorie doit rester utilisable sans icône/couverture plutôt que
+        // de faire échouer tout le job après coup (texte/image/audio déjà
+        // payés à ce stade).
+        try {
+            $stmt = $this->db->prepare('UPDATE categorie SET icon = :icon, cover_image = :cover WHERE idcategorie = :id');
+            $stmt->execute([
+                ':icon' => $icon,
+                ':cover' => $coverFileName !== null ? str_replace('.png', '.webp', $coverFileName) : null,
+                ':id' => $idcategorie,
+            ]);
+        } catch (Exception $e) {
+            Logger::get()->error('Erreur lors de l\'enregistrement de l\'icône/couverture de catégorie', [
+                'service' => 'generation-worker',
+                'category' => $categoryLabel,
+                'exception' => get_class($e),
+                'reason' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /** Ramène la réponse du modèle ("bi-cpu", "Cpu", "cpu.") à une entrée connue de CATEGORY_ICONS, ou au repli par défaut. */
+    private function sanitizeIcon(string $rawIcon): string
+    {
+        $icon = strtolower(trim($rawIcon));
+        $icon = preg_replace('/^bi-/', '', $icon);
+        $icon = preg_replace('/[^a-z0-9-]/', '', $icon);
+
+        return in_array($icon, self::CATEGORY_ICONS, true) ? $icon : self::CATEGORY_DEFAULT_ICON;
     }
 
     private function saveGeneration(

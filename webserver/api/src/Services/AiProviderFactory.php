@@ -40,6 +40,23 @@ class AiProviderFactory
         };
     }
 
+    /**
+     * Générateur de texte utilisé pour la narration principale du podcast
+     * uniquement (pas le titre/la catégorie, qui n'ont pas besoin de
+     * recherche web) : équipé de l'outil "web_search" côté Mistral, pour que
+     * le modèle puisse vérifier des faits récents quand il le juge utile.
+     * Ollama Cloud n'expose pas ce connecteur : on retombe alors sur le
+     * générateur de texte standard, sans web search.
+     */
+    public function researchTextGenerator(): TextGeneratorInterface
+    {
+        return $this->instances['research_text'] ??= match ($this->choice('AI_TEXT_PROVIDER')) {
+            'mistral' => new MistralAgentTextProvider($this->mistralTextAgentConfig()),
+            'ollama' => $this->textGenerator(),
+            default => throw new Exception('AI_TEXT_PROVIDER invalide (attendu : mistral ou ollama).'),
+        };
+    }
+
     public function imageGenerator(): ImageGeneratorInterface
     {
         return $this->instances['image'] ??= match ($this->choice('AI_IMAGE_PROVIDER')) {
@@ -111,6 +128,19 @@ class AiProviderFactory
             'image_model' => $this->get('MISTRAL_IMAGE_MODEL'),
             'image_agent_id' => $this->get('MISTRAL_IMAGE_AGENT_ID'),
         ], fn ($value) => $value !== null);
+    }
+
+    /**
+     * Config de l'agent texte "web_search" (voir MistralAgentTextProvider) :
+     * réutilise la même clé API et le même modèle que le texte classique,
+     * avec en plus un id d'agent pré-créé optionnel (évite une recréation à
+     * chaque process, comme MISTRAL_IMAGE_AGENT_ID pour l'image).
+     */
+    private function mistralTextAgentConfig(): array
+    {
+        return array_merge($this->mistralConfig(), array_filter([
+            'text_agent_id' => $this->get('MISTRAL_TEXT_AGENT_ID'),
+        ], fn ($value) => $value !== null));
     }
 
     /** Ollama Cloud expose une API de chat compatible OpenAI (texte uniquement). */
