@@ -372,6 +372,11 @@
       <form class="newsletter-form" id="newsletter-form" novalidate>
         <input type="email" id="newsletter-email" name="email" placeholder="vous@exemple.fr" required>
         <button type="submit">S'inscrire</button>
+        <!-- Piège à robots : masqué visuellement et aux lecteurs d'écran, jamais rempli par un humain. -->
+        <div aria-hidden="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
+          <label for="newsletter-website">Site web</label>
+          <input type="text" id="newsletter-website" name="website" tabindex="-1" autocomplete="off">
+        </div>
       </form>
       <p class="newsletter-msg" id="newsletter-msg"></p>
     </div>
@@ -389,6 +394,7 @@
   document.getElementById('newsletter-form').addEventListener('submit', async function (e) {
     e.preventDefault();
     var email = document.getElementById('newsletter-email').value.trim();
+    var website = document.getElementById('newsletter-website').value.trim();
     var msg = document.getElementById('newsletter-msg');
     msg.className = 'newsletter-msg';
     msg.textContent = 'Envoi en cours…';
@@ -396,7 +402,7 @@
       var res = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email })
+        body: JSON.stringify({ email: email, website: website })
       });
       var data = await res.json().catch(function () { return {}; });
       if (res.ok) {

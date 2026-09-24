@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\MailerService;
 use App\Utils\Logger;
+use App\Utils\RateLimiter;
 use Dotenv\Dotenv;
 use PDO;
 use PDOException;
@@ -11,6 +12,7 @@ use PDOException;
 class NewsletterController
 {
     private PDO $db;
+    private RateLimiter $rateLimiter;
 
     public function __construct()
     {
@@ -23,6 +25,12 @@ class NewsletterController
             $_ENV['DB_PASS']
         );
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $this->rateLimiter = new RateLimiter(
+            $this->db,
+            (int) ($_ENV['RATE_LIMIT_MAX_REQUESTS'] ?? 5),
+            (int) ($_ENV['RATE_LIMIT_WINDOW_SECONDS'] ?? 3600)
+        );
     }
 
     public function subscribe()
@@ -40,7 +48,23 @@ class NewsletterController
             return;
         }
 
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        if ($this->rateLimiter->tooManyRequests($ip, 'newsletter')) {
+            http_response_code(429);
+            echo json_encode(['message' => 'Trop de tentatives, réessayez plus tard']);
+            return;
+        }
+
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
+
+        // Champ piège invisible (voir site/index.html) : un humain ne le
+        // remplit jamais. On répond succès pour ne pas signaler l'échec aux
+        // robots, comme pour le formulaire de contact.
+        if (trim((string) ($input['website'] ?? '')) !== '') {
+            echo json_encode(['message' => 'Inscription confirmée, vérifiez vos mails']);
+            return;
+        }
+
         $email = trim((string) ($input['email'] ?? ''));
 
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {

@@ -5,12 +5,14 @@ namespace App\Controllers;
 use App\Services\MailerService;
 use App\Utils\Auth;
 use App\Utils\Logger;
+use App\Utils\RateLimiter;
 use Dotenv\Dotenv;
 use PDO;
 
 class AuthController
 {
     private PDO $db;
+    private RateLimiter $rateLimiter;
 
     public function __construct()
     {
@@ -23,6 +25,12 @@ class AuthController
             $_ENV['DB_PASS']
         );
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $this->rateLimiter = new RateLimiter(
+            $this->db,
+            (int) ($_ENV['RATE_LIMIT_MAX_REQUESTS'] ?? 5),
+            (int) ($_ENV['RATE_LIMIT_WINDOW_SECONDS'] ?? 3600)
+        );
     }
 
     /** Inscription publique : toujours en rôle "user", les comptes admin se créent depuis l'espace admin. */
@@ -33,6 +41,23 @@ class AuthController
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['error' => 'Méthode non autorisée']);
+            return;
+        }
+
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        if ($this->rateLimiter->tooManyRequests($ip, 'auth-register')) {
+            http_response_code(429);
+            echo json_encode(['error' => 'Trop de tentatives, réessayez plus tard.']);
+            return;
+        }
+
+        // Champ piège invisible (voir Login.js) : un humain ne le remplit
+        // jamais. On répond avec la même erreur générique que pour un email
+        // déjà invalide, pour ne pas signaler l'échec aux robots.
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        if (trim((string) ($input['website'] ?? '')) !== '') {
+            http_response_code(400);
+            echo json_encode(['error' => 'Inscription impossible, réessayez plus tard.']);
             return;
         }
 
@@ -99,6 +124,17 @@ class AuthController
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['error' => 'Méthode non autorisée']);
+            return;
+        }
+
+        // Limite par IP : un attaquant qui brute-force un mot de passe ou fait
+        // du credential stuffing émet des dizaines/centaines de requêtes,
+        // là où un utilisateur légitime qui se trompe en tape rarement plus
+        // de quelques-unes.
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        if ($this->rateLimiter->tooManyRequests($ip, 'auth-login')) {
+            http_response_code(429);
+            echo json_encode(['error' => 'Trop de tentatives, réessayez plus tard.']);
             return;
         }
 

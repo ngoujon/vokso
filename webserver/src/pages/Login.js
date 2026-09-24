@@ -16,6 +16,7 @@ export default function Login() {
   );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [website, setWebsite] = useState('');
   const [mode, setMode] = useState('login'); // 'login' | 'register'
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -27,7 +28,7 @@ export default function Login() {
     setError(null);
     setLoading(true);
     try {
-      const user = mode === 'login' ? await login(email, password) : await register(email, password);
+      const user = mode === 'login' ? await login(email, password) : await register(email, password, website);
       navigate(user.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
       setError(err.message);
@@ -57,6 +58,20 @@ export default function Login() {
                 required
               />
             </label>
+            {mode === 'register' && (
+              // Piège à robots : masqué visuellement et aux lecteurs d'écran, jamais rempli par un humain.
+              <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }}>
+                <label htmlFor="website">Site web</label>
+                <input
+                  id="website"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                />
+              </div>
+            )}
             {error && <p className="auth-error">{error}</p>}
             <button type="submit" disabled={loading}>
               {loading ? 'Chargement...' : mode === 'login' ? 'Se connecter' : "S'inscrire"}
