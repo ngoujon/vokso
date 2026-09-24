@@ -7,6 +7,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import Contact from './pages/Contact';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import CookieConsentBanner from './components/CookieConsentBanner';
 import { AuthProvider } from './AuthContext';
@@ -39,6 +40,7 @@ function App() {
               </ProtectedRoute>
             )}
           />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </AuthProvider>
