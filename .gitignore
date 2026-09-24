@@ -13,6 +13,7 @@ webserver/logs/
 webserver/public/output/
 webserver/api/storage/uploads/
 webserver/build/
+/backups/
 
 
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.

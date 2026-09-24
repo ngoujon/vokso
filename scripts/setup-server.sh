@@ -22,6 +22,8 @@
 #      uniquement : ne pas relancer sur un serveur qui a déjà des données).
 #   7. Installe le vhost Apache versionné (apache-config/vokso.conf).
 #   8. Configure le pare-feu (UFW : SSH + HTTP/HTTPS uniquement).
+#   9. Installe une crontab quotidienne (3h) exécutant scripts/backup.sh
+#      (voir docs/BACKUP.md), journalisée dans logs/backup.log.
 #
 # Hors périmètre, à faire à la main après ce script :
 #   - Pointer le DNS de vokso.fr / www.vokso.fr vers l'IP du serveur, puis
@@ -72,7 +74,7 @@ apt-get install -y \
   composer \
   git curl unzip openssl \
   certbot python3-certbot-apache \
-  ufw
+  ufw cron
 
 if ! command -v node >/dev/null 2>&1 || [ "$(node -v | grep -oE '^v[0-9]+' | tr -d v)" -lt 20 ]; then
   echo "[setup] Installation de Node.js 20 (NodeSource)..."
@@ -160,6 +162,12 @@ echo "[setup] Pare-feu (UFW)..."
 ufw allow OpenSSH >/dev/null
 ufw allow 'Apache Full' >/dev/null
 ufw --force enable >/dev/null
+
+echo "[setup] Sauvegarde quotidienne (scripts/backup.sh) via crontab de '$DEPLOY_USER'..."
+mkdir -p "$DEPLOY_PATH/logs"
+chown "$DEPLOY_USER:www-data" "$DEPLOY_PATH/logs"
+CRON_LINE="0 3 * * * cd $DEPLOY_PATH && ./scripts/backup.sh >> logs/backup.log 2>&1"
+( sudo -u "$DEPLOY_USER" crontab -l 2>/dev/null | grep -vF "scripts/backup.sh"; echo "$CRON_LINE" ) | sudo -u "$DEPLOY_USER" crontab -
 
 echo "[setup] $(date -Iseconds) Provisioning terminé."
 echo "[setup] Mot de passe généré pour l'utilisateur MySQL '$DB_USER' : $DB_PASS"
