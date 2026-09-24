@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest, useAuth } from '../AuthContext';
+import SecuritySection from '../components/SecuritySection';
 import { config } from '../config';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
@@ -277,6 +278,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      <SecuritySection />
       <KpiSection />
       <UsersSection />
       <PodcastsSection />

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Utils\Auth;
+use App\Utils\PasswordPolicy;
 use Dotenv\Dotenv;
 use PDO;
 
@@ -110,9 +111,16 @@ class AdminController
             $password = is_string($input['password'] ?? null) ? $input['password'] : '';
             $role = in_array($input['role'] ?? 'user', ['user', 'admin'], true) ? $input['role'] : 'user';
 
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($password) < 8) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 http_response_code(400);
-                echo json_encode(['error' => 'Email invalide ou mot de passe trop court (8 caractères minimum).']);
+                echo json_encode(['error' => 'Email invalide.']);
+                return;
+            }
+
+            $policyError = PasswordPolicy::validate($password);
+            if ($policyError !== null) {
+                http_response_code(400);
+                echo json_encode(['error' => $policyError]);
                 return;
             }
 
@@ -124,8 +132,12 @@ class AdminController
                 return;
             }
 
+            // Le mot de passe est choisi par l'admin qui crée le compte et
+            // communiqué hors bande : on force son changement à la première
+            // connexion, comme pour tout identifiant partagé.
             $stmt = $this->db->prepare(
-                'INSERT INTO users (email, password_hash, role, status) VALUES (:email, :password_hash, :role, "active")'
+                'INSERT INTO users (email, password_hash, role, status, must_change_password)
+                 VALUES (:email, :password_hash, :role, "active", 1)'
             );
             $stmt->execute([
                 ':email' => $email,

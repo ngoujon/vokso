@@ -16,7 +16,9 @@ async function apiRequest(path, options = {}) {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.error || 'Une erreur est survenue');
+    const error = new Error(data.error || 'Une erreur est survenue');
+    error.code = data.code;
+    throw error;
   }
   return data;
 }
@@ -47,10 +49,10 @@ export function AuthProvider({ children }) {
     loadUser();
   }, [loadUser]);
 
-  const login = async (email, password) => {
+  const login = async (email, password, totpCode = '') => {
     const data = await apiRequest('auth-login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, totp_code: totpCode }),
     });
     localStorage.setItem('auth_token', data.token);
     setUser(data.user);
@@ -76,8 +78,30 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const changePassword = async (currentPassword, newPassword) => {
+    await apiRequest('auth-change-password', {
+      method: 'POST',
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    });
+    await loadUser();
+  };
+
+  const setup2fa = () => apiRequest('auth-2fa-setup', { method: 'POST' });
+
+  const enable2fa = async (totpCode) => {
+    await apiRequest('auth-2fa-enable', { method: 'POST', body: JSON.stringify({ totp_code: totpCode }) });
+    await loadUser();
+  };
+
+  const disable2fa = async (password) => {
+    await apiRequest('auth-2fa-disable', { method: 'POST', body: JSON.stringify({ password }) });
+    await loadUser();
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, logout, changePassword, setup2fa, enable2fa, disable2fa }}
+    >
       {children}
     </AuthContext.Provider>
   );

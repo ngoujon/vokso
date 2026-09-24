@@ -38,7 +38,7 @@ class Auth
         }
 
         $stmt = $db->prepare(
-            'SELECT u.id, u.email, u.role, u.status
+            'SELECT u.id, u.email, u.role, u.status, u.must_change_password, u.totp_enabled
              FROM auth_tokens t
              JOIN users u ON u.id = t.user_id
              WHERE t.token = :token AND t.expires_at > NOW()'
@@ -50,11 +50,22 @@ class Auth
             return null;
         }
 
+        $user['must_change_password'] = (bool) $user['must_change_password'];
+        $user['totp_enabled'] = (bool) $user['totp_enabled'];
+
         return $user;
     }
 
-    /** Exige un utilisateur connecté ; répond en 401 et arrête l'exécution sinon. */
-    public static function requireUser(PDO $db): array
+    /**
+     * Exige un utilisateur connecté ; répond en 401 et arrête l'exécution sinon.
+     *
+     * Si le compte a un changement de mot de passe imposé (ex. identifiant de
+     * démarrage jamais changé), tous les endpoints sont bloqués sauf ceux qui
+     * passent explicitement $allowPendingPasswordChange (changement de mot de
+     * passe, lecture du profil, déconnexion) : impossible d'utiliser le reste
+     * de l'API tant que le mot de passe imposé n'a pas été changé.
+     */
+    public static function requireUser(PDO $db, bool $allowPendingPasswordChange = false): array
     {
         $user = self::currentUser($db);
         if (!$user) {
@@ -64,13 +75,23 @@ class Auth
             exit;
         }
 
+        if ($user['must_change_password'] && !$allowPendingPasswordChange) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'error' => 'Vous devez changer votre mot de passe avant de continuer.',
+                'code' => 'password_change_required',
+            ]);
+            exit;
+        }
+
         return $user;
     }
 
     /** Exige un utilisateur connecté avec le rôle admin ; répond en 403 sinon. */
-    public static function requireAdmin(PDO $db): array
+    public static function requireAdmin(PDO $db, bool $allowPendingPasswordChange = false): array
     {
-        $user = self::requireUser($db);
+        $user = self::requireUser($db, $allowPendingPasswordChange);
         if ($user['role'] !== 'admin') {
             http_response_code(403);
             header('Content-Type: application/json');

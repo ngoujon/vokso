@@ -7,6 +7,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import Contact from './pages/Contact';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ChangePassword from './pages/ChangePassword';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import CookieConsentBanner from './components/CookieConsentBanner';
@@ -24,6 +25,14 @@ function App() {
           <Route path="/tarifs" element={<Pricing />} />
           <Route path="/politique-de-confidentialite" element={<PrivacyPolicy />} />
           <Route path="/contact" element={<Contact />} />
+          <Route
+            path="/changer-mot-de-passe"
+            element={(
+              <ProtectedRoute skipPasswordCheck>
+                <ChangePassword />
+              </ProtectedRoute>
+            )}
+          />
           <Route
             path="/dashboard"
             element={(

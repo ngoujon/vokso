@@ -16,6 +16,8 @@ export default function Login() {
   );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [totpRequired, setTotpRequired] = useState(false);
   const [website, setWebsite] = useState('');
   const [mode, setMode] = useState('login'); // 'login' | 'register'
   const [error, setError] = useState(null);
@@ -28,10 +30,19 @@ export default function Login() {
     setError(null);
     setLoading(true);
     try {
-      const user = mode === 'login' ? await login(email, password) : await register(email, password, website);
+      const user = mode === 'login' ? await login(email, password, totpCode) : await register(email, password, website);
+      if (user.must_change_password) {
+        navigate('/changer-mot-de-passe');
+        return;
+      }
       navigate(user.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
-      setError(err.message);
+      if (err.code === 'totp_required') {
+        setTotpRequired(true);
+        setError(totpCode ? 'Code invalide, réessayez.' : 'Entrez le code de votre application d\'authentification.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -54,10 +65,26 @@ export default function Login() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                minLength={8}
+                minLength={mode === 'register' ? 12 : 8}
                 required
               />
+              {mode === 'register' && <small>12 caractères minimum, au moins une lettre et un chiffre.</small>}
             </label>
+            {mode === 'login' && totpRequired && (
+              <label>
+                Code de double authentification
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  autoFocus
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value)}
+                  required
+                />
+              </label>
+            )}
             {mode === 'register' && (
               // Piège à robots : masqué visuellement et aux lecteurs d'écran, jamais rempli par un humain.
               <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }}>
