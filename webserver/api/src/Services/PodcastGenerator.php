@@ -81,7 +81,10 @@ class PodcastGenerator
             [$imageContent, $audioContent, $audioExtension] = $this->generateImageAndAudio($generatedText);
 
             $imageFileName = $this->storeOutput('images', 'image_' . $this->getCurrentDateTime() . '.png', $imageContent);
-            $this->convertImageToWebP($imageFileName);
+            if ($this->convertImageToWebP($imageFileName)) {
+                @unlink($this->outputDir . '/images/' . $imageFileName);
+                $imageFileName = str_replace('.png', '.webp', $imageFileName);
+            }
             $costImage = CostEstimator::imageCost($this->imageModel());
 
             $audioFileName = $this->storeOutput(
@@ -425,7 +428,10 @@ class PodcastGenerator
                     str_replace('###REPLACE###', $categoryLabel, $coverPrompt)
                 );
                 $coverFileName = $this->storeOutput('images', 'category_' . $idcategorie . '_' . $this->getCurrentDateTime() . '.png', $coverContent);
-                $this->convertImageToWebP($coverFileName);
+                if ($this->convertImageToWebP($coverFileName)) {
+                    @unlink($this->outputDir . '/images/' . $coverFileName);
+                    $coverFileName = str_replace('.png', '.webp', $coverFileName);
+                }
             }
         } catch (Exception $e) {
             Logger::get()->error('Erreur lors de la génération de la couverture de catégorie', [
@@ -447,7 +453,7 @@ class PodcastGenerator
             $stmt = $this->db->prepare('UPDATE categorie SET icon = :icon, cover_image = :cover WHERE idcategorie = :id');
             $stmt->execute([
                 ':icon' => $icon,
-                ':cover' => $coverFileName !== null ? str_replace('.png', '.webp', $coverFileName) : null,
+                ':cover' => $coverFileName,
                 ':id' => $idcategorie,
             ]);
         } catch (Exception $e) {
@@ -548,11 +554,12 @@ class PodcastGenerator
         return date('Ymd_His');
     }
 
-    private function convertImageToWebP(string $pngFileName): void
+    /** Convertit le PNG en WebP à côté, et ne renvoie true que si le fichier WebP a bien été produit. */
+    private function convertImageToWebP(string $pngFileName): bool
     {
         $pngPath = $this->outputDir . '/images/' . $pngFileName;
         if (!file_exists($pngPath)) {
-            return;
+            return false;
         }
 
         $webpPath = str_replace('.png', '.webp', $pngPath);
@@ -577,5 +584,7 @@ class PodcastGenerator
                 Logger::get()->error('Erreur conversion WebP via GD', ['exception' => get_class($e), 'reason' => $e->getMessage()]);
             }
         }
+
+        return file_exists($webpPath);
     }
 }
