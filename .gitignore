@@ -8,7 +8,6 @@ webserver/api/.phpunit.result.cache
 webserver/api/.phpunit.cache/
 *.htaccess
 !webserver/api/.htaccess
-*.lock
 webserver/logs/
 webserver/public/output/
 webserver/api/storage/uploads/
