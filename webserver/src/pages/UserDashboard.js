@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { apiRequest, useAuth } from '../AuthContext';
 import { config } from '../config';
+import BillingProfileForm from '../components/account/BillingProfileForm';
+import InvoiceHistory from '../components/account/InvoiceHistory';
+import GdprPanel from '../components/account/GdprPanel';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import '../styles/globals.css';
@@ -105,6 +108,19 @@ export default function UserDashboard() {
         ) : (
           <p>Chargement de votre formule...</p>
         )}
+      </section>
+
+      <section>
+        <h2>Facturation</h2>
+        <h3>Informations de facturation</h3>
+        <BillingProfileForm />
+        <h3>Historique des factures</h3>
+        <InvoiceHistory />
+      </section>
+
+      <section>
+        <h2>Confidentialité et données personnelles</h2>
+        <GdprPanel />
       </section>
 
       {loading && <p>Chargement de vos podcasts...</p>}

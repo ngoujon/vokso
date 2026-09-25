@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Services\InvoiceIssuer;
+use App\Services\InvoiceNumberGenerator;
 use App\Services\StripeService;
 use App\Utils\Auth;
 use App\Utils\Logger;
@@ -25,6 +27,7 @@ class BillingController
     private PDO $db;
     private ?StripeService $stripe;
     private string $frontendUrl;
+    private InvoiceIssuer $invoiceIssuer;
 
     public function __construct()
     {
@@ -45,6 +48,7 @@ class BillingController
             : null;
 
         $this->frontendUrl = rtrim($_ENV['FRONTEND_URL'] ?? 'http://localhost:3000', '/');
+        $this->invoiceIssuer = new InvoiceIssuer($this->db, new InvoiceNumberGenerator($this->db));
     }
 
     /** Démarre un abonnement : renvoie l'URL de la Checkout Session Stripe à suivre. */
@@ -239,6 +243,10 @@ class BillingController
                 )->execute([':sub_id' => $subscription->id]);
                 break;
 
+            case 'invoice.paid':
+                $this->issueInvoiceForStripeInvoice($event->data->object);
+                break;
+
             case 'invoice.payment_failed':
                 $invoice = $event->data->object;
                 $this->db->prepare(
@@ -291,6 +299,46 @@ class BillingController
                  cancel_at_period_end = :cancel_at_period_end
              WHERE stripe_customer_id = :customer_id'
         )->execute($params);
+    }
+
+    /**
+     * Émission de la facture Factur-X pour un paiement confirmé. Volontairement
+     * isolée par un try/catch : une erreur ici (ex. vendeur pas encore
+     * configuré, voir InvoiceIssuer) ne doit jamais faire échouer le webhook
+     * dans son ensemble, sous peine de reperdre aussi la synchronisation de
+     * l'abonnement (déjà en production, plus critique que la facturation).
+     */
+    private function issueInvoiceForStripeInvoice(\Stripe\Invoice $invoice): void
+    {
+        try {
+            $stmt = $this->db->prepare('SELECT user_id, plan FROM subscriptions WHERE stripe_customer_id = :customer_id');
+            $stmt->execute([':customer_id' => $invoice->customer]);
+            $subscription = $stmt->fetch();
+
+            if (!$subscription) {
+                Logger::get()->error('Facture Stripe sans abonnement Vokso associé', [
+                    'controller' => 'billing',
+                    'action' => 'invoice.paid',
+                    'stripe_customer_id' => $invoice->customer,
+                ]);
+                return;
+            }
+
+            $this->invoiceIssuer->issueForSubscriptionPayment(
+                (int) $subscription['user_id'],
+                $subscription['plan'],
+                (int) $invoice->amount_paid,
+                (string) $invoice->currency,
+                (string) $invoice->id
+            );
+        } catch (\Throwable $e) {
+            Logger::get()->error($e->getMessage(), [
+                'controller' => 'billing',
+                'action' => 'invoice.paid',
+                'exception' => get_class($e),
+            ]);
+            \Sentry\captureException($e);
+        }
     }
 
     private function planForPrice(string $priceId): string
