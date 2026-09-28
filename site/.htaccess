@@ -1,0 +1,26 @@
+# Ces règles vivent ici plutôt qu'uniquement dans apache-config/vokso.conf
+# parce que le vhost HTTPS réellement servi en production est un fichier
+# généré par certbot (typiquement vokso-le-ssl.conf, voir
+# scripts/setup-server.sh) : un clone figé du vhost pris au moment de son
+# exécution, hors du dépôt, jamais resynchronisé par scripts/deploy.sh. Un
+# .htaccess est en revanche relu à chaque requête directement depuis site/
+# (AllowOverride All), donc actif aussi bien en HTTP qu'en HTTPS sans dépendre
+# de quel vhost sert réellement le trafic.
+RewriteEngine On
+
+# Domaine canonique fixe (vokso.fr, jamais www.vokso.fr) : les deux servaient
+# jusqu'ici le même contenu sans redirection (signal SEO dilué). Voir aussi
+# useCanonical.js (filet de sécurité côté JS, insuffisant seul pour un
+# crawler qui n'exécute pas le JS).
+RewriteCond %{HTTP_HOST} ^www\.vokso\.fr$ [NC]
+RewriteRule ^ https://vokso.fr%{REQUEST_URI} [L,R=301]
+
+# Épisode public rendu côté serveur (voir PodcastPageController) :
+# /podcast/{id}[-{slug}] -> /api/podcast/{id}[-{slug}]
+# generation_id est un VARCHAR (ex. "gen_6ab267b302f6d"), pas un entier
+# (voir SQL/20260818010000.sql) — d'où [A-Za-z0-9_]+ et non [0-9]+.
+RewriteRule ^podcast/([A-Za-z0-9_]+)(-[a-z0-9-]*)?/?$ /api/podcast/$1$2 [PT,L]
+
+# Sitemap généré dynamiquement à partir des épisodes publiés (voir
+# SitemapController), au lieu d'un fichier statique figé sur la page d'accueil.
+RewriteRule ^sitemap\.xml$ /api/sitemap [PT,L]
