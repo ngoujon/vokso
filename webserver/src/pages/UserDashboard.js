@@ -7,6 +7,7 @@ import InvoiceHistory from '../components/account/InvoiceHistory';
 import GdprPanel from '../components/account/GdprPanel';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import { cleanTitle } from '../utils/text';
 import '../styles/globals.css';
 import '../styles/Dashboard.css';
 
@@ -136,12 +137,12 @@ export default function UserDashboard() {
           <div className="podcast-card" key={p.generation_id}>
             <img
               src={`${config.staticUrl}/static/images/${p.image_url}`}
-              alt={p.title}
+              alt={cleanTitle(p.title)}
               className="podcast-card-image"
               loading="lazy"
             />
             <div className="podcast-card-body">
-              <h3>{p.title}</h3>
+              <h3>{cleanTitle(p.title)}</h3>
               <span className="podcast-card-category">{p.category}</span>
               <p className="podcast-card-date">{new Date(p.created_at).toLocaleString('fr-FR')}</p>
               <p className="podcast-card-cost">Coût estimé : {Number(p.cost_total).toFixed(4)} $</p>

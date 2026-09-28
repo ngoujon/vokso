@@ -681,6 +681,19 @@ h2 {
   white-space: pre-line;
 }
 
+.generation-permalink {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.generation-permalink:hover {
+  text-decoration: underline;
+}
+
 .audio-player {
   width: 100%;
   padding: 0.5rem;

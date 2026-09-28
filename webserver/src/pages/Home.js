@@ -9,6 +9,7 @@ import { ReactComponent as VoksoMark } from '../assets/vokso-mark.svg';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import useJsonLd from '../hooks/useJsonLd';
+import { cleanTitle, slugify } from '../utils/text';
 
 // Vérification des variables d'environnement
 if (!config.apiUrl || !config.staticUrl) {
@@ -413,7 +414,8 @@ export default function Home() {
               position: index + 1,
               item: {
                 '@type': 'PodcastEpisode',
-                name: gen.title || 'Sans titre',
+                name: cleanTitle(gen.title) || 'Sans titre',
+                url: `https://vokso.fr/podcast/${gen.id}-${slugify(cleanTitle(gen.title) || '')}`,
                 datePublished: gen.created_at,
                 associatedMedia: {
                   '@type': 'MediaObject',
@@ -591,7 +593,7 @@ export default function Home() {
                 <div className="generation-thumbnail">
                   <img
                     src={`${config.staticUrl}/static/images/${gen.image_url}`}
-                    alt={`Image pour ${gen.title || 'Génération'}`}
+                    alt={`Image pour ${cleanTitle(gen.title) || 'Génération'}`}
                     loading="lazy"
                   />
                   {gen.category && (
@@ -602,7 +604,7 @@ export default function Home() {
                   )}
                 </div>
                 <div className="generation-info">
-                  <h3>{gen.title || 'Sans titre'}</h3>
+                  <h3>{cleanTitle(gen.title) || 'Sans titre'}</h3>
                   <p className="generation-date">
                     {formatDate(gen.created_at)}
                   </p>
@@ -621,6 +623,14 @@ export default function Home() {
                         <p className="generation-full-text">{gen.description}</p>
                       )}
                     </>
+                  )}
+                  {gen.id && (
+                    <a
+                      className="generation-permalink"
+                      href={`/podcast/${gen.id}-${slugify(cleanTitle(gen.title) || '')}`}
+                    >
+                      Voir la page complète de l'épisode ↗
+                    </a>
                   )}
                 </div>
                 <div className="audio-player">

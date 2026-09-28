@@ -49,6 +49,30 @@ echo "[deploy] Installation des dépendances frontend et build (npm)..."
 npm ci --prefix webserver
 npm run build --prefix webserver
 
+# apache-config/vokso.conf n'était jusqu'ici copié vers /etc/apache2/sites-available
+# qu'une fois, à l'installation initiale (scripts/setup-server.sh) : tout
+# changement versionné du vhost (réécritures d'URL, en-têtes...) restait sans
+# effet en prod tant que personne ne relançait cette copie à la main. On la
+# resynchronise donc à chaque déploiement, avec un test de syntaxe et une
+# restauration automatique en cas de config invalide pour ne jamais recharger
+# Apache sur un vhost cassé.
+echo "[deploy] Synchronisation de la configuration Apache (apache-config/vokso.conf)..."
+APACHE_VHOST_DEST="/etc/apache2/sites-available/vokso.conf"
+APACHE_VHOST_BACKUP="$(mktemp)"
+if [ -f "$APACHE_VHOST_DEST" ]; then
+    sudo cp "$APACHE_VHOST_DEST" "$APACHE_VHOST_BACKUP"
+fi
+sudo cp "$PROJECT_DIR/apache-config/vokso.conf" "$APACHE_VHOST_DEST"
+if ! sudo apache2ctl configtest; then
+    echo "[deploy] ERREUR : configuration Apache invalide après synchronisation, restauration de la version précédente."
+    if [ -s "$APACHE_VHOST_BACKUP" ]; then
+        sudo cp "$APACHE_VHOST_BACKUP" "$APACHE_VHOST_DEST"
+    fi
+    rm -f "$APACHE_VHOST_BACKUP"
+    exit 1
+fi
+rm -f "$APACHE_VHOST_BACKUP"
+
 echo "[deploy] Rechargement d'Apache..."
 eval "$APACHE_RELOAD"
 

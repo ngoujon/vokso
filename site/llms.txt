@@ -1,0 +1,18 @@
+# Vokso
+
+> Vokso transforme un simple sujet, en une phrase, en podcast complet : un texte structuré en français, une illustration originale et une narration en voix de synthèse, générés automatiquement en quelques minutes. Hébergement et traitement des données en Europe, sans revente à des tiers ni entraînement de modèles externes.
+
+Vokso s'adresse à toute personne qui veut explorer un sujet (histoire, science, économie, culture générale...) sous forme audio courte, sans avoir à l'écrire, l'illustrer ou l'enregistrer soi-même.
+
+## Pages principales
+
+- [Accueil](https://vokso.fr/) : présentation du produit, fonctionnement en quatre étapes, positionnement souverain (hébergement UE).
+- [Tarifs](https://vokso.fr/app/tarifs) : formules Découverte (gratuite), Créateur et Studio.
+- [Contact](https://vokso.fr/app/contact) : formulaire de contact.
+- [Politique de confidentialité](https://vokso.fr/app/politique-de-confidentialite) : traitement des données, droits RGPD.
+- [Sitemap](https://vokso.fr/sitemap.xml) : liste complète et à jour des épisodes publiés, chacun sur sa propre page (/podcast/{id}-{titre}).
+
+## Notes pour les agents et robots
+
+- Chaque épisode généré par un utilisateur dispose d'une page publique dédiée sous /podcast/{id}-{slug}, avec son texte complet, sa date de publication et l'audio associé — voir le sitemap pour la liste à jour.
+- Le contenu des épisodes est généré par un modèle de langage (IA) à partir d'un sujet fourni par l'utilisateur ; il ne s'agit pas d'un contenu éditorial rédigé par une rédaction humaine.

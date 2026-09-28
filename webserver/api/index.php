@@ -62,6 +62,10 @@ $routes = [
     'admin-kpis' => ['App\Controllers\AdminController', 'kpis'],
     'admin-users' => ['App\Controllers\AdminController', 'users'],
     'admin-podcasts' => ['App\Controllers\AdminController', 'podcasts'],
+    // Pages publiques rendues côté serveur (SEO/GEO) : réécrites en
+    // /podcast/... et /sitemap.xml par le vhost Apache (apache-config/vokso.conf).
+    'podcast' => ['App\Controllers\PodcastPageController', 'show'],
+    'sitemap' => ['App\Controllers\SitemapController', 'show'],
 ];
 
 // Obtenir l'URL après le domaine (par exemple : "/generation" ou "/listing")
@@ -95,6 +99,8 @@ try {
 
     if ($route === 'search') {
         $controller->{$methodName}($_GET['query'] ?? '');
+    } elseif ($route === 'podcast') {
+        $controller->{$methodName}($request);
     } else {
         $controller->{$methodName}();
     }
