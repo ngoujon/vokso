@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Provisionne un serveur Ubuntu FRAIS pour héberger Vokso (vitrine + app React
-# + API PHP) et le prépare à recevoir les déploiements automatiques de
+# + API Laravel) et le prépare à recevoir les déploiements automatiques de
 # scripts/deploy.sh via .github/workflows/deploy.yml.
 #
 # Usage : à exécuter UNE SEULE FOIS, en root, sur le serveur cible fraîchement

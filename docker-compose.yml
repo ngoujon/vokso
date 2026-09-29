@@ -2,7 +2,7 @@ services:
   web:
     build:
       context: ./webserver
-    container_name: podcast_qwebty
+    container_name: vokso_web
     restart: always
     ports:
       - "80:80"
@@ -14,10 +14,11 @@ services:
       - db
     networks:
       - app_network
+    # -D VOKSO_DOCKER : le vhost écoute alors sur *:80 (voir apache-config/vokso.conf).
     command: >
       /bin/bash -c "
-      a2ensite *.conf &&
-      apachectl -D FOREGROUND"
+      a2dissite 000-default >/dev/null; a2ensite vokso >/dev/null &&
+      apachectl -D FOREGROUND -D VOKSO_DOCKER"
 
   db:
     image: mysql:8.0
@@ -60,43 +61,5 @@ services:
     networks:
       - app_network
 
-  # Pile IA locale, désactivée par défaut. Démarrage :
-  #   docker compose --profile local-ai up -d
-  # Modèles recommandés par service : voir docs/LOCAL_AI.md
-
-  # Synthèse vocale, API compatible OpenAI (/v1/audio/speech). Variante CPU :
-  # fonctionne sans GPU, plus lente. Voir docs/LOCAL_AI.md pour la variante GPU.
-  tts:
-    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest
-    container_name: tts
-    profiles: ["local-ai"]
-    restart: always
-    ports:
-      - "8880:8880"
-    networks:
-      - app_network
-
-  # Transcription, API compatible OpenAI (/v1/audio/transcriptions), utilisée
-  # pour la saisie vocale (l'utilisateur parle plutôt que de taper). Variante
-  # CPU : fonctionne sans GPU, plus lente. Modèle téléchargé au 1er appel.
-  whisper:
-    image: fedirz/faster-whisper-server:latest-cpu
-    container_name: whisper
-    profiles: ["local-ai"]
-    restart: always
-    ports:
-      - "8000:8000"
-    volumes:
-      - whisper_data:/root/.cache/huggingface
-      - whisper_uv_cache:/root/.cache/uv
-    networks:
-      - app_network
-
 volumes:
   db_data:
-  whisper_data:
-  whisper_uv_cache:
-
-networks:
-  app_network:
-    driver: bridge

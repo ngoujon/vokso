@@ -1,0 +1,21 @@
+# Front controller Laravel, servi sous /api (Alias Apache, voir
+# apache-config/vokso.conf).
+Options -MultiViews -Indexes
+
+# Réponses dynamiques : pas d'expiration forcée par mod_expires (voir le vhost).
+<IfModule mod_expires.c>
+    ExpiresActive Off
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /api/
+
+    # Transmet l'en-tête Authorization (jeton Bearer) à PHP.
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>

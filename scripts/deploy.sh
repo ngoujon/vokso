@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Déploie la dernière version de la branche de production sur le serveur :
-# récupère le code, installe les dépendances, build le frontend, recharge
-# Apache. Ce script s'exécute SUR le serveur cible (soit à la main en SSH,
+# récupère le code, installe les dépendances de l'API Laravel, build le
+# frontend React, recharge Apache. Ce script s'exécute SUR le serveur cible (soit à la main en SSH,
 # soit appelé automatiquement par .github/workflows/deploy.yml).
 #
 # Utilisation (depuis le répertoire du projet sur le serveur) :
@@ -14,8 +14,7 @@
 #
 # Ne gère pas les migrations SQL : les fichiers sous SQL/ ne sont pas tous
 # rejouables (ALTER/INSERT non idempotents, voir SQL/*.sql), elles restent
-# appliquées manuellement et consciemment, comme actuellement (voir
-# DEPLOIEMENT_REPRODUCTIBLE_CHECKLIST.md).
+# appliquées manuellement et consciemment (voir docs/DEPLOIEMENT.md).
 #
 # Rollback : ce script affiche le commit précédemment déployé avant de
 # mettre à jour. En cas de problème, revenir en arrière avec :
@@ -42,8 +41,30 @@ git reset --hard "origin/$DEPLOY_BRANCH"
 NEW_COMMIT="$(git rev-parse HEAD)"
 echo "[deploy] Nouveau commit : $NEW_COMMIT"
 
+API_DIR="$PROJECT_DIR/webserver/api"
+
 echo "[deploy] Installation des dépendances backend (composer)..."
-composer install --no-dev --optimize-autoloader --prefer-dist --working-dir=webserver/api
+composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --working-dir="$API_DIR"
+
+# Clé d'application Laravel : générée une seule fois si absente du .env.
+# Non bloquant : l'API n'en dépend pas pour fonctionner (pas de session ni
+# de cookie chiffré), mieux vaut un avertissement qu'un déploiement avorté.
+if [ -f "$API_DIR/.env" ] && ! grep -q '^APP_KEY=base64:' "$API_DIR/.env"; then
+    echo "[deploy] Génération de la clé d'application Laravel (APP_KEY)..."
+    grep -q '^APP_KEY=' "$API_DIR/.env" || echo 'APP_KEY=' >> "$API_DIR/.env"
+    php "$API_DIR/artisan" key:generate --force --no-interaction || echo "[deploy] AVERTISSEMENT : APP_KEY non générée."
+fi
+
+# Dossiers écrits par Apache (www-data) au runtime. Non bloquant si sudo
+# n'est pas autorisé pour ces commandes.
+mkdir -p "$API_DIR/storage/uploads" "$PROJECT_DIR/webserver/public/output" "$PROJECT_DIR/webserver/logs"
+sudo -n chgrp -R www-data "$API_DIR/storage" "$API_DIR/bootstrap/cache" "$PROJECT_DIR/webserver/logs" 2>/dev/null \
+    && sudo -n chmod -R g+rwX "$API_DIR/storage" "$API_DIR/bootstrap/cache" "$PROJECT_DIR/webserver/logs" 2>/dev/null \
+    || echo "[deploy] AVERTISSEMENT : droits d'écriture de www-data non ajustés (sudo indisponible)."
+
+# Caches de configuration et de routes : relus à chaque déploiement.
+php "$API_DIR/artisan" config:cache --no-interaction
+php "$API_DIR/artisan" route:cache --no-interaction
 
 echo "[deploy] Installation des dépendances frontend et build (npm)..."
 npm ci --prefix webserver

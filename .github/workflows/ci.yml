@@ -22,6 +22,10 @@ jobs:
         working-directory: webserver
         run: npm ci
 
+      - name: Vérification des types (TypeScript)
+        working-directory: webserver
+        run: npm run typecheck
+
       - name: Build (react-scripts build)
         working-directory: webserver
         run: npm run build
@@ -33,7 +37,7 @@ jobs:
           CI: true
 
   backend:
-    name: Backend PHP (composer + PHPUnit)
+    name: Backend Laravel (composer + PHPUnit)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,12 +45,13 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
-          extensions: pdo, pdo_mysql, mysqli, zip
+          extensions: pdo, pdo_mysql, pdo_sqlite, zip, intl, gd, bcmath
+          coverage: none
 
       - name: Installe les dépendances
         working-directory: webserver/api
         run: composer install --prefer-dist --no-progress
 
-      - name: Tests (PHPUnit)
+      - name: Tests (PHPUnit, base SQLite en mémoire)
         working-directory: webserver/api
         run: vendor/bin/phpunit

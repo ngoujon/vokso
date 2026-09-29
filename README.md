@@ -1,114 +1,63 @@
-# Vokso - Générateur de Podcasts
+# Vokso
 
-Une application web permettant de générer automatiquement des podcasts à partir de textes, en utilisant l'intelligence artificielle pour créer du contenu multimédia complet.
+Vokso transforme un sujet (une phrase, ou un message vocal) en épisode de podcast complet : un texte de narration en français, une illustration et une voix de synthèse, générés par IA en quelques minutes. Le service est **gratuit** ; il faut un compte pour générer, avec un nombre limité de générations par mois pour éviter les abus.
 
-## Description
-
-Vokso est une application qui transforme du texte en podcasts complets, incluant :
-- Un texte structuré en français
-- Une illustration générée par IA
-- Un fichier audio de synthèse vocale
-
-Le système utilise des modèles d'IA avancés pour :
-- Générer du contenu textuel cohérent et structuré
-- Créer des images minimalistes et modernes
-- Convertir le texte en audio naturel
-- Catégoriser automatiquement le contenu
-
-## Fonctionnalités
-
-### Génération de Contenu
-- Création de textes en français (limité à 4000 caractères)
-- Génération d'images minimalistes avec style scandinave
-- Synthèse vocale pour la narration
-- Catégorisation automatique du contenu
-
-### Interface Utilisateur
-- Formulaire de saisie pour le contenu
-- Recherche en temps réel dans les podcasts existants
-- Lecteur audio intégré avec contrôles avancés
-- Affichage des images et textes générés
-- Gestion des erreurs et états de chargement
-
-## Installation
-
-### Prérequis
-- PHP 7.4 ou supérieur
-- Composer
-- Node.js 14.0 ou supérieur
-- MySQL
-- Clé API OpenAI
-
-### Configuration
-
-1. Installation du backend :
-```bash
-cd backend
-composer install
-```
-
-2. Configuration de l'environnement :
-Créez un fichier `.env` avec les variables suivantes :
-```env
-DB_HOST=
-DB_NAME=
-DB_USER=
-DB_PASS=
-OPENAI_API_KEY=
-```
-
-3. Configuration de la base de données :
-```bash
-mysql -u root -p < SQL/2025-01-11.sql
-```
-
-4. Démarrage du serveur backend :
-```bash
-php -S localhost:8000 -t public
-```
-
-5. Installation du frontend :
-```bash
-cd frontend
-npm install
-npm run dev
-```
+Production : [vokso.fr](https://vokso.fr)
 
 ## Architecture
 
-### Base de Données
-- Table `prompt` : Stockage des modèles de prompts
-- Table `histo_prompt` : Historique des modifications des prompts
-- Table `categorie` : Gestion des catégories de contenu
-- Table `generations` : Stockage des contenus générés
+| Dossier | Rôle | Technologies |
+| --- | --- | --- |
+| `site/` | Vitrine statique (racine du domaine), réécritures SEO (`site/.htaccess`) | HTML/CSS |
+| `webserver/src/` | Application web, servie sous `/app/` | React 18 + TypeScript (Create React App) |
+| `webserver/api/` | API servie sous `/api/`, pages épisode rendues côté serveur (`/podcast/...`), sitemap | Laravel 13 (PHP 8.3) |
+| `apache-config/` | Vhost Apache versionné, synchronisé à chaque déploiement | Apache 2.4 |
+| `SQL/` | Historique des migrations de la base de production (appliquées à la main) | MySQL |
+| `scripts/` | Déploiement, provisionnement du serveur, sauvegardes | Bash |
 
-### API Endpoints
-- POST `/generation` : Création de nouveau contenu
-- GET `/listing` : Liste des générations récentes
-- GET `/search` : Recherche dans les contenus
+### Génération d'un podcast
 
-## Technologies
+1. Le front envoie le sujet (`POST /api/generation`) ou un fichier audio (`POST /api/generation-audio`), avec le jeton de connexion.
+2. L'API vérifie les limites anti-abus (par adresse IP et quota mensuel par compte, voir `App\Support\GenerationQuota`), crée un job et lance en arrière-plan `php artisan vokso:process-job {id}`.
+3. `App\Services\PodcastGenerator` enchaîne : transcription éventuelle → texte, titre et catégorie en parallèle → illustration et voix en parallèle → enregistrement.
+4. Le front suit la progression via `GET /api/generation-status?id=...`.
 
-### Backend
-- PHP 7+
-- MySQL
-- Guzzle (client HTTP)
+Toutes les étapes d'IA passent par **Mistral AI** (texte avec recherche web, génération d'image, synthèse vocale Voxtral, transcription Voxtral). Le texte peut aussi passer par Ollama Cloud (`AI_TEXT_PROVIDER=ollama`).
 
-### Frontend
-- React
-- CSS personnalisé
-- Fetch API
+## Développement local
 
-### Services Externes
-- OpenAI API (GPT-4, DALL-E, TTS)
+Prérequis : Docker et Node.js 20 (PHP 8.3+ et Composer en local pour lancer les tests de l'API).
 
-## Contribution
+```bash
+# Base de données, Apache et MailHog
+cp .env.example .env                        # identifiants MySQL locaux
+cp webserver/api/.env.example webserver/api/.env
+docker compose up -d
 
-1. Fork du projet
-2. Création d'une branche pour la fonctionnalité
-3. Tests et modifications
-4. Pull Request
+# API (Laravel), dans le conteneur web (DB_HOST=db)
+docker compose exec -w /var/www/html/webapp/api web composer install
+docker compose exec -w /var/www/html/webapp/api web php artisan key:generate
+docker compose exec -w /var/www/html/webapp/api web php artisan migrate --seed   # schéma + prompts par défaut
 
-## Licence
+# Front (React + TypeScript)
+cd webserver
+npm ci
+npm start
+```
 
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+Variables du front (`webserver/.env`) : `REACT_APP_API_URL` (ex. `http://localhost/api`) et `REACT_APP_STATIC_URL` (ex. `http://localhost`), `REACT_APP_SENTRY_DSN` optionnelle.
+
+La génération nécessite une clé `MISTRAL_API_KEY` dans `webserver/api/.env`.
+
+## Tests
+
+```bash
+cd webserver/api && vendor/bin/phpunit          # API (SQLite en mémoire)
+cd webserver && npm run typecheck && npm test   # Front
+```
+
+La CI GitHub Actions (`.github/workflows/ci.yml`) lance ces vérifications et le build à chaque push.
+
+## Déploiement
+
+Un push sur la branche `production` déclenche la CI puis, si elle réussit, le déploiement (`.github/workflows/deploy.yml` → `scripts/deploy.sh` sur le serveur). Détails : [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md). Sauvegardes : [docs/BACKUP.md](docs/BACKUP.md).

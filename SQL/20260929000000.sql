@@ -9,3 +9,8 @@ ALTER TABLE `generation_jobs`
 -- paiements lié aux factures déjà émises) ; à supprimer à la main si besoin :
 --   DROP TABLE `stripe_events`;
 --   DROP TABLE `subscriptions`;
+
+-- Les jetons de connexion sont désormais stockés sous forme d'empreinte
+-- SHA-256 (API Laravel) : les anciens jetons, en clair, ne sont plus
+-- reconnus et peuvent être purgés (chaque utilisateur se reconnecte une fois).
+DELETE FROM `auth_tokens`;

@@ -1,24 +1,4 @@
-# Seul index.php doit être atteignable depuis le web : ce dossier contient
-# aussi le .env (secrets de production), les sources, vendor/ et les uploads
-# des utilisateurs (storage/), qui étaient jusqu'ici servis tels quels.
-Options -Indexes
-
-<FilesMatch "^\.">
-    Require all denied
-</FilesMatch>
-
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /api/
-
-    # Tout fichier ou dossier interne : 404 (pas 403, inutile de confirmer
-    # son existence).
-    RewriteRule ^(\.|vendor/|src/|storage/|tests/|logs/|composer\.(json|lock)$|phpunit\.xml$|worker\.php$) - [R=404,L]
-
-    # Si le fichier demandé n'existe pas et ce n'est pas un répertoire
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-
-    # Rediriger vers index.php et passer le chemin relatif
-    RewriteRule ^(.*)$ index.php/$1 [QSA,L]
-</IfModule>
+# Seul public/ doit être exposé (voir apache-config/vokso.conf). Filet de
+# sécurité si ce dossier était un jour servi directement : il contient le
+# .env, les sources, vendor/ et les fichiers déposés par les utilisateurs.
+Require all denied

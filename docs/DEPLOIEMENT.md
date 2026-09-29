@@ -3,7 +3,7 @@
 Remplace la procédure manuelle non tracée par un pipeline CI/CD (GitHub
 Actions) et un script de déploiement versionné, utilisable seul en attendant
 que le serveur de production soit choisi (voir
-`HEBERGEMENT_DIMENSIONNEMENT_CHECKLIST.md` et `DNS_EMAIL_CHECKLIST.md` : le
+`docs/audits/HEBERGEMENT_DIMENSIONNEMENT_CHECKLIST.md` et `docs/audits/DNS_EMAIL_CHECKLIST.md` : le
 nom de domaine et l'hébergeur de production ne sont pas encore fixés à ce
 jour).
 
@@ -12,10 +12,11 @@ jour).
 `.github/workflows/ci.yml` — actif dès maintenant, sans configuration
 supplémentaire. Sur chaque push et pull request :
 
-- **Frontend** : installe les dépendances (`webserver/`), build
-  (`react-scripts build`), lance les tests (`react-scripts test`).
-- **Backend** : installe les dépendances Composer (`webserver/api/`), lance
-  les tests PHPUnit.
+- **Frontend** (React + TypeScript) : installe les dépendances
+  (`webserver/`), vérifie les types (`tsc`), build (`react-scripts build`),
+  lance les tests (`react-scripts test`).
+- **Backend** (Laravel) : installe les dépendances Composer
+  (`webserver/api/`), lance les tests PHPUnit (base SQLite en mémoire).
 
 ## 2. Déploiement continu (CD)
 
@@ -60,9 +61,16 @@ racine du dépôt cloné :
 Étapes effectuées :
 1. Affiche le commit actuellement déployé (pour rollback éventuel).
 2. `git fetch` + `git reset --hard origin/production`.
-3. `composer install --no-dev` (backend).
+3. `composer install --no-dev` (API Laravel), génération de `APP_KEY` si
+   absente du `.env`, droits d'écriture de `www-data` sur `storage/`,
+   `php artisan config:cache` et `route:cache`.
 4. `npm ci && npm run build` (frontend).
-5. Recharge Apache.
+5. Synchronise le vhost Apache (`apache-config/vokso.conf`, avec test de
+   syntaxe et restauration automatique) puis recharge Apache.
+
+Le `.env` de l'API étant mis en cache (`config:cache`), toute modification
+de `webserver/api/.env` sur le serveur nécessite de relancer le script (ou
+`php artisan config:cache`).
 
 Variables d'environnement optionnelles :
 - `DEPLOY_BRANCH` (défaut : `production`)
@@ -83,7 +91,8 @@ git checkout <commit-affiché>
 Ce script ne rejoue pas les fichiers `SQL/*.sql` automatiquement : plusieurs
 contiennent des `ALTER TABLE`/`INSERT`/`UPDATE` non idempotents (rejouables
 une seule fois sans casser la base). Elles restent appliquées manuellement et
-consciemment par la personne qui déploie, comme c'est le cas aujourd'hui.
-Automatiser ce point nécessiterait un outil de suivi de migrations dédié
-(table de versions appliquées), hors périmètre de cette mise en place de
-pipeline de déploiement.
+consciemment par la personne qui déploie.
+
+La migration Laravel `webserver/api/database/migrations` décrit le schéma
+complet pour une installation neuve (poste de dev, tests) : elle ne crée que
+les tables absentes et n'est jamais lancée par le déploiement.
