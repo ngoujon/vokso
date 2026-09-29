@@ -489,35 +489,36 @@ class PodcastGenerator
         return date('Ymd_His');
     }
 
-    /** Convertit le PNG en WebP à côté, et ne renvoie true que si le fichier WebP a bien été produit. */
+    /**
+     * Convertit l'image générée en WebP à côté, et ne renvoie true que si le
+     * fichier WebP a bien été produit. Le format réel dépend du fournisseur
+     * (Mistral renvoie du JPEG malgré l'extension .png) : il est détecté
+     * d'après le contenu, pas d'après le nom.
+     */
     private function convertImageToWebP(string $pngFileName): bool
     {
-        $pngPath = $this->outputDir . '/images/' . $pngFileName;
-        if (!file_exists($pngPath)) {
+        $sourcePath = $this->outputDir . '/images/' . $pngFileName;
+        if (!file_exists($sourcePath)) {
             return false;
         }
 
-        $webpPath = str_replace('.png', '.webp', $pngPath);
-        if (extension_loaded('imagick')) {
-            try {
-                $image = new \Imagick($pngPath);
+        $webpPath = preg_replace('/\.png$/', '.webp', $sourcePath);
+        try {
+            if (extension_loaded('imagick')) {
+                $image = new \Imagick($sourcePath);
                 $image->setImageFormat('webp');
                 $image->setImageCompressionQuality(80);
                 $image->writeImage($webpPath);
                 $image->clear();
-            } catch (\Exception $e) {
-                Log::error('Erreur conversion WebP via Imagick', ['exception' => get_class($e), 'reason' => $e->getMessage()]);
-            }
-        } elseif (extension_loaded('gd')) {
-            try {
-                $image = imagecreatefrompng($pngPath);
+            } elseif (function_exists('imagewebp')) {
+                $image = @imagecreatefromstring((string) file_get_contents($sourcePath));
                 if ($image !== false) {
                     imagewebp($image, $webpPath, 80);
                     imagedestroy($image);
                 }
-            } catch (\Exception $e) {
-                Log::error('Erreur conversion WebP via GD', ['exception' => get_class($e), 'reason' => $e->getMessage()]);
             }
+        } catch (\Throwable $e) {
+            Log::error('Erreur de conversion WebP', ['exception' => get_class($e), 'reason' => $e->getMessage()]);
         }
 
         return file_exists($webpPath);

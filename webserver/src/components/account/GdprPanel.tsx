@@ -40,7 +40,7 @@ export default function GdprPanel() {
     <div>
       <p>
         Conformément au RGPD, vous pouvez récupérer une copie de toutes vos données personnelles
-        (profil, factures éventuelles, podcasts générés) ou demander la suppression de votre compte.
+        (profil, podcasts générés) ou demander la suppression de votre compte.
       </p>
       <button onClick={exportData}>Exporter mes données</button>
 
@@ -53,9 +53,8 @@ export default function GdprPanel() {
       {confirming && (
         <form onSubmit={handleDelete} className="auth-form">
           <p>
-            La suppression désactive votre compte et anonymise vos coordonnées. Les factures
-            éventuellement émises sont conservées 10 ans, comme la loi l'exige, mais ne sont plus
-            rattachées à votre identité. Cette action est irréversible.
+            La suppression efface définitivement votre compte. Les podcasts déjà publiés restent en
+            ligne mais ne sont plus rattachés à votre identité. Cette action est irréversible.
           </p>
           <label>
             Confirmez avec votre mot de passe

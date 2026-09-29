@@ -53,19 +53,4 @@ return [
         ],
     ],
 
-    /*
-     * Identité légale du vendeur, pour régénérer les factures émises du temps
-     * des anciens abonnements (conservation légale 10 ans). Plus aucune
-     * facture n'est émise : le service est gratuit.
-     */
-    'invoice_seller' => [
-        'name' => trim((string) env('INVOICE_SELLER_NAME', '')),
-        'address_line1' => trim((string) env('INVOICE_SELLER_ADDRESS', '')),
-        'postal_code' => trim((string) env('INVOICE_SELLER_POSTAL_CODE', '')),
-        'city' => trim((string) env('INVOICE_SELLER_CITY', '')),
-        'country_code' => strtoupper((string) env('INVOICE_SELLER_COUNTRY', 'FR')),
-        'siren' => trim((string) env('INVOICE_SELLER_SIREN', '')),
-        'vat_number' => trim((string) env('INVOICE_SELLER_VAT_NUMBER', '')),
-    ],
-
 ];

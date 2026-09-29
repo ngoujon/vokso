@@ -36,7 +36,7 @@ class PodcastGeneratorTest extends TestCase
         parent::tearDown();
     }
 
-    private function fakeAi(bool $imageFails = false): AiProviderFactory
+    private function fakeAi(bool $imageFails = false, string $imageBytes = 'png'): AiProviderFactory
     {
         $text = new class implements TextGeneratorInterface
         {
@@ -55,18 +55,18 @@ class PodcastGeneratorTest extends TestCase
             }
         };
 
-        $image = new class($imageFails) implements ImageGeneratorInterface
+        $image = new class($imageFails, $imageBytes) implements ImageGeneratorInterface
         {
-            public function __construct(private bool $fails) {}
+            public function __construct(private bool $fails, private string $bytes) {}
 
             public function generateImage(string $prompt): string
             {
-                return 'png';
+                return $this->bytes;
             }
 
             public function generateImageAsync(string $prompt): PromiseInterface
             {
-                return $this->fails ? Create::rejectionFor(new Exception('quota image')) : Create::promiseFor('png');
+                return $this->fails ? Create::rejectionFor(new Exception('quota image')) : Create::promiseFor($this->bytes);
             }
         };
 
@@ -149,5 +149,24 @@ class PodcastGeneratorTest extends TestCase
         $this->assertSame('error', $job->status);
         $this->assertStringContainsString('image', $job->error_message);
         $this->assertSame(0, Generation::count());
+    }
+
+    public function test_a_jpeg_returned_by_the_provider_is_converted_to_webp(): void
+    {
+        if (! function_exists('imagewebp') && ! extension_loaded('imagick')) {
+            $this->markTestSkipped('Aucune extension WebP disponible.');
+        }
+
+        $canvas = imagecreatetruecolor(8, 8);
+        ob_start();
+        imagejpeg($canvas);
+        $jpeg = (string) ob_get_clean();
+
+        GenerationJob::create(['job_id' => 'job_3', 'input' => 'Mars', 'status' => 'pending']);
+        (new PodcastGenerator($this->fakeAi(imageBytes: $jpeg), $this->outputDir))->process('job_3');
+
+        $generation = Generation::where('generation_id', GenerationJob::find('job_3')->generation_id)->first();
+        $this->assertStringEndsWith('.webp', $generation->image_url);
+        $this->assertFileExists($this->outputDir.'/images/'.$generation->image_url);
     }
 }

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { apiRequest, downloadText, errorMessage, triggerDownload } from '../api';
 import { useAuth } from '../AuthContext';
 import { staticFileUrl } from '../config';
-import InvoiceHistory from '../components/account/InvoiceHistory';
 import GdprPanel from '../components/account/GdprPanel';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
@@ -54,8 +53,6 @@ export default function UserDashboard() {
           </p>
         )}
       </section>
-
-      <InvoiceHistory />
 
       <section>
         <h2>Confidentialité et données personnelles</h2>

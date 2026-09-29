@@ -60,15 +60,6 @@ export interface Usage {
   unlimited: boolean;
 }
 
-export interface Invoice {
-  id: number;
-  number: string;
-  issued_at: string;
-  currency: string;
-  description: string;
-  amount_total: string | number;
-}
-
 export interface AdminKpis {
   total_users: number;
   total_podcasts: number;

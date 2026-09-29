@@ -99,47 +99,11 @@ return new class extends Migration
             $table->string('email')->unique('uniq_email');
             $table->dateTime('subscribed_at')->useCurrent();
         });
-
-        $this->create('billing_profiles', function (Blueprint $table) {
-            $table->unsignedInteger('user_id')->primary();
-            $table->enum('client_type', ['particulier', 'pro'])->default('particulier');
-            $table->string('full_name', 190)->default('');
-            $table->string('company_name', 190)->nullable();
-            $table->string('siret', 14)->nullable();
-            $table->string('vat_number', 20)->nullable();
-            $table->string('address_line1', 190)->default('');
-            $table->string('address_line2', 190)->nullable();
-            $table->string('postal_code', 20)->default('');
-            $table->string('city', 120)->default('');
-            $table->char('country_code', 2)->default('FR');
-            $table->dateTime('created_at')->useCurrent();
-            $table->dateTime('updated_at')->useCurrent();
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
-        });
-
-        $this->create('invoices', function (Blueprint $table) {
-            $table->increments('id');
-            $table->unsignedInteger('user_id')->index();
-            $table->string('number', 30)->unique();
-            $table->string('stripe_invoice_id')->nullable()->unique();
-            $table->dateTime('issued_at');
-            $table->char('currency', 3)->default('EUR');
-            $table->string('plan', 50);
-            $table->string('description');
-            $table->decimal('amount_excl_tax', 10, 2);
-            $table->decimal('vat_rate', 5, 2)->default(0);
-            $table->string('vat_exemption_reason')->nullable();
-            $table->decimal('amount_tax', 10, 2)->default(0);
-            $table->decimal('amount_total', 10, 2);
-            $table->text('client_snapshot');
-            $table->dateTime('created_at')->useCurrent();
-            $table->foreign('user_id')->references('id')->on('users')->restrictOnDelete();
-        });
     }
 
     public function down(): void
     {
-        foreach (['invoices', 'billing_profiles', 'newsletter_subscribers', 'rate_limit', 'prompt',
+        foreach (['newsletter_subscribers', 'rate_limit', 'prompt',
             'generation_jobs', 'generations', 'categorie', 'auth_tokens', 'users'] as $table) {
             Schema::dropIfExists($table);
         }

@@ -7,7 +7,6 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\GdprController;
 use App\Http\Controllers\GenerationController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PodcastPageController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UserController;
@@ -57,8 +56,6 @@ Route::middleware('auth.token')->group(function () {
 
         Route::get('user-podcasts', [UserController::class, 'podcasts']);
         Route::get('user-usage', [UserController::class, 'usage']);
-        Route::get('invoices', [InvoiceController::class, 'index']);
-        Route::get('invoice-download', [InvoiceController::class, 'download']);
 
         // --- Administration ---------------------------------------------------
         Route::middleware('admin')->group(function () {

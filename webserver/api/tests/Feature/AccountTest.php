@@ -19,32 +19,20 @@ class AccountTest extends TestCase
             ->assertJsonPath('account.email', 'rgpd@example.com');
     }
 
-    public function test_account_deletion_anonymises_and_requires_the_password(): void
+    public function test_account_deletion_requires_the_password_and_deletes_the_account(): void
     {
         $user = $this->createUser(['email' => 'bye@example.com']);
         $headers = $this->authHeaders($user);
+        DB::table('generations')->insert([
+            'generation_id' => 'gen_1', 'text_content' => 'x', 'image_url' => 'a', 'audio_url' => 'b', 'user_id' => $user->id,
+        ]);
 
         $this->postJson('/gdpr-delete-account', ['password' => 'mauvais'], $headers)->assertStatus(401);
         $this->postJson('/gdpr-delete-account', ['password' => 'MotDePasse123'], $headers)->assertOk();
 
-        $user = User::find($user->id);
-        $this->assertSame('disabled', $user->status);
-        $this->assertStringStartsWith('deleted-user-', $user->email);
+        $this->assertNull(User::find($user->id));
         $this->assertSame(0, DB::table('auth_tokens')->count());
-    }
-
-    public function test_invoices_are_hidden_from_other_users(): void
-    {
-        $owner = $this->createUser();
-        $id = DB::table('invoices')->insertGetId([
-            'user_id' => $owner->id, 'number' => 'VOKSO-2026-000001', 'issued_at' => now(), 'plan' => 'createur',
-            'description' => 'Abonnement', 'amount_excl_tax' => 9, 'amount_total' => 9, 'client_snapshot' => '{}',
-        ]);
-
-        $this->getJson('/invoices', $this->authHeaders($owner))->assertOk()->assertJsonCount(1, 'data');
-        $this->getJson('/invoice-download?id='.$id, $this->authHeaders($this->createUser()))->assertNotFound();
-        // Vendeur non configuré : régénération impossible, mais pas d'erreur 500.
-        $this->getJson('/invoice-download?id='.$id, $this->authHeaders($owner))->assertStatus(503);
+        $this->assertNull(DB::table('generations')->where('generation_id', 'gen_1')->value('user_id'));
     }
 
     public function test_contact_form_requires_a_valid_captcha_and_sends_the_message(): void
