@@ -1,6 +1,19 @@
+# Seul index.php doit être atteignable depuis le web : ce dossier contient
+# aussi le .env (secrets de production), les sources, vendor/ et les uploads
+# des utilisateurs (storage/), qui étaient jusqu'ici servis tels quels.
+Options -Indexes
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /api/
+
+    # Tout fichier ou dossier interne : 404 (pas 403, inutile de confirmer
+    # son existence).
+    RewriteRule ^(\.|vendor/|src/|storage/|tests/|logs/|composer\.(json|lock)$|phpunit\.xml$|worker\.php$) - [R=404,L]
 
     # Si le fichier demandé n'existe pas et ce n'est pas un répertoire
     RewriteCond %{REQUEST_FILENAME} !-f
