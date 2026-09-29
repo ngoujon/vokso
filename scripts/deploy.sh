@@ -48,23 +48,29 @@ composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction -
 
 # Clé d'application Laravel : générée une seule fois si absente du .env.
 # Non bloquant : l'API n'en dépend pas pour fonctionner (pas de session ni
-# de cookie chiffré), mieux vaut un avertissement qu'un déploiement avorté.
-if [ -f "$API_DIR/.env" ] && ! grep -q '^APP_KEY=base64:' "$API_DIR/.env"; then
-    echo "[deploy] Génération de la clé d'application Laravel (APP_KEY)..."
-    grep -q '^APP_KEY=' "$API_DIR/.env" || echo 'APP_KEY=' >> "$API_DIR/.env"
-    php "$API_DIR/artisan" key:generate --force --no-interaction || echo "[deploy] AVERTISSEMENT : APP_KEY non générée."
+# de cookie chiffré). Le .env appartient généralement à Apache et n'est pas
+# lisible par l'utilisateur de déploiement : on ne tente alors rien.
+ENV_FILE="$API_DIR/.env"
+if [ -r "$ENV_FILE" ] && [ -w "$ENV_FILE" ]; then
+    if ! grep -q '^APP_KEY=base64:' "$ENV_FILE"; then
+        echo "[deploy] Génération de la clé d'application Laravel (APP_KEY)..."
+        grep -q '^APP_KEY=' "$ENV_FILE" || echo 'APP_KEY=' >> "$ENV_FILE"
+        php "$API_DIR/artisan" key:generate --force --no-interaction || echo "[deploy] AVERTISSEMENT : APP_KEY non générée."
+    fi
+else
+    echo "[deploy] .env de l'API non modifiable par $(whoami) : génération éventuelle de APP_KEY ignorée."
 fi
 
 # Dossiers écrits par Apache (www-data) au runtime. Non bloquant si sudo
 # n'est pas autorisé pour ces commandes.
-mkdir -p "$API_DIR/storage/uploads" "$PROJECT_DIR/webserver/public/output" "$PROJECT_DIR/webserver/logs"
-sudo -n chgrp -R www-data "$API_DIR/storage" "$API_DIR/bootstrap/cache" "$PROJECT_DIR/webserver/logs" 2>/dev/null \
-    && sudo -n chmod -R g+rwX "$API_DIR/storage" "$API_DIR/bootstrap/cache" "$PROJECT_DIR/webserver/logs" 2>/dev/null \
+mkdir -p "$API_DIR/storage/uploads" "$PROJECT_DIR/webserver/public/output" "$PROJECT_DIR/webserver/logs" 2>/dev/null || true
+sudo -n chgrp -R www-data "$API_DIR/storage" "$PROJECT_DIR/webserver/logs" 2>/dev/null \
+    && sudo -n chmod -R g+rwX "$API_DIR/storage" "$PROJECT_DIR/webserver/logs" 2>/dev/null \
     || echo "[deploy] AVERTISSEMENT : droits d'écriture de www-data non ajustés (sudo indisponible)."
 
-# Caches de configuration et de routes : relus à chaque déploiement.
-php "$API_DIR/artisan" config:cache --no-interaction
-php "$API_DIR/artisan" route:cache --no-interaction
+# Pas de config:cache : l'utilisateur de déploiement ne peut pas lire le .env,
+# le cache produit contiendrait des valeurs par défaut.
+rm -f "$API_DIR/bootstrap/cache/config.php" "$API_DIR/bootstrap/cache/routes-v7.php"
 
 echo "[deploy] Installation des dépendances frontend et build (npm)..."
 npm ci --prefix webserver

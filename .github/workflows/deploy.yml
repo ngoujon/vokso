@@ -35,7 +35,12 @@ jobs:
           host: ${{ secrets.DEPLOY_SSH_HOST }}
           username: ${{ secrets.DEPLOY_SSH_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          # Le script de déploiement est d'abord mis à jour depuis la branche :
+          # sinon c'est la version précédente, déjà présente sur le serveur,
+          # qui s'exécuterait (elle se remplace elle-même en cours de route).
           script: |
             set -e
             cd "${{ secrets.DEPLOY_PATH }}"
-            ./scripts/deploy.sh
+            git fetch origin production
+            git checkout origin/production -- scripts/deploy.sh
+            bash ./scripts/deploy.sh

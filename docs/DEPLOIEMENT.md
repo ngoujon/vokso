@@ -63,14 +63,13 @@ racine du dépôt cloné :
 2. `git fetch` + `git reset --hard origin/production`.
 3. `composer install --no-dev` (API Laravel), génération de `APP_KEY` si
    absente du `.env`, droits d'écriture de `www-data` sur `storage/`,
-   `php artisan config:cache` et `route:cache`.
+   sans cache de configuration (le `.env` n'est pas lisible par l'utilisateur de déploiement).
 4. `npm ci && npm run build` (frontend).
 5. Synchronise le vhost Apache (`apache-config/vokso.conf`, avec test de
    syntaxe et restauration automatique) puis recharge Apache.
 
-Le `.env` de l'API étant mis en cache (`config:cache`), toute modification
-de `webserver/api/.env` sur le serveur nécessite de relancer le script (ou
-`php artisan config:cache`).
+Le workflow met d'abord à jour `scripts/deploy.sh` depuis la branche avant
+de l'exécuter : c'est toujours la dernière version du script qui tourne.
 
 Variables d'environnement optionnelles :
 - `DEPLOY_BRANCH` (défaut : `production`)
