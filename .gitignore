@@ -15,7 +15,7 @@ webserver/api/vendor/
 /logs/*
 webserver/logs/
 webserver/public/output/
-webserver/api/storage/uploads/
+webserver/api/storage/
 /backups/
 
 # .htaccess : seuls ceux du dépôt sont versionnés
