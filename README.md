@@ -4,6 +4,16 @@ Vokso transforme un sujet (une phrase, ou un message vocal) en épisode de podca
 
 Production : [vokso.fr](https://vokso.fr)
 
+## Aperçu
+
+*Captures en local ; les épisodes, catégories et illustrations affichés sont fictifs.*
+
+![Épisodes récents](docs/screenshots/episodes.jpg)
+
+| Vitrine | Page de génération |
+| --- | --- |
+| ![Vitrine](docs/screenshots/vitrine.jpg) | ![Génération](docs/screenshots/generation.jpg) |
+
 ## Architecture
 
 | Dossier | Rôle | Technologies |
