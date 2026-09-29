@@ -54,12 +54,6 @@ class GdprController
         $billingProfile = $stmt->fetch() ?: null;
 
         $stmt = $this->db->prepare(
-            'SELECT plan, status, current_period_end, cancel_at_period_end FROM subscriptions WHERE user_id = :id'
-        );
-        $stmt->execute([':id' => $user['id']]);
-        $subscription = $stmt->fetch() ?: null;
-
-        $stmt = $this->db->prepare(
             'SELECT number, issued_at, currency, plan, description, amount_excl_tax, vat_rate, amount_tax, amount_total
              FROM invoices WHERE user_id = :id ORDER BY issued_at DESC'
         );
@@ -77,7 +71,6 @@ class GdprController
             'exported_at' => (new \DateTimeImmutable())->format(DATE_ATOM),
             'account' => $account,
             'billing_profile' => $billingProfile,
-            'subscription' => $subscription,
             'invoices' => $invoices,
             'podcasts' => $podcasts,
         ];

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Utils\Auth;
+use App\Utils\GenerationQuota;
 use App\Utils\RateLimiter;
 use Dotenv\Dotenv;
 use PDO;
@@ -12,12 +13,10 @@ class GenerationController
     private const MAX_INPUT_LENGTH = 300;
     private const MAX_AUDIO_SIZE = 26214400; // 25 Mo, alignée sur la limite de l'API OpenAI Whisper
     private const ALLOWED_AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'ogg', 'webm', 'mp4', 'mpeg', 'mpga'];
-    // Formule "Découverte" (gratuite, voir /tarifs) : Créateur et Studio n'ont
-    // pas de limite ici (usage raisonnable géré manuellement pour l'instant).
-    private const FREE_PLAN_MONTHLY_LIMIT = 5;
 
     private PDO $db;
     private RateLimiter $rateLimiter;
+    private GenerationQuota $quota;
     private string $uploadDir;
 
     public function __construct()
@@ -39,6 +38,7 @@ class GenerationController
             (int) ($_ENV['RATE_LIMIT_MAX_REQUESTS'] ?? 5),
             (int) ($_ENV['RATE_LIMIT_WINDOW_SECONDS'] ?? 3600)
         );
+        $this->quota = GenerationQuota::fromEnv($this->db);
 
         // Hors de public/ : ces fichiers sont une entrée de travail temporaire,
         // pas un résultat à servir (contrairement à public/output/).
@@ -89,14 +89,12 @@ class GenerationController
             return;
         }
 
-        $currentUser = Auth::currentUser($this->db);
-        if ($currentUser && $this->freePlanQuotaReached((int) $currentUser['id'])) {
-            http_response_code(402);
-            echo json_encode(['error' => 'Quota mensuel de la formule Découverte atteint. Passez à une formule supérieure pour continuer.']);
+        $currentUser = $this->requireUserWithinQuota();
+        if ($currentUser === null) {
             return;
         }
 
-        $jobId = $this->createJob('text', $userInput, null, $currentUser['id'] ?? null);
+        $jobId = $this->createJob('text', $userInput, null, (int) $currentUser['id']);
         $this->dispatch($jobId);
 
         http_response_code(202);
@@ -126,6 +124,13 @@ class GenerationController
         if ($this->rateLimiter->tooManyRequests($clientIp, 'generation')) {
             http_response_code(429);
             echo json_encode(['error' => 'Trop de requêtes. Merci de réessayer plus tard.']);
+            return;
+        }
+
+        // Vérifié avant de stocker le fichier : un refus ne doit pas laisser
+        // d'upload orphelin dans storage/uploads.
+        $currentUser = $this->requireUserWithinQuota();
+        if ($currentUser === null) {
             return;
         }
 
@@ -170,14 +175,7 @@ class GenerationController
             return;
         }
 
-        $currentUser = Auth::currentUser($this->db);
-        if ($currentUser && $this->freePlanQuotaReached((int) $currentUser['id'])) {
-            http_response_code(402);
-            echo json_encode(['error' => 'Quota mensuel de la formule Découverte atteint. Passez à une formule supérieure pour continuer.']);
-            return;
-        }
-
-        $jobId = $this->createJob('audio', null, $destination, $currentUser['id'] ?? null);
+        $jobId = $this->createJob('audio', null, $destination, (int) $currentUser['id']);
         $this->dispatch($jobId);
 
         http_response_code(202);
@@ -188,23 +186,41 @@ class GenerationController
         ]);
     }
 
-    /** Formule Découverte uniquement : Créateur/Studio n'ont pas de plafond mensuel. */
-    private function freePlanQuotaReached(int $userId): bool
+    /**
+     * Génération réservée aux comptes (gratuite mais plafonnée par mois, voir
+     * GenerationQuota) : répond 401/429 et renvoie null si refusé.
+     */
+    private function requireUserWithinQuota(): ?array
     {
-        $stmt = $this->db->prepare('SELECT plan FROM subscriptions WHERE user_id = :user_id');
-        $stmt->execute([':user_id' => $userId]);
-        $plan = $stmt->fetchColumn();
-
-        if ($plan !== false && $plan !== 'decouverte') {
-            return false;
+        $user = Auth::currentUser($this->db);
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode([
+                'error' => 'Connectez-vous (inscription gratuite) pour générer un podcast.',
+                'code' => 'auth_required',
+            ]);
+            return null;
         }
 
-        $stmt = $this->db->prepare(
-            "SELECT COUNT(*) FROM generations WHERE user_id = :user_id AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')"
-        );
-        $stmt->execute([':user_id' => $userId]);
+        if ($user['must_change_password']) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Vous devez changer votre mot de passe avant de continuer.', 'code' => 'password_change_required']);
+            return null;
+        }
 
-        return (int) $stmt->fetchColumn() >= self::FREE_PLAN_MONTHLY_LIMIT;
+        if ($this->quota->isReached($user)) {
+            http_response_code(429);
+            echo json_encode([
+                'error' => sprintf(
+                    'Limite de %d podcasts par mois atteinte. Elle se renouvelle le 1er du mois prochain.',
+                    $this->quota->limit()
+                ),
+                'code' => 'quota_reached',
+            ]);
+            return null;
+        }
+
+        return $user;
     }
 
     private function createJob(string $sourceType, ?string $input, ?string $audioPath, ?int $userId): string

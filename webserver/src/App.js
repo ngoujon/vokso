@@ -1,8 +1,7 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
-import Pricing from './pages/Pricing';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Contact from './pages/Contact';
 import UserDashboard from './pages/UserDashboard';
@@ -22,7 +21,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/tarifs" element={<Pricing />} />
+          {/* Ancienne page de tarifs : le service est désormais gratuit. */}
+          <Route path="/tarifs" element={<Navigate to="/" replace />} />
           <Route path="/politique-de-confidentialite" element={<PrivacyPolicy />} />
           <Route path="/contact" element={<Contact />} />
           <Route

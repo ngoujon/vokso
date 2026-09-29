@@ -67,7 +67,7 @@ export default function GdprPanel() {
     <div>
       <p>
         Conformément au RGPD, vous pouvez récupérer une copie de toutes vos données personnelles
-        (profil, abonnement, factures, podcasts générés) ou demander la suppression de votre compte.
+        (profil, factures éventuelles, podcasts générés) ou demander la suppression de votre compte.
       </p>
       <button onClick={() => downloadPersonalData(setError)}>Exporter mes données</button>
 

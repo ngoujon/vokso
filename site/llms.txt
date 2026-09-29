@@ -7,7 +7,7 @@ Vokso s'adresse à toute personne qui veut explorer un sujet (histoire, science,
 ## Pages principales
 
 - [Accueil](https://vokso.fr/) : présentation du produit, fonctionnement en quatre étapes, positionnement souverain (hébergement UE).
-- [Tarifs](https://vokso.fr/app/tarifs) : formules Découverte (gratuite), Créateur et Studio.
+- [Créer un compte](https://vokso.fr/app/login) : Vokso est entièrement gratuit ; un compte est nécessaire pour générer des épisodes (nombre de générations limité par mois pour éviter les abus).
 - [Contact](https://vokso.fr/app/contact) : formulaire de contact.
 - [Politique de confidentialité](https://vokso.fr/app/politique-de-confidentialite) : traitement des données, droits RGPD.
 - [Sitemap](https://vokso.fr/sitemap.xml) : liste complète et à jour des épisodes publiés, chacun sur sa propre page (/podcast/{id}-{titre}).

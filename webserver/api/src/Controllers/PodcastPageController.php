@@ -168,7 +168,7 @@ class PodcastPageController
   </article>
 </main>
 <footer>
-  <p>Vokso — générateur de podcasts par IA hébergé en Europe. <a href="/">Accueil</a> · <a href="/app/tarifs">Tarifs</a> · <a href="/app/contact">Contact</a></p>
+  <p>Vokso — générateur de podcasts par IA hébergé en Europe. <a href="/">Accueil</a> · <a href="/app/contact">Contact</a></p>
 </footer>
 </body>
 </html>

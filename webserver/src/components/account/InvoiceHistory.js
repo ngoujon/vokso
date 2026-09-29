@@ -40,15 +40,18 @@ export default function InvoiceHistory() {
   }, []);
 
   if (loading) {
-    return <p>Chargement de vos factures...</p>;
+    return null;
   }
 
+  // Service gratuit : seuls les comptes ayant payé un ancien abonnement
+  // ont des factures, la section est masquée pour tous les autres.
   if (invoices.length === 0) {
-    return <p>Aucune facture émise pour le moment.</p>;
+    return null;
   }
 
   return (
-    <>
+    <section>
+      <h2>Mes factures</h2>
       {error && <p className="auth-error">{error}</p>}
       <table className="data-table">
         <thead>
@@ -76,6 +79,6 @@ export default function InvoiceHistory() {
           ))}
         </tbody>
       </table>
-    </>
+    </section>
   );
 }

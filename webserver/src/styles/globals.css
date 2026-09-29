@@ -283,6 +283,14 @@ h1 {
   box-shadow: 0 2px 10px var(--shadow-color);
 }
 
+.auth-required {
+  text-align: center;
+}
+
+.auth-required .btn {
+  margin: 0.5rem 0.75rem 0 0;
+}
+
 .source-mode-tabs {
   display: flex;
   justify-content: center;

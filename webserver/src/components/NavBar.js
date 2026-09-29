@@ -20,7 +20,6 @@ export default function NavBar() {
         </Link>
         <div className="navbar-links">
           <Link to="/" className={isActive('/') ? 'active' : ''}>Accueil</Link>
-          <Link to="/tarifs" className={isActive('/tarifs') ? 'active' : ''}>Tarifs</Link>
           <Link to="/contact" className={isActive('/contact') ? 'active' : ''}>Contact</Link>
           {user ? (
             <>

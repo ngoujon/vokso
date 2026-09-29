@@ -10,10 +10,11 @@ use Dotenv\Dotenv;
 use PDO;
 
 /**
- * Historique de facturation de l'utilisateur connecté. Le PDF/A-3 Factur-X
- * n'est jamais stocké : il est reconstruit à la demande (download) à partir
- * des données figées dans `invoices` au moment de l'émission (voir
- * InvoiceIssuer), pour éviter de gérer un espace de stockage de fichiers.
+ * Historique de facturation de l'utilisateur connecté. Le service est gratuit
+ * depuis la suppression des abonnements Stripe : plus aucune facture n'est
+ * émise, mais celles déjà émises restent consultables (conservation légale
+ * de 10 ans). Le PDF/A-3 Factur-X n'est jamais stocké : il est reconstruit à
+ * la demande (download) à partir des données figées dans `invoices`.
  */
 class InvoiceController
 {

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { apiRequest, useAuth } from '../AuthContext';
 import { config } from '../config';
-import BillingProfileForm from '../components/account/BillingProfileForm';
 import InvoiceHistory from '../components/account/InvoiceHistory';
 import GdprPanel from '../components/account/GdprPanel';
 import useCanonical from '../hooks/useCanonical';
@@ -10,12 +9,6 @@ import useDocumentMeta from '../hooks/useDocumentMeta';
 import { cleanTitle } from '../utils/text';
 import '../styles/globals.css';
 import '../styles/Dashboard.css';
-
-const PLAN_LABELS = {
-  decouverte: 'Découverte',
-  createur: 'Créateur',
-  studio: 'Studio',
-};
 
 function downloadFile(url, filename) {
   const link = document.createElement('a');
@@ -45,10 +38,7 @@ export default function UserDashboard() {
   const [podcasts, setPodcasts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [subscription, setSubscription] = useState(null);
-  const [portalLoading, setPortalLoading] = useState(false);
-  const [searchParams] = useSearchParams();
-  const checkoutState = searchParams.get('checkout');
+  const [usage, setUsage] = useState(null);
 
   useEffect(() => {
     apiRequest('user-podcasts')
@@ -56,21 +46,10 @@ export default function UserDashboard() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
 
-    apiRequest('billing-status')
-      .then((data) => setSubscription(data.subscription))
-      .catch(() => setSubscription(null));
+    apiRequest('user-usage')
+      .then(setUsage)
+      .catch(() => setUsage(null));
   }, []);
-
-  const openBillingPortal = async () => {
-    setPortalLoading(true);
-    try {
-      const data = await apiRequest('billing-portal', { method: 'POST' });
-      window.location.href = data.url;
-    } catch (e) {
-      setError(e.message);
-      setPortalLoading(false);
-    }
-  };
 
   return (
     <div className="container">
@@ -83,41 +62,23 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      {checkoutState === 'success' && (
-        <p className="dashboard-notice">Votre abonnement est actif, merci !</p>
-      )}
-      {checkoutState === 'cancel' && (
-        <p className="dashboard-notice">Paiement annulé, vous pouvez réessayer à tout moment.</p>
-      )}
-
       <section>
-        <h2>Ma formule</h2>
-        {subscription ? (
-          <>
+        <h2>Mon utilisation</h2>
+        {usage ? (
+          usage.unlimited ? (
+            <p>Générations illimitées (compte administrateur).</p>
+          ) : (
             <p>
-              Formule actuelle : <strong>{PLAN_LABELS[subscription.plan] || subscription.plan}</strong>
-              {subscription.cancel_at_period_end && ' (résiliation programmée en fin de période)'}
+              Vokso est gratuit. Ce mois-ci : <strong>{usage.used} / {usage.limit}</strong> podcasts générés
+              {' '}(limite renouvelée le 1er de chaque mois).
             </p>
-            {subscription.has_stripe_customer ? (
-              <button onClick={openBillingPortal} disabled={portalLoading}>
-                {portalLoading ? 'Redirection…' : 'Gérer mon abonnement'}
-              </button>
-            ) : (
-              <Link to="/tarifs" className="btn btn-primary">Passer à une formule supérieure</Link>
-            )}
-          </>
+          )
         ) : (
-          <p>Chargement de votre formule...</p>
+          <p>Chargement de votre utilisation...</p>
         )}
       </section>
 
-      <section>
-        <h2>Facturation</h2>
-        <h3>Informations de facturation</h3>
-        <BillingProfileForm />
-        <h3>Historique des factures</h3>
-        <InvoiceHistory />
-      </section>
+      <InvoiceHistory />
 
       <section>
         <h2>Confidentialité et données personnelles</h2>

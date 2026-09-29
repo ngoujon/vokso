@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Utils\Auth;
+use App\Utils\GenerationQuota;
 use Dotenv\Dotenv;
 use PDO;
 
@@ -42,5 +43,19 @@ class UserController
         $stmt->execute([':user_id' => $user['id']]);
 
         echo json_encode(['data' => $stmt->fetchAll()]);
+    }
+
+    /** Consommation du quota mensuel de générations, affichée dans l'espace compte. */
+    public function usage()
+    {
+        header('Content-Type: application/json');
+        $user = Auth::requireUser($this->db);
+        $quota = GenerationQuota::fromEnv($this->db);
+
+        echo json_encode([
+            'used' => $quota->usedThisMonth((int) $user['id']),
+            'limit' => $quota->limit(),
+            'unlimited' => $user['role'] === 'admin',
+        ]);
     }
 }

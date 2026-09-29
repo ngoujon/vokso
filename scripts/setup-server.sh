@@ -29,7 +29,7 @@
 #   - Pointer le DNS de vokso.fr / www.vokso.fr vers l'IP du serveur, puis
 #     lancer `certbot --apache -d vokso.fr -d www.vokso.fr` (HTTPS).
 #   - Remplir les secrets applicatifs dans /var/www/html/webserver/api/.env
-#     (MISTRAL_API_KEY, STRIPE_*, SMTP_*, SENTRY_DSN_API) : ce script laisse
+#     (MISTRAL_API_KEY, SMTP_*, SENTRY_DSN_API) : ce script laisse
 #     ces valeurs vides, ce ne sont pas des informations d'infrastructure.
 #   - Une fois la clé de déploiement confirmée fonctionnelle, désactiver
 #     l'authentification par mot de passe SSH (PasswordAuthentication no)
@@ -147,7 +147,6 @@ if [ ! -f "$DEPLOY_PATH/webserver/api/.env" ]; then
     -e "s/^DB_USER=.*/DB_USER=$DB_USER/" \
     -e "s/^DB_PASS=.*/DB_PASS=$DB_PASS/" \
     -e "s#^ALLOWED_ORIGINS=.*#ALLOWED_ORIGINS=https://$DOMAIN#" \
-    -e "s#^FRONTEND_URL=.*#FRONTEND_URL=https://$DOMAIN#" \
     -e "s/^APP_DEBUG=.*/APP_DEBUG=false/" \
     "$DEPLOY_PATH/webserver/api/.env"
 fi
@@ -173,7 +172,7 @@ echo "[setup] $(date -Iseconds) Provisioning terminé."
 echo "[setup] Mot de passe généré pour l'utilisateur MySQL '$DB_USER' : $DB_PASS"
 echo "[setup] -> déjà reporté dans $DEPLOY_PATH/webserver/api/.env (DB_PASS)."
 echo "[setup] Reste à faire à la main :"
-echo "[setup]   - Compléter MISTRAL_API_KEY / STRIPE_* / SMTP_* / SENTRY_DSN_API dans webserver/api/.env"
+echo "[setup]   - Compléter MISTRAL_API_KEY / SMTP_* / SENTRY_DSN_API dans webserver/api/.env"
 echo "[setup]   - Pointer le DNS de $DOMAIN vers ce serveur puis lancer :"
 echo "[setup]       certbot --apache -d $DOMAIN -d www.$DOMAIN"
 echo "[setup]   - Une fois la clé de déploiement validée, désactiver l'auth par mot de passe SSH"

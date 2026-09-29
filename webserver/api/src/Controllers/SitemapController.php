@@ -41,7 +41,6 @@ class SitemapController
 
         $urls = [
             ['loc' => 'https://vokso.fr/', 'changefreq' => 'daily', 'priority' => '1.0'],
-            ['loc' => 'https://vokso.fr/app/tarifs', 'changefreq' => 'weekly', 'priority' => '0.8'],
             ['loc' => 'https://vokso.fr/app/contact', 'changefreq' => 'monthly', 'priority' => '0.3'],
             ['loc' => 'https://vokso.fr/app/politique-de-confidentialite', 'changefreq' => 'yearly', 'priority' => '0.2'],
         ];

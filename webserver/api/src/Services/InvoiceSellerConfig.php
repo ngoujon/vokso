@@ -5,9 +5,10 @@ namespace App\Services;
 /**
  * Identité légale du vendeur (Vokso) à faire figurer sur les factures,
  * lue depuis l'environnement plutôt que codée en dur : inventer une fausse
- * adresse/SIREN produirait des factures non conformes. Tant que ces
- * variables ne sont pas renseignées (voir .env.example), aucune facture
- * n'est émise ni régénérée (voir InvoiceIssuer et InvoiceController).
+ * adresse/SIREN produirait des factures non conformes. Le service étant
+ * désormais gratuit, plus aucune facture n'est émise : cette configuration
+ * ne sert qu'à régénérer les factures déjà émises (InvoiceController),
+ * conservées 10 ans (art. L123-22 du code de commerce).
  */
 class InvoiceSellerConfig
 {
