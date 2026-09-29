@@ -38,6 +38,7 @@ docker compose up -d
 docker compose exec -w /var/www/html/webapp/api web composer install
 docker compose exec -w /var/www/html/webapp/api web php artisan key:generate
 docker compose exec -w /var/www/html/webapp/api web php artisan migrate --seed   # schéma + prompts par défaut
+docker compose exec -w /var/www/html/webapp/api web php artisan vokso:create-admin vous@exemple.fr
 
 # Front (React + TypeScript)
 cd webserver
