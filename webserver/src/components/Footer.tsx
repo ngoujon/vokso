@@ -9,6 +9,7 @@ export default function Footer() {
         <div className="site-footer-links">
           <Link to="/contact">Contact</Link>
           <Link to="/politique-de-confidentialite">Politique de confidentialité</Link>
+          <Link to="/admin">Administration</Link>
         </div>
       </div>
     </footer>

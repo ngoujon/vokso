@@ -1,0 +1,42 @@
+name: Génération d'épisodes de démonstration
+
+# Lancement manuel uniquement (onglet Actions ou `gh workflow run`) : exécute
+# `php artisan vokso:seed-podcasts` sur le serveur, sous l'utilisateur
+# d'Apache pour que les fichiers produits lui appartiennent. Les sujets déjà
+# générés sont ignorés, le workflow peut donc être relancé sans doublon.
+on:
+  workflow_dispatch:
+    inputs:
+      sujets:
+        description: "Sujets séparés par « | » (vide : sélection variée par défaut)"
+        required: false
+        default: ""
+
+jobs:
+  seed:
+    name: Génère les épisodes sur le serveur
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Exécute vokso:seed-podcasts via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          SUJETS: ${{ inputs.sujets }}
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: SUJETS
+          command_timeout: 110m
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}/webserver/api"
+            args=()
+            if [ -n "$SUJETS" ]; then
+              IFS='|' read -ra parts <<< "$SUJETS"
+              for p in "${parts[@]}"; do
+                p="$(echo "$p" | xargs)"
+                [ -n "$p" ] && args+=("$p")
+              done
+            fi
+            sudo -n -u www-data php artisan vokso:seed-podcasts "${args[@]}"

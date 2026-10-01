@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /app/admin
+Disallow: /app/login
 
 Sitemap: https://vokso.fr/sitemap.xml
