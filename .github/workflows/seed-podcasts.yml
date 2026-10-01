@@ -35,8 +35,11 @@ jobs:
             if [ -n "$SUJETS" ]; then
               IFS='|' read -ra parts <<< "$SUJETS"
               for p in "${parts[@]}"; do
-                p="$(echo "$p" | xargs)"
-                [ -n "$p" ] && args+=("$p")
+                # Retire les espaces autour du sujet (pas xargs : il refuse
+                # les apostrophes, fréquentes en français).
+                p="${p#"${p%%[![:space:]]*}"}"
+                p="${p%"${p##*[![:space:]]}"}"
+                if [ -n "$p" ]; then args+=("$p"); fi
               done
             fi
             sudo -n -u www-data php artisan vokso:seed-podcasts "${args[@]}"
