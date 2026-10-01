@@ -26,28 +26,37 @@ class RateLimiter
 
     public function tooManyRequests(string $ip, string $route): bool
     {
+        if ($this->isLimited($ip, $route)) {
+            return true;
+        }
+
+        $this->hit($ip, $route);
+
+        return false;
+    }
+
+    /** Vérifie la limite sans compter l'appel courant (voir GenerationLimits). */
+    public function isLimited(string $ip, string $route): bool
+    {
         $since = now()->subSeconds($this->windowSeconds)->format('Y-m-d H:i:s');
 
         // Purge des entrées expirées pour cette route : évite de faire grossir
         // la table indéfiniment sans tâche planifiée dédiée.
         DB::table('rate_limit')->where('route', $route)->where('requested_at', '<', $since)->delete();
 
-        $count = DB::table('rate_limit')
+        return DB::table('rate_limit')
             ->where('ip_address', $ip)
             ->where('route', $route)
             ->where('requested_at', '>=', $since)
-            ->count();
+            ->count() >= $this->maxRequests;
+    }
 
-        if ($count >= $this->maxRequests) {
-            return true;
-        }
-
+    public function hit(string $ip, string $route): void
+    {
         DB::table('rate_limit')->insert([
             'ip_address' => $ip,
             'route' => $route,
             'requested_at' => now()->format('Y-m-d H:i:s'),
         ]);
-
-        return false;
     }
 }

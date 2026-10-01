@@ -6,7 +6,7 @@ import { staticFileUrl } from '../config';
 import GdprPanel from '../components/account/GdprPanel';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
-import type { PodcastWithCosts, Usage } from '../types';
+import type { PodcastWithCosts } from '../types';
 import { cleanTitle } from '../utils/text';
 import '../styles/globals.css';
 import '../styles/Dashboard.css';
@@ -18,17 +18,12 @@ export default function UserDashboard() {
   const [podcasts, setPodcasts] = useState<PodcastWithCosts[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [usage, setUsage] = useState<Usage | null>(null);
 
   useEffect(() => {
     apiRequest<{ data: PodcastWithCosts[] }>('user-podcasts')
       .then((data) => setPodcasts(data.data))
       .catch((e) => setError(errorMessage(e)))
       .finally(() => setLoading(false));
-
-    apiRequest<Usage>('user-usage')
-      .then(setUsage)
-      .catch(() => setUsage(null));
   }, []);
 
   return (
@@ -41,18 +36,6 @@ export default function UserDashboard() {
           <button onClick={logout}>Déconnexion</button>
         </div>
       </div>
-
-      <section>
-        <h2>Mon utilisation</h2>
-        {!usage && <p>Chargement de votre utilisation...</p>}
-        {usage?.unlimited && <p>Générations illimitées (compte administrateur).</p>}
-        {usage && !usage.unlimited && (
-          <p>
-            Vokso est gratuit. Ce mois-ci : <strong>{usage.used} / {usage.limit}</strong> podcasts générés
-            {' '}(limite renouvelée le 1er de chaque mois).
-          </p>
-        )}
-      </section>
 
       <section>
         <h2>Confidentialité et données personnelles</h2>

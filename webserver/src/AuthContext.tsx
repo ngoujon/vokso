@@ -11,7 +11,6 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string, totpCode?: string) => Promise<User>;
-  register: (email: string, password: string, website?: string) => Promise<User>;
   logout: () => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   setup2fa: () => Promise<{ secret: string; otpauth_uri: string }>;
@@ -56,9 +55,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = (email: string, password: string, totpCode = '') =>
     authenticate('auth-login', { email, password, totp_code: totpCode });
 
-  const register = (email: string, password: string, website = '') =>
-    authenticate('auth-register', { email, password, website });
-
   const logout = async () => {
     try {
       await apiRequest('auth-logout', { method: 'POST' });
@@ -92,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, changePassword, setup2fa, enable2fa, disable2fa }}
+      value={{ user, loading, login, logout, changePassword, setup2fa, enable2fa, disable2fa }}
     >
       {children}
     </AuthContext.Provider>

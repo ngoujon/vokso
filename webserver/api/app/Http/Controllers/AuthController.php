@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Services\Mailer;
 use App\Support\PasswordPolicy;
 use App\Support\RateLimiter;
 use App\Support\TokenAuth;
@@ -13,58 +12,6 @@ use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
-    /** Inscription publique : toujours en rôle "user", les comptes admin se créent depuis l'espace admin. */
-    public function register(Request $request, Mailer $mailer): JsonResponse
-    {
-        if (RateLimiter::fromConfig()->tooManyRequests((string) $request->ip(), 'auth-register')) {
-            return $this->error('Trop de tentatives, réessayez plus tard.', 429);
-        }
-
-        // Champ piège invisible (voir Login.tsx) : un humain ne le remplit
-        // jamais. Même erreur générique que pour un email invalide, pour ne
-        // pas signaler l'échec aux robots.
-        if (trim((string) $request->json('website', '')) !== '') {
-            return $this->error('Inscription impossible, réessayez plus tard.', 400);
-        }
-
-        [$email, $password, $error] = $this->readCredentials($request);
-        if ($error !== null) {
-            return $this->error($error, 400);
-        }
-
-        $policyError = PasswordPolicy::validate($password);
-        if ($policyError !== null) {
-            return $this->error($policyError, 400);
-        }
-
-        if (User::where('email', $email)->exists()) {
-            return $this->error('Un compte existe déjà avec cet email.', 409);
-        }
-
-        $user = User::create([
-            'email' => $email,
-            'password_hash' => password_hash($password, PASSWORD_BCRYPT),
-            'role' => 'user',
-            'status' => 'active',
-        ]);
-
-        // Un échec d'envoi ne bloque jamais la création du compte.
-        $mailer->send(
-            $email,
-            'Bienvenue sur Vokso',
-            "Votre compte Vokso est créé.\n\n"
-            ."Vokso est entièrement gratuit. Vos podcasts sont générés sur une infrastructure hébergée en Europe : "
-            ."vos données ne servent jamais à entraîner un modèle tiers.\n\n"
-            ."Vous pouvez dès maintenant générer votre premier épisode depuis votre espace.\n\n"
-            ."À bientôt,\nL'équipe Vokso"
-        );
-
-        return response()->json([
-            'token' => TokenAuth::issue($user),
-            'user' => ['id' => $user->id, 'email' => $email, 'role' => 'user'],
-        ], 201);
-    }
-
     public function login(Request $request): JsonResponse
     {
         // Limite par IP : le brute-force ou le credential stuffing émettent

@@ -13,17 +13,15 @@ export default function Login() {
   useCanonical();
   useDocumentMeta(
     'Connexion — Vokso',
-    'Connectez-vous ou créez un compte Vokso pour générer et gérer vos épisodes.'
+    'Connexion à l\'espace d\'administration de Vokso.'
   );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [totpCode, setTotpCode] = useState('');
   const [totpRequired, setTotpRequired] = useState(false);
-  const [website, setWebsite] = useState('');
-  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,7 +29,7 @@ export default function Login() {
     setError(null);
     setLoading(true);
     try {
-      const user = mode === 'login' ? await login(email, password, totpCode) : await register(email, password, website);
+      const user = await login(email, password, totpCode);
       if (user.must_change_password) {
         navigate('/changer-mot-de-passe');
         return;
@@ -54,7 +52,7 @@ export default function Login() {
       <NavBar />
       <div className="container">
         <div className="auth-card">
-          <h1>{mode === 'login' ? 'Connexion' : 'Créer un compte'}</h1>
+          <h1>Connexion</h1>
           <form onSubmit={handleSubmit} className="auth-form">
             <label>
               Email
@@ -66,12 +64,11 @@ export default function Login() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                minLength={mode === 'register' ? 12 : 8}
+                minLength={8}
                 required
               />
-              {mode === 'register' && <small>12 caractères minimum, au moins une lettre et un chiffre.</small>}
             </label>
-            {mode === 'login' && totpRequired && (
+            {totpRequired && (
               <label>
                 Code de double authentification
                 <input
@@ -86,28 +83,11 @@ export default function Login() {
                 />
               </label>
             )}
-            {mode === 'register' && (
-              // Piège à robots : masqué visuellement et aux lecteurs d'écran, jamais rempli par un humain.
-              <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }}>
-                <label htmlFor="website">Site web</label>
-                <input
-                  id="website"
-                  type="text"
-                  tabIndex={-1}
-                  autoComplete="off"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                />
-              </div>
-            )}
             {error && <p className="auth-error">{error}</p>}
             <button type="submit" disabled={loading}>
-              {loading ? 'Chargement...' : mode === 'login' ? 'Se connecter' : "S'inscrire"}
+              {loading ? 'Chargement...' : 'Se connecter'}
             </button>
           </form>
-          <button className="auth-switch" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
-            {mode === 'login' ? 'Pas encore de compte ? Inscrivez-vous' : 'Déjà un compte ? Connectez-vous'}
-          </button>
           <Link to="/" className="auth-back">← Retour à l'accueil</Link>
         </div>
       </div>

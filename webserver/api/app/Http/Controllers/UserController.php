@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\GenerationQuota;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,16 +25,4 @@ class UserController extends Controller
         return response()->json(['data' => $podcasts]);
     }
 
-    /** Consommation du quota mensuel de générations, affichée dans l'espace compte. */
-    public function usage(Request $request): JsonResponse
-    {
-        $user = $request->user();
-        $quota = GenerationQuota::fromConfig();
-
-        return response()->json([
-            'used' => $quota->usedThisMonth($user->id),
-            'limit' => $quota->limit(),
-            'unlimited' => $user->isAdmin(),
-        ]);
-    }
 }

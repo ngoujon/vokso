@@ -1,6 +1,6 @@
 # Vokso
 
-Vokso transforme un sujet (une phrase, ou un message vocal) en épisode de podcast complet : un texte de narration en français, une illustration et une voix de synthèse, générés par IA en quelques minutes. Le service est **gratuit** ; il faut un compte pour générer, avec un nombre limité de générations par mois pour éviter les abus.
+Vokso transforme un sujet (une phrase, ou un message vocal) en épisode de podcast complet : un texte de narration en français, une illustration et une voix de synthèse, générés par IA en quelques minutes. Le service est **gratuit et sans inscription**, avec un nombre limité de générations par adresse IP et par jour pour éviter les abus (les comptes ne servent plus qu'à l'administration).
 
 Production : [vokso.fr](https://vokso.fr)
 
@@ -27,8 +27,8 @@ Production : [vokso.fr](https://vokso.fr)
 
 ### Génération d'un podcast
 
-1. Le front envoie le sujet (`POST /api/generation`) ou un fichier audio (`POST /api/generation-audio`), avec le jeton de connexion.
-2. L'API vérifie les limites anti-abus (par adresse IP et quota mensuel par compte, voir `App\Support\GenerationQuota`), crée un job et lance en arrière-plan `php artisan vokso:process-job {id}`.
+1. Le front envoie le sujet (`POST /api/generation`) ou un fichier audio (`POST /api/generation-audio`), sans compte.
+2. L'API vérifie les limites anti-abus (par adresse IP sur une heure et sur 24 h, plus un plafond global sur 24 h ; voir `App\Support\GenerationLimits`), crée un job et lance en arrière-plan `php artisan vokso:process-job {id}`.
 3. `App\Services\PodcastGenerator` enchaîne : transcription éventuelle → texte, titre et catégorie en parallèle → illustration et voix en parallèle → enregistrement.
 4. Le front suit la progression via `GET /api/generation-status?id=...`.
 

@@ -66,15 +66,6 @@
   font-size: 0.9rem;
 }
 
-.auth-switch {
-  display: block;
-  margin: 1rem auto 0;
-  background: none;
-  border: none;
-  color: var(--primary-dark);
-  cursor: pointer;
-  text-decoration: underline;
-}
 
 .auth-back {
   display: block;

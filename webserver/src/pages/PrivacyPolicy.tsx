@@ -10,7 +10,7 @@ export default function PrivacyPolicy() {
   useCanonical();
   useDocumentMeta(
     'Politique de confidentialité — Vokso',
-    'Comment Vokso collecte et traite vos données personnelles : compte utilisateur, contenus générés par IA, newsletter.'
+    'Comment Vokso collecte et traite vos données personnelles : contenus générés par IA, newsletter, données techniques.'
   );
 
   return (
@@ -26,11 +26,10 @@ export default function PrivacyPolicy() {
 
       <h2>1. Données collectées</h2>
       <ul>
-        <li><strong>Compte utilisateur</strong> : adresse e-mail et mot de passe (stocké sous forme chiffrée), utilisés pour la connexion et la gestion de votre compte.</li>
         <li><strong>Contenus soumis pour génération</strong> : le sujet ou texte que vous saisissez, ou l'enregistrement audio de votre voix si vous utilisez la saisie vocale.</li>
-        <li><strong>Contenus générés</strong> : les textes, images et fichiers audio produits par le site à partir de vos demandes, ainsi que l'historique de vos générations.</li>
+        <li><strong>Contenus générés</strong> : les textes, images et fichiers audio produits par le site à partir de vos demandes, publiés dans le catalogue public des épisodes.</li>
         <li><strong>Newsletter</strong> : votre adresse e-mail, si vous choisissez de vous y inscrire.</li>
-        <li><strong>Données techniques</strong> : adresse IP, utilisée pour limiter le nombre de requêtes et prévenir les abus (protection anti-spam), et nombre de générations effectuées par votre compte dans le mois (le service est gratuit, avec une limite mensuelle par compte).</li>
+        <li><strong>Données techniques</strong> : adresse IP, conservée le temps nécessaire (de l'ordre de 24 heures) pour limiter le nombre de générations et de requêtes et prévenir les abus (le service est gratuit et sans inscription).</li>
       </ul>
 
       <h2>2. Services utilisés pour traiter vos données</h2>
@@ -47,7 +46,7 @@ export default function PrivacyPolicy() {
           la transcription effectuée.
         </li>
         <li>
-          <strong>Envoi d'e-mails</strong> : les e-mails liés à votre compte ou à la newsletter sont envoyés via
+          <strong>Envoi d'e-mails</strong> : les e-mails liés à la newsletter ou à vos messages de contact sont envoyés via
           un serveur d'envoi d'e-mails (SMTP).
         </li>
       </ul>
@@ -59,17 +58,17 @@ export default function PrivacyPolicy() {
 
       <h2>3. Pourquoi ces données sont traitées</h2>
       <ul>
-        <li>Créer et gérer votre compte, et vous permettre de vous connecter.</li>
         <li>Générer les podcasts (texte, image, audio) que vous demandez.</li>
-        <li>Conserver l'historique de vos générations pour vous permettre de les réécouter.</li>
+        <li>Publier les épisodes générés pour qu'ils puissent être écoutés.</li>
         <li>Vous envoyer la newsletter si vous y êtes inscrit·e.</li>
         <li>Assurer la sécurité et la disponibilité du site (limitation du nombre de requêtes).</li>
       </ul>
 
       <h2>4. Durée de conservation</h2>
       <p>
-        Vos données de compte et l'historique de vos générations sont conservés tant que votre compte est actif.
-        Vous pouvez demander la suppression de votre compte et des données associées à tout moment.
+        Les épisodes générés restent publiés tant que le service existe ; vous pouvez demander le retrait
+        d'un épisode à tout moment via le formulaire de contact. Les adresses IP utilisées pour la limitation
+        des requêtes sont effacées dès qu'elles ne servent plus à ce calcul (de l'ordre de 24 heures).
       </p>
 
       <h2>5. Vos droits</h2>

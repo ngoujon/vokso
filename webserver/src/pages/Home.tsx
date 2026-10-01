@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import { apiRequest, errorMessage } from '../api';
-import { useAuth } from '../AuthContext';
 import '../styles/globals.css';
 import '../styles/Dashboard.css';
 import { config } from '../config';
@@ -41,7 +39,6 @@ export default function Home() {
     'Vokso — Générez et écoutez des podcasts',
     "Vokso permet de générer et d'écouter des épisodes de podcast à partir d'un sujet ou d'un texte."
   );
-  const { user, loading: authLoading } = useAuth();
   const [subject, setSubject] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceMode, setSourceMode] = useState<"text" | "audio">("text");
@@ -435,15 +432,6 @@ export default function Home() {
       </div>
       <div className="form-container">
         <h1>Générer un podcast</h1>
-        {!authLoading && !user ? (
-          <div className="auth-required">
-            <p>Vokso est gratuit : créez un compte pour générer vos propres podcasts.</p>
-            <Link to="/login" className="btn btn-primary">Créer un compte gratuit</Link>
-            {' '}
-            <Link to="/login">J'ai déjà un compte</Link>
-          </div>
-        ) : (
-        <>
         <div className="source-mode-tabs">
           <button
             type="button"
@@ -500,8 +488,6 @@ export default function Home() {
             {loading ? "Envoi en cours..." : "Générer"}
           </button>
         </form>
-        </>
-        )}
 
         {loading && (
           <div className="job-progress">

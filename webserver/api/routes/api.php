@@ -26,13 +26,15 @@ Route::post('ping', [HomeController::class, 'ping']);
 Route::get('listing', [CatalogController::class, 'latest']);
 Route::get('search', [CatalogController::class, 'search']);
 Route::get('categories', [CatalogController::class, 'categories']);
+// Génération ouverte sans compte (plafonds anti-abus : GenerationLimits).
+Route::post('generation', [GenerationController::class, 'generateText']);
+Route::post('generation-audio', [GenerationController::class, 'generateFromAudio']);
 Route::get('generation-status', [GenerationController::class, 'status']);
 
 Route::get('contact-challenge', [ContactController::class, 'challenge']);
 Route::post('contact', [ContactController::class, 'send']);
 Route::post('newsletter', [ContactController::class, 'subscribeNewsletter']);
 
-Route::post('auth-register', [AuthController::class, 'register']);
 Route::post('auth-login', [AuthController::class, 'login']);
 Route::post('auth-logout', [AuthController::class, 'logout']);
 
@@ -51,11 +53,7 @@ Route::middleware('auth.token')->group(function () {
 
     // --- Connecté, mot de passe à jour ----------------------------------------
     Route::middleware('password.changed')->group(function () {
-        Route::post('generation', [GenerationController::class, 'generateText']);
-        Route::post('generation-audio', [GenerationController::class, 'generateFromAudio']);
-
         Route::get('user-podcasts', [UserController::class, 'podcasts']);
-        Route::get('user-usage', [UserController::class, 'usage']);
 
         // --- Administration ---------------------------------------------------
         Route::middleware('admin')->group(function () {

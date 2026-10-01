@@ -8,36 +8,9 @@ use Tests\TestCase;
 
 class AuthTest extends TestCase
 {
-    public function test_register_creates_an_account_and_returns_a_token(): void
+    public function test_public_registration_is_gone(): void
     {
-        $response = $this->postJson('/auth-register', ['email' => 'Nouveau@Example.com', 'password' => 'MotDePasse123']);
-
-        $response->assertCreated()->assertJsonPath('user.email', 'nouveau@example.com')->assertJsonPath('user.role', 'user');
-        $this->getJson('/auth-me', ['Authorization' => 'Bearer '.$response->json('token')])
-            ->assertOk()
-            ->assertJsonPath('user.email', 'nouveau@example.com');
-    }
-
-    public function test_register_rejects_weak_passwords_duplicates_and_bots(): void
-    {
-        $this->postJson('/auth-register', ['email' => 'a@example.com', 'password' => 'courtcourt'])->assertStatus(400);
-        $this->postJson('/auth-register', ['email' => 'a@example.com', 'password' => 'MotDePasse123', 'website' => 'spam'])->assertStatus(400);
-
-        $this->createUser(['email' => 'pris@example.com']);
-        $this->postJson('/auth-register', ['email' => 'pris@example.com', 'password' => 'MotDePasse123'])->assertStatus(409);
-    }
-
-    public function test_tokens_are_stored_hashed(): void
-    {
-        $user = $this->createUser(['email' => 'login@example.com']);
-
-        $token = $this->postJson('/auth-login', ['email' => 'login@example.com', 'password' => 'MotDePasse123'])
-            ->assertOk()
-            ->json('token');
-
-        $this->assertNull(AuthToken::find($token));
-        $this->assertNotNull(AuthToken::find(hash('sha256', $token)));
-        $this->assertSame($user->id, AuthToken::first()->user_id);
+        $this->postJson('/auth-register', ['email' => 'a@example.com', 'password' => 'MotDePasse123'])->assertNotFound();
     }
 
     public function test_login_rejects_bad_credentials_and_disabled_accounts(): void

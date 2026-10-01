@@ -8,22 +8,14 @@ use Tests\TestCase;
 
 class GenerationTest extends TestCase
 {
-    public function test_generation_requires_an_account(): void
+    public function test_generation_is_open_without_an_account(): void
     {
-        $this->postJson('/generation', ['input' => 'Les volcans'])->assertStatus(401);
-        $this->assertSame(0, GenerationJob::count());
-    }
-
-    public function test_generation_is_queued_for_the_user(): void
-    {
-        $user = $this->createUser();
-
-        $response = $this->postJson('/generation', ['input' => '<b>Les volcans</b>'], $this->authHeaders($user))
+        $response = $this->postJson('/generation', ['input' => '<b>Les volcans</b>'])
             ->assertStatus(202)
             ->assertJsonPath('status', 'pending');
 
         $job = GenerationJob::find($response->json('job_id'));
-        $this->assertSame($user->id, $job->user_id);
+        $this->assertNull($job->user_id);
         $this->assertSame('Les volcans', $job->input);
 
         $this->getJson('/generation-status?id='.$job->job_id)
@@ -32,59 +24,82 @@ class GenerationTest extends TestCase
             ->assertJsonPath('progress', 0);
     }
 
-    public function test_generation_validates_the_subject(): void
+    public function test_generation_is_attached_to_a_logged_in_user(): void
     {
-        $headers = $this->authHeaders($this->createUser());
+        $user = $this->createUser();
 
-        $this->postJson('/generation', ['input' => '   '], $headers)->assertStatus(400);
-        $this->postJson('/generation', ['input' => str_repeat('a', 301)], $headers)->assertStatus(400);
+        $response = $this->postJson('/generation', ['input' => 'Les volcans'], $this->authHeaders($user))->assertStatus(202);
+
+        $this->assertSame($user->id, GenerationJob::find($response->json('job_id'))->user_id);
     }
 
-    public function test_monthly_quota_counts_pending_jobs_but_not_failed_ones(): void
+    public function test_generation_validates_the_subject_without_consuming_the_limit(): void
     {
-        config(['vokso.generation_monthly_quota' => 2, 'vokso.rate_limit.max_requests' => 100]);
-        $user = $this->createUser();
-        $headers = $this->authHeaders($user);
+        config(['vokso.generation_limits.per_ip_hourly' => 1]);
 
-        GenerationJob::create(['job_id' => 'job_failed', 'user_id' => $user->id, 'status' => 'error']);
-        GenerationJob::create(['job_id' => 'job_last_month', 'user_id' => $user->id, 'status' => 'done'])
-            ->forceFill(['created_at' => now()->subMonthNoOverflow()->startOfMonth()])->save();
+        $this->postJson('/generation', ['input' => '   '])->assertStatus(400);
+        $this->postJson('/generation', ['input' => str_repeat('a', 301)])->assertStatus(400);
+        $this->postJson('/generation', ['input' => 'Sujet'])->assertStatus(202);
+    }
 
-        $this->postJson('/generation', ['input' => 'Sujet 1'], $headers)->assertStatus(202);
-        $this->postJson('/generation', ['input' => 'Sujet 2'], $headers)->assertStatus(202);
-        $this->postJson('/generation', ['input' => 'Sujet 3'], $headers)
+    public function test_generation_is_limited_per_ip_per_hour(): void
+    {
+        config(['vokso.generation_limits.per_ip_hourly' => 2]);
+
+        $this->postJson('/generation', ['input' => 'Sujet 1'])->assertStatus(202);
+        $this->postJson('/generation', ['input' => 'Sujet 2'])->assertStatus(202);
+        $this->postJson('/generation', ['input' => 'Sujet 3'])
             ->assertStatus(429)
-            ->assertJsonPath('code', 'quota_reached');
+            ->assertJsonPath('code', 'limit_reached');
 
-        $this->getJson('/user-usage', $headers)->assertOk()->assertJson(['used' => 2, 'limit' => 2, 'unlimited' => false]);
+        // Une autre IP n'est pas concernée.
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.7'])
+            ->postJson('/generation', ['input' => 'Sujet 4'])
+            ->assertStatus(202);
+    }
+
+    public function test_generation_is_limited_per_ip_per_day(): void
+    {
+        config(['vokso.generation_limits.per_ip_daily' => 1]);
+
+        $this->postJson('/generation', ['input' => 'Sujet 1'])->assertStatus(202);
+        $this->travel(2)->hours();
+        $this->postJson('/generation', ['input' => 'Sujet 2'])->assertStatus(429);
+        $this->travel(23)->hours();
+        $this->postJson('/generation', ['input' => 'Sujet 3'])->assertStatus(202);
+    }
+
+    public function test_global_daily_cap_ignores_failed_and_old_jobs(): void
+    {
+        config(['vokso.generation_limits.global_daily' => 2]);
+
+        GenerationJob::create(['job_id' => 'job_failed', 'status' => 'error']);
+        GenerationJob::create(['job_id' => 'job_old', 'status' => 'done'])
+            ->forceFill(['created_at' => now()->subDays(2)])->save();
+        GenerationJob::create(['job_id' => 'job_recent', 'status' => 'done']);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.1'])
+            ->postJson('/generation', ['input' => 'Sujet 1'])->assertStatus(202);
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.2'])
+            ->postJson('/generation', ['input' => 'Sujet 2'])->assertStatus(429);
     }
 
     public function test_admins_are_not_capped(): void
     {
-        config(['vokso.generation_monthly_quota' => 0]);
+        config(['vokso.generation_limits.per_ip_hourly' => 0, 'vokso.generation_limits.global_daily' => 0]);
 
         $this->postJson('/generation', ['input' => 'Sujet'], $this->authHeaders($this->createUser(['role' => 'admin'])))
             ->assertStatus(202);
-    }
-
-    public function test_generation_is_rate_limited_per_ip(): void
-    {
-        config(['vokso.rate_limit.max_requests' => 1]);
-        $headers = $this->authHeaders($this->createUser());
-
-        $this->postJson('/generation', ['input' => 'Sujet 1'], $headers)->assertStatus(202);
-        $this->postJson('/generation', ['input' => 'Sujet 2'], $headers)->assertStatus(429);
     }
 
     public function test_audio_generation_stores_the_upload(): void
     {
         $dir = sys_get_temp_dir().'/vokso-uploads-'.uniqid();
         config(['vokso.upload_dir' => $dir]);
-        $headers = $this->authHeaders($this->createUser());
 
-        $this->post('/generation-audio', ['audio' => UploadedFile::fake()->create('voix.exe', 10)], $headers)->assertStatus(400);
+        $this->post('/generation-audio', ['audio' => UploadedFile::fake()->create('voix.exe', 10)])->assertStatus(400);
 
-        $response = $this->post('/generation-audio', ['audio' => UploadedFile::fake()->create('voix.webm', 10)], $headers)
+        $response = $this->post('/generation-audio', ['audio' => UploadedFile::fake()->create('voix.webm', 10)])
             ->assertStatus(202);
 
         $job = GenerationJob::find($response->json('job_id'));

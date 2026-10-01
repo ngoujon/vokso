@@ -30,6 +30,5 @@
         <env name="PUBLIC_URL" value="https://vokso.fr"/>
         <env name="SENTRY_DSN_API" value=""/>
         <env name="RATE_LIMIT_MAX_REQUESTS" value="100"/>
-        <env name="GENERATION_MONTHLY_QUOTA" value="5"/>
     </php>
 </phpunit>

@@ -15,12 +15,20 @@ return [
     // Fichiers audio déposés, en attente de transcription par le worker.
     'upload_dir' => env('UPLOAD_DIR', storage_path('uploads')),
 
-    // Limites anti-abus (voir App\Support\RateLimiter et GenerationQuota).
+    // Limites anti-abus des routes sensibles (connexion, contact...), voir
+    // App\Support\RateLimiter.
     'rate_limit' => [
         'max_requests' => (int) env('RATE_LIMIT_MAX_REQUESTS', 5),
         'window_seconds' => (int) env('RATE_LIMIT_WINDOW_SECONDS', 3600),
     ],
-    'generation_monthly_quota' => max(0, (int) env('GENERATION_MONTHLY_QUOTA', 5)),
+
+    // Génération sans compte : plafonds par IP et plafond global sur 24 h
+    // glissantes (garde-fou du coût des appels IA), voir GenerationLimits.
+    'generation_limits' => [
+        'per_ip_hourly' => max(0, (int) env('GENERATION_IP_HOURLY_LIMIT', 5)),
+        'per_ip_daily' => max(0, (int) env('GENERATION_IP_DAILY_LIMIT', 10)),
+        'global_daily' => max(0, (int) env('GENERATION_GLOBAL_DAILY_LIMIT', 150)),
+    ],
 
     // Jeton anti-spam invisible du formulaire de contact (CaptchaService).
     'captcha_secret' => (string) env('CAPTCHA_SECRET', ''),

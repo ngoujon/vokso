@@ -21,17 +21,13 @@ export default function NavBar() {
         <div className="navbar-links">
           <Link to="/" className={isActive('/') ? 'active' : ''}>Accueil</Link>
           <Link to="/contact" className={isActive('/contact') ? 'active' : ''}>Contact</Link>
-          {user ? (
+          {/* Pas de compte à créer : la connexion (/login) ne sert plus qu'à l'administration. */}
+          {user && (
             <>
               <Link to={user.role === 'admin' ? '/admin' : '/dashboard'}>
                 {user.role === 'admin' ? 'Espace admin' : 'Mon espace'}
               </Link>
               <button onClick={logout}>Déconnexion</button>
-            </>
-          ) : (
-            <>
-              <Link to="/login">Connexion</Link>
-              <Link to="/login" className="btn btn-primary">S'inscrire</Link>
             </>
           )}
         </div>

@@ -169,4 +169,18 @@ class PodcastGeneratorTest extends TestCase
         $this->assertStringEndsWith('.webp', $generation->image_url);
         $this->assertFileExists($this->outputDir.'/images/'.$generation->image_url);
     }
+
+    public function test_seed_command_generates_topics_and_skips_those_already_done(): void
+    {
+        config(['vokso.output_dir' => $this->outputDir]);
+        $this->app->instance(AiProviderFactory::class, $this->fakeAi());
+
+        $this->artisan('vokso:seed-podcasts', ['sujets' => ['Mars', 'Les volcans']])->assertSuccessful();
+        $this->assertSame(2, GenerationJob::where('status', 'done')->count());
+
+        $this->artisan('vokso:seed-podcasts', ['sujets' => ['Mars']])
+            ->expectsOutputToContain('déjà généré')
+            ->assertSuccessful();
+        $this->assertSame(2, GenerationJob::count());
+    }
 }

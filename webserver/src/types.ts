@@ -54,12 +54,6 @@ export interface JobStatus {
   error: string | null;
 }
 
-export interface Usage {
-  used: number;
-  limit: number;
-  unlimited: boolean;
-}
-
 export interface AdminKpis {
   total_users: number;
   total_podcasts: number;

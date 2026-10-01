@@ -4,26 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../AuthContext';
 import Home from './Home';
 
-// Enveloppe le mock fetch du test pour simuler un utilisateur connecté
-// (la génération est réservée aux comptes).
-function mockLoggedInUser() {
-  localStorage.setItem('auth_token', 'test-token');
-  const inner = global.fetch;
-  global.fetch = jest.fn((url: string, options?: RequestInit) => {
-    if (url.includes('/auth-me')) {
-      return Promise.resolve({
-        ok: true,
-        json: async () => ({ user: { id: 1, email: 'test@example.com', role: 'user' } }),
-      });
-    }
-    return inner(url, options);
-  }) as unknown as typeof fetch;
-}
-
-function renderHome({ loggedIn = true } = {}) {
-  if (loggedIn) {
-    mockLoggedInUser();
-  }
+function renderHome() {
   return render(
     <MemoryRouter>
       <AuthProvider>
@@ -49,10 +30,10 @@ afterEach(() => {
   localStorage.clear();
 });
 
-test('invite à créer un compte gratuit si le visiteur n\'est pas connecté', async () => {
-  renderHome({ loggedIn: false });
-  expect(await screen.findByRole('link', { name: 'Créer un compte gratuit' })).toBeInTheDocument();
-  expect(screen.queryByPlaceholderText('Tapez ici...')).not.toBeInTheDocument();
+test('le formulaire de génération est accessible sans compte', async () => {
+  renderHome();
+  expect(screen.getByPlaceholderText('Tapez ici...')).toBeInTheDocument();
+  expect(screen.queryByText(/créer un compte/i)).not.toBeInTheDocument();
 });
 
 test('affiche le formulaire en mode texte par défaut', async () => {
@@ -99,7 +80,6 @@ test('envoie le sujet saisi lors de la soumission du formulaire', async () => {
       expect.stringContaining('/generation'),
       expect.objectContaining({
         method: 'POST',
-        headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
         body: JSON.stringify({ input: 'Un sujet de test' }),
       })
     );

@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GenerationJob;
-use App\Models\User;
-use App\Support\GenerationQuota;
-use App\Support\RateLimiter;
+use App\Support\GenerationLimits;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,12 +22,6 @@ class GenerationController extends Controller
 
     public function generateText(Request $request): JsonResponse
     {
-        // Quota par IP en plus du quota par compte : cet endpoint déclenche
-        // plusieurs appels IA payants.
-        if (RateLimiter::fromConfig()->tooManyRequests((string) $request->ip(), 'generation')) {
-            return $this->error('Trop de requêtes. Merci de réessayer plus tard.', 429);
-        }
-
         $input = $request->json('input');
         if (! is_string($input) || trim($input) === '') {
             return $this->error('Valeur manquante', 400);
@@ -41,12 +33,12 @@ class GenerationController extends Controller
             return $this->error('Le sujet ne doit pas dépasser '.self::MAX_INPUT_LENGTH.' caractères.', 400);
         }
 
-        $refusal = $this->quotaRefusal($request->user());
+        $refusal = $this->limitRefusal($request);
         if ($refusal !== null) {
             return $refusal;
         }
 
-        $jobId = $this->createJob('text', $userInput, null, $request->user()->id);
+        $jobId = $this->createJob('text', $userInput, null, $request->user()?->id);
         $this->dispatch($jobId);
 
         return response()->json([
@@ -59,17 +51,6 @@ class GenerationController extends Controller
     /** Variante qui part d'un message vocal, transcrit par le worker avant la même chaîne. */
     public function generateFromAudio(Request $request): JsonResponse
     {
-        if (RateLimiter::fromConfig()->tooManyRequests((string) $request->ip(), 'generation')) {
-            return $this->error('Trop de requêtes. Merci de réessayer plus tard.', 429);
-        }
-
-        // Vérifié avant de stocker le fichier : un refus ne doit pas laisser
-        // d'upload orphelin.
-        $refusal = $this->quotaRefusal($request->user());
-        if ($refusal !== null) {
-            return $refusal;
-        }
-
         $file = $request->file('audio');
         if ($file === null) {
             return $this->error('Aucun fichier audio reçu.', 400);
@@ -86,6 +67,13 @@ class GenerationController extends Controller
             return $this->error('Format audio non supporté.', 400);
         }
 
+        // Vérifié avant de stocker le fichier : un refus ne doit pas laisser
+        // d'upload orphelin.
+        $refusal = $this->limitRefusal($request);
+        if ($refusal !== null) {
+            return $refusal;
+        }
+
         $uploadDir = (string) config('vokso.upload_dir');
         if (! is_dir($uploadDir) && ! @mkdir($uploadDir, 0775, true) && ! is_dir($uploadDir)) {
             return $this->error('Impossible de préparer le stockage du fichier audio.', 500);
@@ -100,7 +88,7 @@ class GenerationController extends Controller
             return $this->error('Impossible d\'enregistrer le fichier audio.', 500);
         }
 
-        $jobId = $this->createJob('audio', null, $uploadDir.'/'.$storedName, $request->user()->id);
+        $jobId = $this->createJob('audio', null, $uploadDir.'/'.$storedName, $request->user()?->id);
         $this->dispatch($jobId);
 
         return response()->json([
@@ -139,22 +127,15 @@ class GenerationController extends Controller
         ]);
     }
 
-    /** Génération gratuite mais plafonnée par mois et par compte (GenerationQuota). */
-    private function quotaRefusal(User $user): ?JsonResponse
+    /** Génération sans compte, plafonnée par IP et globalement (GenerationLimits). */
+    private function limitRefusal(Request $request): ?JsonResponse
     {
-        $quota = GenerationQuota::fromConfig();
-        if (! $quota->isReached($user)) {
-            return null;
-        }
+        $message = GenerationLimits::fromConfig()->refusal($request->user(), (string) $request->ip());
 
-        return $this->error(
-            sprintf('Limite de %d podcasts par mois atteinte. Elle se renouvelle le 1er du mois prochain.', $quota->limit()),
-            429,
-            ['code' => 'quota_reached']
-        );
+        return $message === null ? null : $this->error($message, 429, ['code' => 'limit_reached']);
     }
 
-    private function createJob(string $sourceType, ?string $input, ?string $audioPath, int $userId): string
+    private function createJob(string $sourceType, ?string $input, ?string $audioPath, ?int $userId): string
     {
         $jobId = 'job_'.bin2hex(random_bytes(16));
 
