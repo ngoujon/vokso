@@ -8,7 +8,8 @@
 <meta name="description" content="<?= $e($description) ?>">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="<?= $e($canonical) ?>">
-<link rel="icon" href="/assets/favicon.ico" sizes="any">
+<link rel="icon" href="/assets/favicon.ico?v=2" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Vokso">
 <meta property="og:title" content="<?= $e($title) ?>">
