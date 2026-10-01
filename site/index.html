@@ -7,6 +7,8 @@
 <meta name="description" content="Vokso transforme un simple sujet en podcast complet — texte, illustration et voix de synthèse — en quelques minutes. Gratuit, hébergement européen.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://vokso.fr/">
+<meta name="theme-color" content="#f3eee4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/assets/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="apple-touch-icon" href="/assets/vokso-icon-180.png">
@@ -53,348 +55,714 @@
   "description": "Vokso, générateur de podcasts par IA hébergé en Europe."
 }
 </script>
+<link rel="preload" href="/assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/design-system.css?v=20261001">
 <style>
-  :root {
-    --primary-color: #4653d6;
-    --primary-light: #6672e8;
-    --accent-color: #ff7a52;
-    --accent-light: #ff9773;
-    --bg: #f4f5fa;
-    --bg-soft: #eef0fb;
-    --card: #ffffff;
-    --line: #e3e5ee;
-    --text: #1a1c29;
-    --muted: #5b6172;
-    --success: #1fae72;
-    --radius: 16px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --primary-color: #5b6ef5;
-      --primary-light: #7c8bff;
-      --accent-color: #ff8a5b;
-      --accent-light: #ffa97e;
-      --bg: #0e1016;
-      --bg-soft: #14171f;
-      --card: #181c25;
-      --line: #262b36;
-      --text: #f7f8fa;
-      --muted: #a6adbb;
-      --success: #2fd988;
-    }
-  }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; }
   body {
     margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--vk-paper);
+    color: var(--vk-ink);
+    font-family: var(--vk-font);
+    font-size: 1.02rem;
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
   }
-  a { color: var(--primary-color); }
-  .wrap { width: min(1080px, 100% - 2.5rem); margin-inline: auto; }
+  a { color: inherit; }
+  img { max-width: 100%; display: block; }
+  .wrap { width: min(1160px, 100% - 2.5rem); margin-inline: auto; }
+  h1, h2, h3 { margin: 0; line-height: 1.05; }
+  .display {
+    font-stretch: 72%;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+  }
 
+  /* ---- En-tête ---------------------------------------------------------- */
   header.site {
-    position: sticky; top: 0; z-index: 10;
-    backdrop-filter: blur(10px);
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-    border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--vk-paper) 90%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--vk-line);
   }
-  header.site .wrap {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 1rem; padding: .9rem 0; flex-wrap: wrap;
-  }
-  .brand { display: flex; align-items: center; gap: .6rem; font-weight: 800; letter-spacing: -0.02em; font-size: 1.1rem; }
-  .brand .dot {
-    width: 28px; height: 28px; border-radius: 8px;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-    flex: none;
-    display: flex; align-items: center; justify-content: center;
-    color: #fff;
-  }
-  .brand .dot svg { width: 62%; height: 62%; }
-  nav.site a { color: var(--muted); text-decoration: none; margin-left: 1.4rem; font-size: .95rem; font-weight: 600; }
-  nav.site a:hover { color: var(--text); }
+  header.site .wrap { display: flex; align-items: center; gap: 1.5rem; padding: 0.8rem 0; }
+  .brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; font-weight: 800; font-size: 1.15rem; font-stretch: 85%; letter-spacing: 0.02em; text-transform: uppercase; }
+  .brand svg { width: 30px; height: 20px; color: var(--vk-signal); }
+  nav.site { display: flex; align-items: center; gap: 1.4rem; margin-left: auto; }
+  nav.site a:not(.vk-btn) { text-decoration: none; font-size: 0.92rem; font-weight: 500; color: var(--vk-ink-2); }
+  nav.site a:not(.vk-btn):hover { color: var(--vk-ink); }
+  nav.site .vk-btn { padding: 0.55rem 1rem; font-size: 0.9rem; }
 
-  .hero { padding: 4.5rem 0 3.5rem; }
-  .hero h1 {
-    font-size: clamp(2rem, 6vw, 3.4rem);
-    line-height: 1.15; margin: 0 0 1rem; font-weight: 800; letter-spacing: -0.03em;
-  }
-  .hero h1 span {
-    background: linear-gradient(120deg, var(--primary-color), var(--accent-color));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .hero p.lead { font-size: clamp(1rem, 2.4vw, 1.2rem); color: var(--muted); max-width: 62ch; margin: 0 0 2rem; }
-  .cta { display: flex; gap: .8rem; flex-wrap: wrap; }
-  .btn {
-    display: inline-block; padding: .8rem 1.6rem; border-radius: 999px;
-    text-decoration: none; font-weight: 700; border: 1px solid transparent;
-    transition: transform .15s ease;
-  }
-  .btn:hover { transform: translateY(-1px); }
-  .btn-primary { background: var(--primary-color); color: #fff; box-shadow: 0 8px 24px color-mix(in srgb, var(--primary-color) 30%, transparent); }
-  .btn-primary:hover { background: var(--primary-light); }
-  .btn-ghost { border-color: var(--line); color: var(--text); }
+  /* ---- Ouverture -------------------------------------------------------- */
+  .hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 3.5rem; align-items: center; padding: 4.5rem 0 4rem; }
+  .hero .kicker { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 1.6rem; }
+  .hero h1 { font-size: clamp(2.7rem, 6.2vw, 5.4rem); line-height: 0.92; }
+  .hero h1 .line { display: block; overflow: hidden; padding-bottom: 0.06em; }
+  .hero h1 .line > span { display: inline-block; }
+  .hero h1 em { font-style: normal; color: var(--vk-signal); }
+  .hero .lead { max-width: 52ch; margin: 1.6rem 0 2rem; color: var(--vk-ink-2); font-size: 1.12rem; }
+  .cta { display: flex; gap: 0.8rem; flex-wrap: wrap; }
 
-  .badge-free {
-    display: inline-flex; align-items: center; gap: .4rem;
-    background: color-mix(in srgb, var(--accent-color) 16%, transparent);
-    color: var(--accent-color);
-    border-radius: 999px; padding: .3rem .9rem; font-size: .78rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .02em;
-    margin-bottom: 1.1rem;
+  .js .hero h1 .line > span { transform: translateY(105%); animation: rise 0.9s var(--vk-ease) forwards; }
+  .js .hero h1 .line:nth-child(2) > span { animation-delay: 0.12s; }
+  .js .hero h1 .line:nth-child(3) > span { animation-delay: 0.24s; }
+  @keyframes rise { to { transform: none; } }
+
+  /* Le poste : cadran de tuner + épisode à l'antenne. */
+  .tuner {
+    background: var(--vk-console);
+    color: var(--vk-on-console);
+    border-radius: var(--vk-radius-lg);
+    padding: 1.3rem;
+    box-shadow: var(--vk-shadow);
   }
-
-  section { padding: 3.2rem 0; border-top: 1px solid var(--line); }
-  h2 { font-size: clamp(1.4rem, 3.6vw, 2rem); margin: 0 0 .6rem; font-weight: 800; letter-spacing: -0.01em; }
-  .section-intro { color: var(--muted); max-width: 65ch; margin: 0 0 2rem; }
-
-  .grid { display: grid; gap: 1.1rem; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
-  .card {
-    background: var(--card); border: 1px solid var(--line);
-    border-radius: var(--radius); padding: 1.4rem;
-    transition: transform .2s ease, box-shadow .2s ease;
+  .tuner .vk-label { color: color-mix(in srgb, var(--vk-on-console) 62%, transparent); }
+  .tuner-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .tuner .vk-onair { color: #ff5a3c; }
+  .dial {
+    position: relative; height: 3.6rem; margin-bottom: 1.2rem;
+    border-radius: var(--vk-radius-sm);
+    background: color-mix(in srgb, var(--vk-on-console) 6%, transparent);
+    overflow: hidden;
   }
-  .card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(0,0,0,.12); }
-  .card h3 { margin: .2rem 0 .5rem; font-size: 1.05rem; }
-  .card p { margin: 0; color: var(--muted); font-size: .95rem; }
-  .card .ico { font-size: 1.5rem; }
-
-  ol.steps { list-style: none; counter-reset: step; padding: 0; margin: 0; display: grid; gap: 1rem; }
-  ol.steps li {
-    counter-increment: step; position: relative;
-    background: var(--bg-soft); border: 1px solid var(--line);
-    border-radius: var(--radius); padding: 1.1rem 1.2rem 1.1rem 3.6rem;
+  .dial-ticks {
+    position: absolute; inset: 0.55rem 0.8rem auto;
+    height: 1rem;
+    background:
+      repeating-linear-gradient(90deg, color-mix(in srgb, var(--vk-on-console) 55%, transparent) 0 1px, transparent 1px 10%),
+      repeating-linear-gradient(90deg, color-mix(in srgb, var(--vk-on-console) 25%, transparent) 0 1px, transparent 1px 2%);
+    background-size: 100% 100%, 100% 55%;
+    background-repeat: no-repeat;
   }
-  ol.steps li::before {
-    content: counter(step);
-    position: absolute; left: 1.1rem; top: 1.1rem;
-    width: 1.8rem; height: 1.8rem; border-radius: 50%;
-    display: grid; place-items: center; font-weight: 700; font-size: .9rem;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); color: #fff;
+  .dial-nums {
+    position: absolute; left: 0.8rem; right: 0.8rem; bottom: 0.45rem;
+    display: flex; justify-content: space-between;
+    font-family: var(--vk-mono); font-size: 0.66rem;
+    color: color-mix(in srgb, var(--vk-on-console) 55%, transparent);
   }
-  ol.steps strong { display: block; }
-  ol.steps span { color: var(--muted); font-size: .95rem; }
+  .dial-needle {
+    position: absolute; top: 0.25rem; bottom: 0.25rem; left: 50%;
+    width: 2px; margin-left: -1px;
+    background: #ff5a3c;
+    box-shadow: 0 0 10px #ff5a3c;
+    transition: left 0.9s var(--vk-ease);
+  }
+  .tuner-body { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: 1.1rem; align-items: center; }
+  .tuner-cover { aspect-ratio: 1; border-radius: var(--vk-radius-sm); overflow: hidden; background: color-mix(in srgb, var(--vk-on-console) 10%, transparent); }
+  .tuner-cover img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.35s ease; }
+  .tuner-title { font-size: 1.3rem; font-stretch: 85%; font-weight: 700; margin: 0.35rem 0 0.9rem; text-wrap: balance; }
+  .tuner-title a { text-decoration: none; }
+  .tuner-title a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .tuner-controls { display: flex; align-items: center; gap: 0.9rem; }
+  .tuner-next {
+    margin-left: auto; padding: 0.45rem 0.7rem;
+    background: none; border: 1px solid color-mix(in srgb, var(--vk-on-console) 30%, transparent);
+    border-radius: var(--vk-radius-sm); color: inherit; cursor: pointer;
+    font-family: var(--vk-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .tuner-next:hover { border-color: var(--vk-on-console); }
+  .tuner.is-switching .tuner-cover img, .tuner.is-switching .tuner-title { opacity: 0.2; }
+  .tuner-title { transition: opacity 0.35s ease; }
+  .tuner-empty { padding: 1rem 0; color: color-mix(in srgb, var(--vk-on-console) 70%, transparent); }
 
-  .stack { display: flex; flex-wrap: wrap; gap: .5rem; }
-  .stack span { border: 1px solid var(--line); border-radius: 999px; padding: .3rem .8rem; font-size: .85rem; color: var(--muted); }
+  /* ---- Bandeau défilant ------------------------------------------------- */
+  .ticker { background: var(--vk-ink); color: var(--vk-paper); overflow: hidden; border-block: 1px solid var(--vk-ink); }
+  .ticker-track { display: flex; width: max-content; animation: ticker 70s linear infinite; }
+  .ticker:hover .ticker-track { animation-play-state: paused; }
+  .ticker-track span { padding: 0.7rem 1.4rem; white-space: nowrap; font-family: var(--vk-mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .ticker-track span::before { content: "●"; color: var(--vk-signal); margin-right: 1.4rem; font-size: 0.6rem; vertical-align: 0.15em; }
+  @keyframes ticker { to { transform: translateX(-50%); } }
 
-  footer.site { border-top: 1px solid var(--line); padding: 2rem 0 3rem; color: var(--muted); font-size: .9rem; }
+  /* ---- Sections --------------------------------------------------------- */
+  section { padding: 5rem 0; }
+  .section-head { display: flex; align-items: end; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 2.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--vk-ink); }
+  .section-head h2 { font-size: clamp(2.1rem, 5vw, 3.4rem); }
+  .section-head p { margin: 0.5rem 0 0; color: var(--vk-ink-2); max-width: 55ch; }
+  .link-arrow { font-weight: 600; text-decoration: none; border-bottom: 1.5px solid currentColor; padding-bottom: 2px; white-space: nowrap; }
+  .link-arrow:hover { color: var(--vk-signal); }
 
-  .newsletter-form { display: flex; gap: .6rem; flex-wrap: wrap; max-width: 480px; margin-inline: auto; }
+  /* Sélection du jour : pochettes, le disque sort au survol et tourne en lecture. */
+  .crate { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3rem 2.2rem; }
+  .sleeve-art { position: relative; padding-right: 16%; }
+  .vinyl {
+    position: absolute; top: 3%; bottom: 3%; left: 0;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, var(--vk-paper) 0 2.2%, transparent 2.4%),
+      radial-gradient(circle, transparent 0 17%, #0e0d0b 17.5%),
+      repeating-radial-gradient(circle, #191714 0 1.5px, #24211c 1.5px 3px);
+    transform: translateX(6%);
+    transition: transform 0.6s var(--vk-ease);
+  }
+  .vinyl::after {
+    content: ""; position: absolute; inset: 33%;
+    border-radius: 50%;
+    background: var(--cover, var(--vk-signal)) center / cover;
+    -webkit-mask: radial-gradient(circle, transparent 0 7%, #000 7.5%);
+            mask: radial-gradient(circle, transparent 0 7%, #000 7.5%);
+  }
+  .vinyl-spin { position: absolute; inset: 0; border-radius: 50%; }
+  .sleeve:hover .vinyl, .sleeve.is-playing .vinyl { transform: translateX(19%); }
+  .sleeve.is-playing .vinyl { animation: spin 3.2s linear infinite; }
+  @keyframes spin { from { transform: translateX(19%) rotate(0); } to { transform: translateX(19%) rotate(360deg); } }
+  .sleeve-cover {
+    position: relative; aspect-ratio: 1; width: 100%;
+    border-radius: var(--vk-radius-sm); overflow: hidden;
+    background: var(--vk-paper-2);
+    box-shadow: var(--vk-shadow);
+  }
+  .sleeve-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s var(--vk-ease); }
+  .sleeve:hover .sleeve-cover img { transform: scale(1.03); }
+  .sleeve-cover .vk-play { position: absolute; left: 0.8rem; bottom: 0.8rem; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+  .sleeve-meta { display: flex; justify-content: space-between; gap: 1rem; margin: 1.1rem 16% 0.4rem 0; }
+  .sleeve h3 { margin-right: 16%; font-size: 1.28rem; font-weight: 700; font-stretch: 88%; line-height: 1.15; text-wrap: balance; }
+  .sleeve h3 a { text-decoration: none; }
+  .sleeve h3 a:hover { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+  .sleeve .vk-meter { margin-left: 0.5rem; vertical-align: -1px; }
+  .sleeve:not(.is-playing) .vk-meter { display: none; }
+  .crate-empty { color: var(--vk-ink-2); }
+
+  /* Conducteur : « Comment ça marche » façon liste de titres. */
+  .tracklist { list-style: none; margin: 0; padding: 0; }
+  .tracklist li {
+    display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) minmax(0, 1.4fr); gap: 1.5rem;
+    padding: 1.6rem 0; border-bottom: 1px solid var(--vk-line);
+    align-items: baseline;
+  }
+  .tracklist .num { font-family: var(--vk-mono); font-size: 0.9rem; color: var(--vk-signal); font-weight: 600; }
+  .tracklist strong { font-size: 1.6rem; font-stretch: 80%; font-weight: 700; line-height: 1.1; }
+  .tracklist p { margin: 0; color: var(--vk-ink-2); }
+
+  /* Fiche technique : souveraineté. */
+  .specs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 3rem; }
+  .spec { padding: 1.4rem 0; border-top: 1px solid var(--vk-line); }
+  .spec h3 { font-size: 1.15rem; font-weight: 700; margin: 0.4rem 0 0.4rem; }
+  .spec p { margin: 0; color: var(--vk-ink-2); }
+
+  /* Fin d'émission : appel à l'action + newsletter. */
+  .signoff { background: var(--vk-console); color: var(--vk-on-console); border-radius: var(--vk-radius-lg); padding: clamp(2rem, 5vw, 4rem); display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 3rem; align-items: center; }
+  .signoff h2 { font-size: clamp(2.2rem, 5vw, 3.6rem); }
+  .signoff p { color: color-mix(in srgb, var(--vk-on-console) 72%, transparent); margin: 1rem 0 1.6rem; }
+  .signoff .vk-btn:not(.vk-btn-signal) { border-color: var(--vk-on-console); color: var(--vk-on-console); }
+  .newsletter h3 { font-size: 1.2rem; margin-bottom: 0.4rem; }
+  .newsletter-form { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
   .newsletter-form input[type=email] {
-    flex: 1 1 220px; padding: .8rem 1.1rem; border-radius: 999px;
-    border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: 1rem;
+    flex: 1 1 200px; min-width: 0; padding: 0.8rem 1rem;
+    border-radius: var(--vk-radius-sm); border: 1px solid color-mix(in srgb, var(--vk-on-console) 30%, transparent);
+    background: transparent; color: var(--vk-on-console); font: inherit;
   }
-  .newsletter-form button {
-    padding: .8rem 1.5rem; border-radius: 999px; border: none; cursor: pointer;
-    background: var(--primary-color); color: #fff;
-    font-weight: 700; font-size: 1rem;
-  }
-  .newsletter-msg { margin-top: .8rem; font-size: .9rem; min-height: 1.2em; }
-  .newsletter-msg.ok { color: var(--success); }
-  .newsletter-msg.err { color: #e1435b; }
+  .newsletter-form input[type=email]::placeholder { color: color-mix(in srgb, var(--vk-on-console) 45%, transparent); }
+  .newsletter-msg { margin: 0.8rem 0 0; font-size: 0.9rem; min-height: 1.2em; }
+  .newsletter-msg.ok { color: #7ed69f; }
+  .newsletter-msg.err { color: #ff8a73; }
 
+  footer.site { padding: 2.5rem 0 7rem; color: var(--vk-ink-2); font-size: 0.9rem; }
+  footer.site .wrap { display: flex; gap: 1rem 2rem; flex-wrap: wrap; justify-content: space-between; border-top: 1px solid var(--vk-line); padding-top: 1.5rem; }
+  footer.site nav { display: flex; gap: 1.4rem; flex-wrap: wrap; }
+  footer.site a { color: var(--vk-ink-2); }
+  footer.site a:hover { color: var(--vk-ink); }
+
+  /* Lecteur persistant, apparaît à la première écoute. */
+  .deck {
+    position: fixed; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); z-index: 30;
+    width: min(760px, 100% - 1.5rem);
+    display: grid; grid-template-columns: 3rem auto minmax(0, 1fr) auto; gap: 0.9rem; align-items: center;
+    padding: 0.6rem 0.9rem 0.6rem 0.6rem;
+    background: var(--vk-console); color: var(--vk-on-console);
+    border: 1px solid color-mix(in srgb, var(--vk-on-console) 14%, transparent);
+    border-radius: var(--vk-radius); box-shadow: 0 18px 40px -12px rgba(0,0,0,.55);
+    transform: translate(-50%, 160%); visibility: hidden;
+    transition: transform 0.5s var(--vk-ease), visibility 0s linear 0.5s;
+  }
+  .deck.is-visible { transform: translate(-50%, 0); visibility: visible; transition-delay: 0s; }
+  .deck img { width: 3rem; height: 3rem; border-radius: var(--vk-radius-sm); object-fit: cover; }
+  .deck .vk-play { width: 2.4rem; height: 2.4rem; }
+  .deck-title { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .deck-bar { position: relative; height: 4px; margin-top: 0.45rem; border-radius: 2px; background: color-mix(in srgb, var(--vk-on-console) 18%, transparent); cursor: pointer; }
+  .deck-bar::before { content: ""; position: absolute; inset: -8px 0; }
+  .deck-bar span { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; background: var(--vk-signal); }
+  .deck-time { font-family: var(--vk-mono); font-size: 0.75rem; color: color-mix(in srgb, var(--vk-on-console) 65%, transparent); white-space: nowrap; }
+
+  /* Apparition au défilement (uniquement si le JS tourne). */
+  .js .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.8s var(--vk-ease), transform 0.8s var(--vk-ease); }
+  .js .reveal.in { opacity: 1; transform: none; }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; gap: 2.5rem; padding-top: 3rem; }
+    .crate { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .signoff { grid-template-columns: 1fr; }
+    .tracklist li { grid-template-columns: 3rem minmax(0, 1fr); }
+    .tracklist p { grid-column: 2; }
+  }
   @media (max-width: 640px) {
-    header.site .wrap { justify-content: center; }
-    nav.site { display: flex; flex-wrap: wrap; justify-content: center; }
-    nav.site a { margin: 0 .7rem; }
-    .hero { padding: 3rem 0 2.5rem; }
-    .btn { width: 100%; text-align: center; }
+    nav.site a:not(.vk-btn) { display: none; }
+    section { padding: 3.5rem 0; }
+    .crate { grid-template-columns: 1fr; }
+    .specs { grid-template-columns: 1fr; }
+    .tuner-body { grid-template-columns: 6.5rem minmax(0, 1fr); }
+    .tuner-title { font-size: 1.1rem; }
+    .tuner-next { margin-left: 0; }
+    .tuner-controls { flex-wrap: wrap; }
+    .deck { grid-template-columns: auto minmax(0, 1fr); }
+    .deck img, .deck-time { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .ticker-track { animation: none; }
+    .js .hero h1 .line > span { transform: none; }
+    .js .reveal { opacity: 1; transform: none; }
   }
 </style>
+<script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 16 16"><path d="M4 2.5v11a.5.5 0 0 0 .77.42l8.5-5.5a.5.5 0 0 0 0-.84l-8.5-5.5A.5.5 0 0 0 4 2.5z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 16 16"><rect x="3" y="2" width="3.6" height="12" rx="1" fill="currentColor"/><rect x="9.4" y="2" width="3.6" height="12" rx="1" fill="currentColor"/></symbol>
+</svg>
+
 <header class="site">
   <div class="wrap">
-    <div class="brand">
-      <span class="dot" aria-hidden="true">
-        <svg viewBox="218 312 588 382" fill="currentColor">
-          <rect x="258" y="432" width="52" height="160" rx="26" />
-          <rect x="336" y="352" width="52" height="320" rx="26" />
-          <rect x="414" y="402" width="52" height="220" rx="26" />
-          <rect x="500" y="362" width="266" height="52" rx="26" opacity="0.5" />
-          <rect x="500" y="442" width="200" height="52" rx="26" opacity="0.5" />
-          <rect x="500" y="522" width="266" height="52" rx="26" opacity="0.5" />
-          <rect x="500" y="602" width="160" height="52" rx="26" opacity="0.5" />
-        </svg>
-      </span>
+    <a class="brand" href="/">
+      <svg viewBox="218 312 588 382" fill="currentColor" aria-hidden="true">
+        <rect x="258" y="432" width="52" height="160" rx="26" />
+        <rect x="336" y="352" width="52" height="320" rx="26" />
+        <rect x="414" y="402" width="52" height="220" rx="26" />
+        <rect x="500" y="362" width="266" height="52" rx="26" opacity="0.5" />
+        <rect x="500" y="442" width="200" height="52" rx="26" opacity="0.5" />
+        <rect x="500" y="522" width="266" height="52" rx="26" opacity="0.5" />
+        <rect x="500" y="602" width="160" height="52" rx="26" opacity="0.5" />
+      </svg>
       Vokso
-    </div>
-    <nav class="site">
-      <a href="#concept">Le concept</a>
-      <a href="#fonctionnement">Fonctionnement</a>
+    </a>
+    <nav class="site" aria-label="Navigation principale">
+      <a href="#selection">Sélection du jour</a>
+      <a href="#fonctionnement">Comment ça marche</a>
       <a href="#souverainete">Souveraineté</a>
-      <a class="btn btn-primary" href="/app/" style="margin-left:1.4rem; padding:.5rem 1.2rem;">Essayer l'app</a>
+      <a class="vk-btn vk-btn-signal" href="/app/">Créer un épisode</a>
     </nav>
   </div>
 </header>
 
 <main>
   <div class="wrap hero">
-    <span class="badge-free">Hébergé en Europe</span>
-    <h1>Un sujet en une phrase.<br><span>Un podcast complet en retour.</span></h1>
-    <p class="lead">
-      Vokso écrit le texte, dessine l'illustration et enregistre la voix. Vous saisissez
-      simplement le thème que vous voulez explorer : l'épisode est prêt à écouter quelques
-      minutes plus tard, avec sa jaquette et son classement par thématique. 100 % gratuit,
-      sans inscription.
-    </p>
-    <div class="cta">
-      <a class="btn btn-primary" href="/app/">Essayer gratuitement</a>
+    <div>
+      <div class="kicker">
+        <span class="vk-onair">À l'antenne</span>
+        <span class="vk-label">Podcasts générés par IA · Hébergé en Europe</span>
+      </div>
+      <h1 class="display">
+        <span class="line"><span>Un sujet</span></span>
+        <span class="line"><span>en une phrase.</span></span>
+        <span class="line"><span><em>Un podcast</em> en retour.</span></span>
+      </h1>
+      <p class="lead">
+        Vokso écrit le texte, dessine la pochette et enregistre la voix. Donnez un thème,
+        l'épisode est prêt à écouter quelques instants plus tard. Gratuit, sans inscription.
+      </p>
+      <div class="cta">
+        <a class="vk-btn vk-btn-signal" href="/app/">Créer mon épisode</a>
+        <a class="vk-btn" href="#selection">Écouter la sélection</a>
+      </div>
     </div>
+
+    <aside class="tuner" id="tuner" aria-label="Épisode à l'antenne">
+      <div class="tuner-head">
+        <span class="vk-label">Vokso FM</span>
+        <span class="vk-label" id="tuner-freq">— MHz</span>
+      </div>
+      <div class="dial" aria-hidden="true">
+        <div class="dial-ticks"></div>
+        <div class="dial-nums"><span>88</span><span>92</span><span>96</span><span>100</span><span>104</span><span>108</span></div>
+        <div class="dial-needle" id="dial-needle"></div>
+      </div>
+      <div class="tuner-body" id="tuner-body" hidden>
+        <div class="tuner-cover"><img id="tuner-img" alt="" width="300" height="300"></div>
+        <div>
+          <span class="vk-label" id="tuner-cat"></span>
+          <h2 class="tuner-title"><a id="tuner-title" href="#"></a></h2>
+          <div class="tuner-controls">
+            <button class="vk-play" id="tuner-play" type="button" aria-pressed="false" aria-label="Écouter">
+              <svg class="i-play"><use href="#i-play"/></svg><svg class="i-pause"><use href="#i-pause"/></svg>
+            </button>
+            <span class="vk-meter" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <button class="tuner-next" id="tuner-next" type="button">Station suivante →</button>
+          </div>
+        </div>
+      </div>
+      <p class="tuner-empty" id="tuner-empty">Réglage de la fréquence…</p>
+    </aside>
   </div>
 
-  <section id="concept">
+  <div class="ticker" aria-hidden="true" hidden id="ticker"><div class="ticker-track" id="ticker-track"></div></div>
+
+  <section id="selection">
     <div class="wrap">
-      <h2>Ce que fait Vokso</h2>
-      <p class="section-intro">
-        Trois métiers habituellement séparés — la rédaction, l'illustration et la voix —
-        réunis derrière un unique champ de saisie.
-      </p>
-      <div class="grid">
-        <div class="card">
-          <div class="ico">✍️</div>
-          <h3>Un texte structuré</h3>
-          <p>Un épisode rédigé en français : contexte, repères historiques, notions clés, applications concrètes et mise en perspective.</p>
+      <div class="section-head reveal">
+        <div>
+          <span class="vk-label" id="selection-date">Sélection du jour</span>
+          <h2 class="display">La sélection du jour</h2>
+          <p>Six épisodes tirés de la discothèque Vokso, renouvelés chaque matin.</p>
         </div>
-        <div class="card">
-          <div class="ico">🎨</div>
-          <h3>Une illustration dédiée</h3>
-          <p>Une jaquette originale au style minimaliste et cohérent d'un épisode à l'autre, générée à partir du contenu du texte.</p>
-        </div>
-        <div class="card">
-          <div class="ico">🎧</div>
-          <h3>Une voix naturelle</h3>
-          <p>La narration est enregistrée automatiquement et lisible depuis le lecteur intégré, avec avance et retour rapides.</p>
-        </div>
-        <div class="card">
-          <div class="ico">🗂️</div>
-          <h3>Un classement automatique</h3>
-          <p>Chaque épisode reçoit sa thématique sans intervention, et la recherche retrouve un sujet dès trois lettres saisies.</p>
-        </div>
+        <a class="link-arrow" href="/app/">Toute la discothèque →</a>
+      </div>
+      <div class="crate" id="crate">
+        <p class="crate-empty">Chargement de la sélection…</p>
       </div>
     </div>
   </section>
 
   <section id="fonctionnement">
     <div class="wrap">
-      <h2>Comment ça marche</h2>
-      <p class="section-intro">Quatre étapes enchaînées automatiquement après validation du sujet.</p>
-      <ol class="steps">
-        <li><strong>Vous décrivez le sujet</strong><span>Une phrase suffit : « l'histoire du café », « la photosynthèse », « les marchés obligataires ».</span></li>
-        <li><strong>Le texte est rédigé</strong><span>Un modèle de langage produit un épisode complet en français, guidé par des consignes de rédaction stockées côté serveur.</span></li>
-        <li><strong>L'image et la voix sont produites</strong><span>L'illustration et la narration sont générées en parallèle à partir du texte, pour un épisode prêt plus vite.</span></li>
-        <li><strong>L'épisode rejoint la bibliothèque</strong><span>Il apparaît dans les dernières publications, classé par thématique et immédiatement écoutable.</span></li>
+      <div class="section-head reveal">
+        <div>
+          <span class="vk-label">Face A</span>
+          <h2 class="display">Comment ça marche</h2>
+          <p>Trois métiers habituellement séparés — l'écriture, l'illustration et la voix — enchaînés derrière un seul champ de saisie.</p>
+        </div>
+      </div>
+      <ol class="tracklist">
+        <li class="reveal"><span class="num">A1</span><strong>Vous donnez le sujet</strong><p>Une phrase ou un message vocal suffit : « l'histoire du café », « la photosynthèse », « pourquoi le ciel est bleu ».</p></li>
+        <li class="reveal"><span class="num">A2</span><strong>Le texte est écrit</strong><p>Un épisode complet en français, avec contexte, repères, notions clés et mise en perspective, appuyé sur une recherche web.</p></li>
+        <li class="reveal"><span class="num">A3</span><strong>La pochette et la voix</strong><p>L'illustration et la narration sont produites en parallèle à partir du texte.</p></li>
+        <li class="reveal"><span class="num">A4</span><strong>Diffusion</strong><p>L'épisode rejoint la discothèque, classé par thème, avec sa propre page et son lecteur.</p></li>
       </ol>
     </div>
   </section>
 
   <section id="souverainete">
     <div class="wrap">
-      <span class="badge-free">Souverain par conception</span>
-      <h2>Une IA de confiance, hébergée en Europe</h2>
-      <p class="section-intro">
-        Vokso est pensé pour rester indépendant des grands acteurs non-européens du cloud et de l'IA :
-        hébergement européen, modèles ouverts et aucune revente de vos données.
-      </p>
-      <div class="grid">
-        <div class="card">
-          <h3>Hébergé en Europe</h3>
-          <p>Vos textes, images et audios sont générés et stockés sur une infrastructure basée dans l'Union européenne, soumise au droit européen.</p>
+      <div class="section-head reveal">
+        <div>
+          <span class="vk-label">Fiche technique</span>
+          <h2 class="display">Émis depuis l'Europe</h2>
+          <p>Vokso reste indépendant des grands acteurs non européens du cloud et de l'IA.</p>
         </div>
-        <div class="card">
-          <h3>Vos contenus restent les vôtres</h3>
-          <p>Ce que vous créez ne sert jamais à entraîner un modèle tiers et n'est jamais revendu ou partagé à des fins publicitaires.</p>
-        </div>
-        <div class="card">
-          <h3>Conformité RGPD par construction</h3>
-          <p>Chiffrement des mots de passe, minimisation des données collectées et droit à l'effacement intégrés dès la conception.</p>
-        </div>
-        <div class="card">
-          <h3>Indépendance technologique</h3>
-          <p>Nous choisissons des briques ouvertes et un hébergement européen plutôt qu'une dépendance exclusive aux grands clouds non-européens.</p>
-        </div>
+      </div>
+      <div class="specs">
+        <div class="spec reveal"><span class="vk-label">Hébergement</span><h3>Serveurs dans l'Union européenne</h3><p>Textes, images et audios sont générés et stockés sur une infrastructure soumise au droit européen.</p></div>
+        <div class="spec reveal"><span class="vk-label">Modèles</span><h3>IA française</h3><p>Texte, image, voix et transcription passent par Mistral AI, traitement dans l'Union européenne.</p></div>
+        <div class="spec reveal"><span class="vk-label">Données</span><h3>Rien n'est revendu</h3><p>Vos sujets ne servent jamais à entraîner un modèle tiers ni à de la publicité. Pas de compte, pas de traceur.</p></div>
+        <div class="spec reveal"><span class="vk-label">Conformité</span><h3>RGPD par construction</h3><p>Minimisation des données collectées : seule l'adresse IP est conservée, quelques heures, pour limiter les abus.</p></div>
       </div>
     </div>
   </section>
 
-  <section id="technique">
+  <section id="essayer">
     <div class="wrap">
-      <h2>Sous le capot</h2>
-      <p class="section-intro">Une architecture volontairement simple, hébergeable sur un seul serveur.</p>
-      <div class="grid">
-        <div class="card">
-          <h3>Interface</h3>
-          <p>Application React : saisie du sujet, recherche instantanée et lecteur audio maison.</p>
+      <div class="signoff reveal">
+        <div>
+          <span class="vk-onair">Micro ouvert</span>
+          <h2 class="display" style="margin-top:1.2rem">Votre émission,<br>dans une minute.</h2>
+          <p>Choisissez un sujet, Vokso s'occupe du reste. Gratuit et sans inscription.</p>
+          <a class="vk-btn vk-btn-signal" href="/app/">Créer mon épisode</a>
         </div>
-        <div class="card">
-          <h3>Service applicatif</h3>
-          <p>API PHP qui orchestre les moteurs d'IA, stocke les fichiers produits et sert la bibliothèque.</p>
-        </div>
-        <div class="card">
-          <h3>Données</h3>
-          <p>Base MySQL pour les épisodes, les thématiques et les consignes de rédaction modifiables sans redéploiement.</p>
-        </div>
-        <div class="card">
-          <h3>Déploiement</h3>
-          <p>Ensemble conteneurisé, avec une pile d'IA interchangeable (cloud ou auto-hébergée) activable à la demande.</p>
+        <div class="newsletter" id="newsletter">
+          <h3>Restez à l'écoute</h3>
+          <p style="margin:0">Un mail quand un nouveau mode ou une nouvelle voix arrive. Rien d'autre.</p>
+          <form class="newsletter-form" id="newsletter-form" novalidate>
+            <label for="newsletter-email" class="vk-label" style="position:absolute;left:-9999px">Adresse e-mail</label>
+            <input type="email" id="newsletter-email" name="email" placeholder="vous@exemple.fr" required>
+            <button type="submit" class="vk-btn">S'inscrire</button>
+            <!-- Piège à robots : masqué visuellement et aux lecteurs d'écran, jamais rempli par un humain. -->
+            <div aria-hidden="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
+              <label for="newsletter-website">Site web</label>
+              <input type="text" id="newsletter-website" name="website" tabindex="-1" autocomplete="off">
+            </div>
+          </form>
+          <p class="newsletter-msg" id="newsletter-msg" role="status"></p>
         </div>
       </div>
-      <div class="stack" style="margin-top:1.4rem">
-        <span>React</span><span>PHP 8</span><span>MySQL</span><span>Docker</span>
-      </div>
-    </div>
-  </section>
-
-  <section id="essayer" style="text-align:center;">
-    <div class="wrap">
-      <h2>Prêt à écouter votre premier épisode ?</h2>
-      <p class="section-intro" style="margin-inline:auto;">
-        Vokso est entièrement gratuit et sans inscription : générez votre premier épisode dès maintenant.
-      </p>
-      <div class="cta" style="justify-content:center;">
-        <a class="btn btn-primary" href="/app/">Essayer Vokso gratuitement</a>
-      </div>
-    </div>
-  </section>
-
-  <section id="newsletter" style="text-align:center;">
-    <div class="wrap">
-      <h2>Être prévenu des nouveautés</h2>
-      <p class="section-intro" style="margin-inline:auto;">
-        Laissez votre adresse pour recevoir un mail lorsqu'un nouveau mode ou une nouvelle voix arrive.
-      </p>
-      <form class="newsletter-form" id="newsletter-form" novalidate>
-        <input type="email" id="newsletter-email" name="email" placeholder="vous@exemple.fr" required>
-        <button type="submit">S'inscrire</button>
-        <!-- Piège à robots : masqué visuellement et aux lecteurs d'écran, jamais rempli par un humain. -->
-        <div aria-hidden="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
-          <label for="newsletter-website">Site web</label>
-          <input type="text" id="newsletter-website" name="website" tabindex="-1" autocomplete="off">
-        </div>
-      </form>
-      <p class="newsletter-msg" id="newsletter-msg"></p>
     </div>
   </section>
 </main>
 
 <footer class="site">
   <div class="wrap">
-    Vokso — générateur de podcasts par IA, hébergé en Europe.
-    Une question ? <a href="mailto:contact@vokso.fr">contact@vokso.fr</a>
-    · <a href="/app/admin">Administration</a>
+    <span>© <span id="year">2026</span> Vokso — podcasts générés par IA, hébergés en Europe.</span>
+    <nav aria-label="Liens de pied de page">
+      <a href="/app/contact">Contact</a>
+      <a href="/app/politique-de-confidentialite">Confidentialité</a>
+      <a href="/app/admin">Administration</a>
+    </nav>
   </div>
 </footer>
 
+<div class="deck" id="deck" aria-label="Lecteur">
+  <img id="deck-img" alt="">
+  <button class="vk-play" id="deck-play" type="button" aria-pressed="false" aria-label="Lecture">
+    <svg class="i-play"><use href="#i-play"/></svg><svg class="i-pause"><use href="#i-pause"/></svg>
+  </button>
+  <div style="min-width:0">
+    <div class="deck-title" id="deck-title"></div>
+    <div class="deck-bar" id="deck-bar" role="slider" aria-label="Position de lecture" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0"><span id="deck-progress"></span></div>
+  </div>
+  <span class="deck-time" id="deck-time">0:00</span>
+</div>
+
 <script>
-  document.getElementById('newsletter-form').addEventListener('submit', async function (e) {
+(function () {
+  'use strict';
+
+  var SELECTION_SIZE = 6;
+  var STATIC = '/static';
+  var $ = function (id) { return document.getElementById(id); };
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // ---- Utilitaires (mêmes règles que webserver/src/utils/text.ts) ----------
+  function cleanTitle(t) {
+    return (t || '').replace(/(\*\*|__)(.*?)\1/g, '$2').replace(/[*_`#]/g, '').replace(/\s+/g, ' ').trim();
+  }
+  function slugify(t) {
+    return (t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+  }
+  function episodeUrl(ep) {
+    var slug = slugify(ep.title);
+    return '/podcast/' + ep.id + (slug ? '-' + slug : '');
+  }
+  function fmt(sec) {
+    if (!isFinite(sec)) return '';
+    var m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function playButton(label) {
+    var b = el('button', 'vk-play');
+    b.type = 'button';
+    b.setAttribute('aria-pressed', 'false');
+    b.setAttribute('aria-label', label);
+    b.innerHTML = '<svg class="i-play"><use href="#i-play"/></svg><svg class="i-pause"><use href="#i-pause"/></svg>';
+    return b;
+  }
+  function meter() {
+    var m = el('span', 'vk-meter');
+    m.setAttribute('aria-hidden', 'true');
+    m.innerHTML = '<i></i><i></i><i></i><i></i>';
+    return m;
+  }
+
+  // Tirage déterministe par date : tout le monde voit la même sélection
+  // dans la journée, et elle change chaque jour.
+  function dailyPick(list, n) {
+    var d = new Date();
+    var seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+    function rand() { // mulberry32
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+    var a = list.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(rand() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a.slice(0, n);
+  }
+
+  // ---- Lecteur unique -----------------------------------------------------
+  var audio = new Audio();
+  audio.preload = 'none';
+  var current = null;
+  var deck = $('deck');
+
+  function syncButtons() {
+    var playing = !audio.paused;
+    document.querySelectorAll('[data-ep]').forEach(function (node) {
+      var on = current && node.getAttribute('data-ep') === current.id && playing;
+      node.classList.toggle('is-playing', !!on);
+      var btn = node.matches('.vk-play') ? node : node.querySelector('.vk-play');
+      if (btn) btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    $('deck-play').setAttribute('aria-pressed', playing ? 'true' : 'false');
+    deck.classList.toggle('is-playing', playing);
+  }
+
+  function toggle(ep) {
+    if (current && current.id === ep.id) {
+      if (audio.paused) audio.play(); else audio.pause();
+      return;
+    }
+    current = ep;
+    audio.src = STATIC + '/audios/' + ep.audio_url;
+    audio.play();
+    $('deck-img').src = STATIC + '/images/' + ep.image_url;
+    $('deck-title').textContent = cleanTitle(ep.title);
+    deck.classList.add('is-visible');
+  }
+
+  audio.addEventListener('play', syncButtons);
+  audio.addEventListener('pause', syncButtons);
+  audio.addEventListener('ended', syncButtons);
+  audio.addEventListener('timeupdate', function () {
+    var pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+    $('deck-progress').style.width = pct + '%';
+    $('deck-bar').setAttribute('aria-valuenow', Math.round(pct));
+    $('deck-time').textContent = fmt(audio.currentTime) + ' / ' + (fmt(audio.duration) || '–');
+  });
+  $('deck-play').addEventListener('click', function () { if (current) toggle(current); });
+  $('deck-bar').addEventListener('click', function (e) {
+    if (!audio.duration) return;
+    var r = this.getBoundingClientRect();
+    audio.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * audio.duration;
+  });
+  $('deck-bar').addEventListener('keydown', function (e) {
+    if (!audio.duration) return;
+    if (e.key === 'ArrowRight') audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
+    if (e.key === 'ArrowLeft') audio.currentTime = Math.max(0, audio.currentTime - 10);
+  });
+
+  // ---- Poste (ouverture) --------------------------------------------------
+  var station = 0;
+  function tune(selection, i, animate) {
+    station = i;
+    var ep = selection[i];
+    var tuner = $('tuner');
+    var apply = function () {
+      $('tuner-img').src = STATIC + '/images/' + ep.image_url;
+      $('tuner-title').textContent = cleanTitle(ep.title);
+      $('tuner-title').href = episodeUrl(ep);
+      $('tuner-cat').textContent = ep.category || 'Épisode';
+      $('tuner-play').setAttribute('data-ep', ep.id);
+      $('tuner-play').setAttribute('aria-label', 'Écouter « ' + cleanTitle(ep.title) + ' »');
+      tuner.setAttribute('data-ep', ep.id);
+      tuner.classList.remove('is-switching');
+      syncButtons();
+    };
+    var pos = (i + 0.5) / selection.length;
+    $('dial-needle').style.left = 'calc(0.8rem + (100% - 1.6rem) * ' + pos + ')';
+    $('tuner-freq').textContent = (88 + pos * 20).toFixed(1).replace('.', ',') + ' MHz';
+    if (animate) { tuner.classList.add('is-switching'); setTimeout(apply, 350); } else { apply(); }
+  }
+
+  function renderTuner(selection) {
+    $('tuner-empty').hidden = true;
+    $('tuner-body').hidden = false;
+    tune(selection, 0, false);
+    $('tuner-play').addEventListener('click', function () { toggle(selection[station]); });
+    $('tuner-next').addEventListener('click', function () {
+      var next = (station + 1) % selection.length;
+      var wasPlaying = !audio.paused && current && current.id === selection[station].id;
+      tune(selection, next, true);
+      if (wasPlaying) toggle(selection[next]);
+    });
+  }
+
+  // ---- Sélection du jour ----------------------------------------------------
+  function renderCrate(selection) {
+    var crate = $('crate');
+    crate.textContent = '';
+    selection.forEach(function (ep, i) {
+      var card = el('article', 'sleeve reveal');
+      card.setAttribute('data-ep', ep.id);
+      card.style.transitionDelay = (i % 3) * 90 + 'ms';
+
+      var art = el('div', 'sleeve-art');
+      var vinyl = el('div', 'vinyl');
+      vinyl.setAttribute('aria-hidden', 'true');
+      vinyl.style.setProperty('--cover', 'url("' + STATIC + '/images/' + ep.image_url + '")');
+      var cover = el('div', 'sleeve-cover');
+      var img = el('img');
+      img.src = STATIC + '/images/' + ep.image_url;
+      img.alt = '';
+      img.loading = 'lazy';
+      img.width = 400; img.height = 400;
+      var btn = playButton('Écouter « ' + cleanTitle(ep.title) + ' »');
+      btn.addEventListener('click', function () { toggle(ep); });
+      cover.appendChild(img);
+      cover.appendChild(btn);
+      art.appendChild(vinyl);
+      art.appendChild(cover);
+
+      var meta = el('div', 'sleeve-meta');
+      var cat = el('span', 'vk-label', (i + 1 < 10 ? '0' : '') + (i + 1) + ' · ' + (ep.category || 'Épisode'));
+      var dur = el('span', 'vk-label', '');
+      meta.appendChild(cat);
+      var right = el('span');
+      right.appendChild(dur);
+      right.appendChild(meter());
+      meta.appendChild(right);
+
+      var h3 = el('h3');
+      var a = el('a', null, cleanTitle(ep.title) || 'Sans titre');
+      a.href = episodeUrl(ep);
+      h3.appendChild(a);
+
+      card.appendChild(art);
+      card.appendChild(meta);
+      card.appendChild(h3);
+      crate.appendChild(card);
+
+      // Durée affichée sans télécharger le fichier : métadonnées seules.
+      var probe = new Audio();
+      probe.preload = 'metadata';
+      probe.addEventListener('loadedmetadata', function () { dur.textContent = fmt(probe.duration); });
+      probe.src = STATIC + '/audios/' + ep.audio_url;
+    });
+    observeReveals();
+  }
+
+  function renderTicker(episodes) {
+    var track = $('ticker-track');
+    var titles = episodes.map(function (ep) { return cleanTitle(ep.title); }).filter(Boolean);
+    // Deux copies pour une boucle sans à-coup (translateX -50 %).
+    titles.concat(titles).forEach(function (t) { track.appendChild(el('span', null, t)); });
+    $('ticker').hidden = false;
+  }
+
+  function showDate() {
+    var label = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    $('selection-date').textContent = 'Programme du ' + label;
+  }
+
+  fetch('/api/listing?limit=60')
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+    .then(function (data) {
+      var episodes = (data && data.data || []).filter(function (ep) { return ep.audio_url && ep.image_url; });
+      if (!episodes.length) throw new Error('vide');
+      var selection = dailyPick(episodes, SELECTION_SIZE);
+      showDate();
+      renderTuner(selection);
+      renderCrate(selection);
+      renderTicker(episodes);
+    })
+    .catch(function () {
+      $('tuner-empty').textContent = 'Le signal ne passe pas pour le moment. Réessayez dans un instant.';
+      $('crate').innerHTML = '';
+      $('crate').appendChild(el('p', 'crate-empty', 'La sélection du jour est momentanément indisponible.'));
+    });
+
+  // ---- Apparitions au défilement ------------------------------------------
+  var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { rootMargin: '0px 0px -8% 0px' }) : null;
+  function observeReveals() {
+    document.querySelectorAll('.reveal:not(.in)').forEach(function (n) {
+      if (io) io.observe(n); else n.classList.add('in');
+    });
+  }
+  observeReveals();
+
+  // ---- Newsletter -----------------------------------------------------------
+  $('newsletter-form').addEventListener('submit', async function (e) {
     e.preventDefault();
-    var email = document.getElementById('newsletter-email').value.trim();
-    var website = document.getElementById('newsletter-website').value.trim();
-    var msg = document.getElementById('newsletter-msg');
+    var email = $('newsletter-email').value.trim();
+    var website = $('newsletter-website').value.trim();
+    var msg = $('newsletter-msg');
     msg.className = 'newsletter-msg';
     msg.textContent = 'Envoi en cours…';
     try {
@@ -417,6 +785,7 @@
       msg.textContent = "L'inscription a échoué, réessayez.";
     }
   });
+})();
 </script>
 
 </body>

@@ -1,0 +1,209 @@
+/*
+ * Vokso — design system « studio radio ».
+ *
+ * Inspiration : le matériel de diffusion (voyant ON AIR, cadran de tuner,
+ * vumètres, pochettes de disques, conducteurs d'émission), sur un fond papier
+ * chaud le jour et un studio sombre la nuit. Une seule couleur de signal (le
+ * rouge du voyant) pour l'action, l'ambre des vumètres en appoint.
+ *
+ * Polices auto-hébergées (aucun appel à un service tiers) :
+ * - Archivo (variable, largeur 62–125) : titres en condensé, texte courant ;
+ * - IBM Plex Mono : étiquettes techniques (fréquences, minutages, catégories).
+ * Toutes deux sous licence SIL Open Font License 1.1.
+ *
+ * Les jetons sont repris à l'identique dans webserver/src/styles/globals.css
+ * (application React) : les garder synchronisés.
+ */
+
+@font-face {
+  font-family: "Archivo";
+  src: url("/assets/fonts/archivo-var-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Plex Mono";
+  src: url("/assets/fonts/plex-mono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Plex Mono";
+  src: url("/assets/fonts/plex-mono-500.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Plex Mono";
+  src: url("/assets/fonts/plex-mono-600.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+
+:root {
+  /* Couleurs — jour (papier) */
+  --vk-paper: #f3eee4;
+  --vk-paper-2: #e9e2d4;
+  --vk-card: #fbf8f2;
+  --vk-ink: #17140f;
+  --vk-ink-2: #5d5649;
+  --vk-ink-3: #8a8274;
+  --vk-line: #d8cfbf;
+  --vk-signal: #d93a22;
+  --vk-signal-hover: #b92e19;
+  --vk-on-signal: #fffaf3;
+  --vk-amber: #e3a03a;
+  --vk-console: #1d1a15;
+  --vk-on-console: #f1eadc;
+  --vk-success: #2f7d4f;
+  --vk-danger: #c4321c;
+
+  /* Typographie */
+  --vk-font: "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --vk-mono: "Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Formes */
+  --vk-radius-sm: 4px;
+  --vk-radius: 10px;
+  --vk-radius-lg: 18px;
+  --vk-shadow: 0 1px 0 rgba(23, 20, 15, 0.04), 0 10px 30px -12px rgba(23, 20, 15, 0.25);
+
+  /* Mouvement */
+  --vk-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Couleurs — nuit (studio) */
+    --vk-paper: #14120e;
+    --vk-paper-2: #1b1813;
+    --vk-card: #211d17;
+    --vk-ink: #f1eadc;
+    --vk-ink-2: #b1a796;
+    --vk-ink-3: #7f7666;
+    --vk-line: #342e25;
+    --vk-signal: #f04a2c;
+    --vk-signal-hover: #ff6a4d;
+    --vk-on-signal: #fffaf3;
+    --vk-amber: #f2b04a;
+    --vk-console: #0c0b08;
+    --vk-on-console: #f1eadc;
+    --vk-success: #5fc58a;
+    --vk-danger: #ff6b52;
+    --vk-shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 14px 34px -14px rgba(0, 0, 0, 0.8);
+    color-scheme: dark;
+  }
+}
+
+/* ---- Composants partagés ------------------------------------------------ */
+
+/* Étiquette technique en capitales mono (catégorie, minutage, rubrique). */
+.vk-label {
+  font-family: var(--vk-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vk-ink-2);
+}
+
+/* Voyant « à l'antenne ». */
+.vk-onair {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid currentColor;
+  border-radius: var(--vk-radius-sm);
+  color: var(--vk-signal);
+  font-family: var(--vk-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.vk-onair::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 0 currentColor;
+  animation: vk-lamp 2.4s ease-in-out infinite;
+}
+@keyframes vk-lamp {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px 1px color-mix(in srgb, currentColor 60%, transparent); }
+  50% { opacity: 0.55; box-shadow: 0 0 0 0 transparent; }
+}
+
+.vk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.8rem 1.35rem;
+  border: 1.5px solid var(--vk-ink);
+  border-radius: var(--vk-radius-sm);
+  background: transparent;
+  color: var(--vk-ink);
+  font: 600 0.98rem/1 var(--vk-font);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s var(--vk-ease);
+}
+.vk-btn:hover { background: var(--vk-ink); color: var(--vk-paper); }
+.vk-btn:active { transform: translateY(1px); }
+.vk-btn-signal { background: var(--vk-signal); border-color: var(--vk-signal); color: var(--vk-on-signal); }
+.vk-btn-signal:hover { background: var(--vk-signal-hover); border-color: var(--vk-signal-hover); color: var(--vk-on-signal); }
+.vk-btn:focus-visible,
+.vk-play:focus-visible { outline: 2px solid var(--vk-amber); outline-offset: 3px; }
+
+/* Bouton lecture rond. */
+.vk-play {
+  display: inline-grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  border: none;
+  border-radius: 50%;
+  background: var(--vk-signal);
+  color: var(--vk-on-signal);
+  cursor: pointer;
+  transition: transform 0.15s var(--vk-ease), background-color 0.15s ease;
+}
+.vk-play:hover { background: var(--vk-signal-hover); transform: scale(1.06); }
+.vk-play svg { width: 42%; height: 42%; }
+.vk-play .i-pause { display: none; }
+.vk-play[aria-pressed="true"] .i-play { display: none; }
+.vk-play[aria-pressed="true"] .i-pause { display: block; }
+
+/* Vumètre : barres animées uniquement pendant la lecture. */
+.vk-meter { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+.vk-meter i {
+  width: 3px;
+  height: 30%;
+  background: var(--vk-amber);
+  border-radius: 1px;
+  transform-origin: bottom;
+}
+.is-playing .vk-meter i { animation: vk-meter 0.9s ease-in-out infinite alternate; }
+.is-playing .vk-meter i:nth-child(2) { animation-duration: 0.7s; animation-delay: -0.3s; }
+.is-playing .vk-meter i:nth-child(3) { animation-duration: 1.1s; animation-delay: -0.5s; }
+.is-playing .vk-meter i:nth-child(4) { animation-duration: 0.8s; animation-delay: -0.2s; }
+@keyframes vk-meter {
+  0% { height: 20%; }
+  50% { height: 90%; }
+  100% { height: 45%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

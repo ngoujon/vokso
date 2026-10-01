@@ -1,51 +1,57 @@
-/* Design system — palette froide (indigo/cobalt), inspirée des grilles de
-   cartes et des gros CTA arrondis des apps audio grand public, sans reprendre
-   leur duo noir/vert. */
+/* Design system « studio radio » : mêmes jetons que la vitrine
+   (site/assets/design-system.css, à garder synchronisés). Fond papier le
+   jour, studio sombre la nuit, rouge « ON AIR » pour l'action, ambre des
+   vumètres en appoint. Polices Archivo et IBM Plex Mono, auto-hébergées
+   (déclarées dans public/index.html). */
 :root {
-  --primary-color: #4653d6;
-  --primary-light: #6672e8;
-  --primary-dark: #333fb0;
-  --accent-color: #ff7a52;
-  --accent-light: #ff9773;
-  --background-color: #f4f5fa;
-  --surface-color: #ffffff;
-  --card-bg: #ffffff;
-  --card-bg-hover: #eef0fb;
-  --text-primary: #1a1c29;
-  --text-secondary: #5b6172;
-  --border-color: #e3e5ee;
-  --success-color: #1fae72;
-  --danger-color: #e1435b;
-  --input-bg: #ffffff;
-  --input-border: #e3e5ee;
-  --glow-color: rgba(70, 83, 214, 0.14);
-  --shadow-color: rgba(26, 28, 41, 0.08);
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-pill: 999px;
+  --primary-color: #d93a22;
+  --primary-light: #b92e19;
+  --primary-dark: #a82814;
+  --accent-color: #b7781c;
+  --accent-light: #e3a03a;
+  --background-color: #f3eee4;
+  --surface-color: #e9e2d4;
+  --card-bg: #fbf8f2;
+  --card-bg-hover: #f1ebdf;
+  --text-primary: #17140f;
+  --text-secondary: #5d5649;
+  --border-color: #d8cfbf;
+  --success-color: #2f7d4f;
+  --danger-color: #c4321c;
+  --input-bg: #fbf8f2;
+  --input-border: #d8cfbf;
+  --glow-color: rgba(217, 58, 34, 0.18);
+  --shadow-color: rgba(23, 20, 15, 0.08);
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 18px;
+  --radius-pill: 6px;
+  --font-sans: "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --primary-color: #5b6ef5;
-    --primary-light: #7c8bff;
-    --primary-dark: #3f4fd1;
-    --accent-color: #ff8a5b;
-    --accent-light: #ffa97e;
-    --background-color: #0e1016;
-    --surface-color: #14171f;
-    --card-bg: #181c25;
-    --card-bg-hover: #20242f;
-    --text-primary: #f7f8fa;
-    --text-secondary: #a6adbb;
-    --border-color: #262b36;
-    --success-color: #2fd988;
-    --danger-color: #ff5c72;
-    --input-bg: #181c25;
-    --input-border: #2a2f3b;
-    --glow-color: rgba(91, 110, 245, 0.25);
-    --shadow-color: rgba(0, 0, 0, 0.4);
+    --primary-color: #f04a2c;
+    --primary-light: #ff6a4d;
+    --primary-dark: #d93a22;
+    --accent-color: #f2b04a;
+    --accent-light: #f6c272;
+    --background-color: #14120e;
+    --surface-color: #1b1813;
+    --card-bg: #211d17;
+    --card-bg-hover: #2a251d;
+    --text-primary: #f1eadc;
+    --text-secondary: #b1a796;
+    --border-color: #342e25;
+    --success-color: #5fc58a;
+    --danger-color: #ff6b52;
+    --input-bg: #211d17;
+    --input-border: #3d362b;
+    --glow-color: rgba(240, 74, 44, 0.25);
+    --shadow-color: rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
   }
 }
 
@@ -57,7 +63,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.6;
   color: var(--text-primary);
   background-color: var(--background-color);
@@ -102,9 +108,11 @@ a {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  font-stretch: 85%;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   color: var(--text-primary);
   text-decoration: none;
 }
@@ -112,12 +120,10 @@ a {
 .navbar-logo-mark {
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--primary-color);
   flex: none;
 }
 
@@ -205,12 +211,13 @@ a {
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem 0.85rem;
-  border-radius: var(--radius-pill);
-  background-color: color-mix(in srgb, var(--accent-color) 16%, transparent);
-  color: var(--accent-color);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  color: var(--primary-color);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -227,10 +234,7 @@ a {
   width: 64px;
   height: 64px;
   margin: 0 auto 1.25rem;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-  color: #fff;
-  box-shadow: 0 12px 24px -8px var(--glow-color);
+  color: var(--primary-color);
 }
 
 .hero-logo svg {
@@ -263,10 +267,18 @@ a {
 h1 {
   margin-bottom: 2rem;
   color: var(--text-primary);
-  font-size: 2rem;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1;
   text-align: center;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  font-stretch: 72%;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-stretch: 80%;
+  font-weight: 800;
 }
 
 .input-container {
@@ -563,11 +575,11 @@ h2 {
 
 .generation-info h3 {
   margin: 0 0 0.3rem 0;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 700;
+  font-stretch: 88%;
   color: var(--text-primary);
-  text-transform: capitalize;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .generation-date {
@@ -584,13 +596,14 @@ h2 {
   align-items: center;
   gap: 0.35rem;
   padding: 0.3rem 0.7rem;
-  border-radius: var(--radius-pill);
-  background-color: color-mix(in srgb, #000 45%, transparent);
+  border-radius: var(--radius-sm);
+  background-color: color-mix(in srgb, #17140f 70%, transparent);
   backdrop-filter: blur(6px);
-  color: #fff;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  color: #f1eadc;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -660,6 +673,7 @@ h2 {
 }
 
 .generation-text-toggle {
+  display: block;
   background: none;
   border: none;
   padding: 0;
@@ -685,7 +699,7 @@ h2 {
 
 .generation-permalink {
   display: inline-block;
-  margin-top: 0.5rem;
+  margin-top: 0.35rem;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--primary-color);
