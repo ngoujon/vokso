@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { apiRequest, downloadText, errorMessage, triggerDownload } from '../api';
 import { useAuth } from '../AuthContext';
 import { staticFileUrl } from '../config';
@@ -32,7 +31,7 @@ export default function UserDashboard() {
         <h1>Mon espace</h1>
         <div className="dashboard-header-actions">
           <span>{user?.email}</span>
-          <Link to="/">Accueil</Link>
+          <a href="/">Accueil</a>
           <button onClick={logout}>Déconnexion</button>
         </div>
       </div>

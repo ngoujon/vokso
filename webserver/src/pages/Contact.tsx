@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import useCanonical from '../hooks/useCanonical';
@@ -98,7 +97,7 @@ export default function Contact() {
               </button>
             </form>
           )}
-          <Link to="/" className="auth-back">← Retour à l'accueil</Link>
+          <a href="/" className="auth-back">← Retour à l'accueil</a>
         </div>
       </div>
       <Footer />

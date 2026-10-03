@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { apiRequest, downloadText, errorMessage, triggerDownload } from '../api';
 import { useAuth } from '../AuthContext';
 import SecuritySection from '../components/SecuritySection';
@@ -261,7 +260,7 @@ export default function AdminDashboard() {
         <h1>Espace administrateur</h1>
         <div className="dashboard-header-actions">
           <span>{user?.email}</span>
-          <Link to="/">Accueil</Link>
+          <a href="/">Accueil</a>
           <button onClick={logout}>Déconnexion</button>
         </div>
       </div>

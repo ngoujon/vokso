@@ -4,7 +4,9 @@
  * Inspiration : le matériel de diffusion (voyant ON AIR, cadran de tuner,
  * vumètres, pochettes de disques, conducteurs d'émission), sur un fond papier
  * chaud le jour et un studio sombre la nuit. Une seule couleur de signal (le
- * rouge du voyant) pour l'action, l'ambre des vumètres en appoint.
+ * jaune du voyant) pour l'action, l'ambre des vumètres en appoint. Le jaune
+ * ne porte jamais de texte clair : texte encre dessus (--vk-on-signal), et
+ * --vk-signal-ink quand la couleur sert de texte sur le fond papier.
  *
  * Polices auto-hébergées (aucun appel à un service tiers) :
  * - Archivo (variable, largeur 62–125) : titres en condensé, texte courant ;
@@ -50,10 +52,11 @@
   --vk-ink-2: #5d5649;
   --vk-ink-3: #8a8274;
   --vk-line: #d8cfbf;
-  --vk-signal: #d93a22;
-  --vk-signal-hover: #b92e19;
-  --vk-on-signal: #fffaf3;
-  --vk-amber: #e3a03a;
+  --vk-signal: #f5c400;
+  --vk-signal-hover: #e2b300;
+  --vk-on-signal: #17140f;
+  --vk-signal-ink: #7a5a00;
+  --vk-amber: #e08a1e;
   --vk-console: #1d1a15;
   --vk-on-console: #f1eadc;
   --vk-success: #2f7d4f;
@@ -85,10 +88,11 @@
     --vk-ink-2: #b1a796;
     --vk-ink-3: #7f7666;
     --vk-line: #342e25;
-    --vk-signal: #f04a2c;
-    --vk-signal-hover: #ff6a4d;
-    --vk-on-signal: #fffaf3;
-    --vk-amber: #f2b04a;
+    --vk-signal: #ffd23f;
+    --vk-signal-hover: #ffdf6e;
+    --vk-on-signal: #17140f;
+    --vk-signal-ink: #ffd23f;
+    --vk-amber: #f2a64a;
     --vk-console: #0c0b08;
     --vk-on-console: #f1eadc;
     --vk-success: #5fc58a;
@@ -118,7 +122,7 @@
   padding: 0.3rem 0.65rem;
   border: 1px solid currentColor;
   border-radius: var(--vk-radius-sm);
-  color: var(--vk-signal);
+  color: var(--vk-signal-ink);
   font-family: var(--vk-mono);
   font-size: 0.7rem;
   font-weight: 600;
@@ -159,7 +163,7 @@
 .vk-btn-signal { background: var(--vk-signal); border-color: var(--vk-signal); color: var(--vk-on-signal); }
 .vk-btn-signal:hover { background: var(--vk-signal-hover); border-color: var(--vk-signal-hover); color: var(--vk-on-signal); }
 .vk-btn:focus-visible,
-.vk-play:focus-visible { outline: 2px solid var(--vk-amber); outline-offset: 3px; }
+.vk-play:focus-visible { outline: 2px solid var(--vk-ink); outline-offset: 3px; }
 
 /* Bouton lecture rond. */
 .vk-play {

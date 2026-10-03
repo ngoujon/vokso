@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import '../styles/globals.css';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
@@ -20,7 +19,7 @@ export default function NotFound() {
       >
         <h1>404</h1>
         <p>Cette page n'existe pas ou plus.</p>
-        <p><Link to="/">&larr; Retour à l'accueil</Link></p>
+        <p><a href="/">&larr; Retour à l'accueil</a></p>
       </div>
       <Footer />
     </>

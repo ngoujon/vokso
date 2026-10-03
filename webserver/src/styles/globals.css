@@ -1,14 +1,18 @@
 /* Design system « studio radio » : mêmes jetons que la vitrine
    (site/assets/design-system.css, à garder synchronisés). Fond papier le
-   jour, studio sombre la nuit, rouge « ON AIR » pour l'action, ambre des
-   vumètres en appoint. Polices Archivo et IBM Plex Mono, auto-hébergées
+   jour, studio sombre la nuit, jaune « ON AIR » pour l'action (toujours avec
+   un texte encre dessus : --on-primary), --primary-ink quand la couleur sert
+   de texte sur le fond papier. En-tête et pied de page viennent de
+   /assets/site.css, partagé avec la vitrine. Polices Archivo et IBM Plex Mono, auto-hébergées
    (déclarées dans public/index.html). */
 :root {
-  --primary-color: #d93a22;
-  --primary-light: #b92e19;
-  --primary-dark: #a82814;
+  --primary-color: #f5c400;
+  --primary-light: #e2b300;
+  --primary-dark: #7a5a00;
+  --primary-ink: #7a5a00;
+  --on-primary: #17140f;
   --accent-color: #b7781c;
-  --accent-light: #e3a03a;
+  --accent-light: #e08a1e;
   --background-color: #f3eee4;
   --surface-color: #e9e2d4;
   --card-bg: #fbf8f2;
@@ -20,7 +24,7 @@
   --danger-color: #c4321c;
   --input-bg: #fbf8f2;
   --input-border: #d8cfbf;
-  --glow-color: rgba(217, 58, 34, 0.18);
+  --glow-color: rgba(245, 196, 0, 0.25);
   --shadow-color: rgba(23, 20, 15, 0.08);
   --radius-sm: 4px;
   --radius-md: 10px;
@@ -33,9 +37,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --primary-color: #f04a2c;
-    --primary-light: #ff6a4d;
-    --primary-dark: #d93a22;
+    --primary-color: #ffd23f;
+    --primary-light: #ffdf6e;
+    --primary-dark: #ffd23f;
+    --primary-ink: #ffd23f;
+    --on-primary: #17140f;
     --accent-color: #f2b04a;
     --accent-light: #f6c272;
     --background-color: #14120e;
@@ -49,7 +55,7 @@
     --danger-color: #ff6b52;
     --input-bg: #211d17;
     --input-border: #3d362b;
-    --glow-color: rgba(240, 74, 44, 0.25);
+    --glow-color: rgba(255, 210, 63, 0.2);
     --shadow-color: rgba(0, 0, 0, 0.45);
     color-scheme: dark;
   }
@@ -71,7 +77,7 @@ body {
 }
 
 a {
-  color: var(--primary-color);
+  color: var(--primary-ink);
 }
 
 /* Conteneur principal */
@@ -83,84 +89,24 @@ a {
   width: 100%;
 }
 
-/* Barre de navigation partagée */
-.navbar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  backdrop-filter: blur(10px);
-  background-color: color-mix(in srgb, var(--background-color) 88%, transparent);
-  border-bottom: 1px solid var(--border-color);
+/* En-tête et pied de page : voir /assets/site.css (partagé avec la vitrine). */
+.App .site-header {
   margin-bottom: 2rem;
 }
 
-.navbar-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.navbar-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  font-size: 1.45rem;
-  font-weight: 800;
-  font-stretch: 85%;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--text-primary);
-  text-decoration: none;
-}
-
-.navbar-logo-mark {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary-color);
-  flex: none;
-}
-
-.navbar-logo-mark svg {
-  width: 100%;
-  height: 100%;
-}
-
-.navbar-links {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  font-size: 0.95rem;
-}
-
-.navbar-links a {
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s ease;
-}
-
-.navbar-links a:hover,
-.navbar-links a.active {
-  color: var(--text-primary);
-}
-
-.navbar-links button {
+.site-nav button.site-nav-link {
   background: none;
   border: none;
-  color: var(--text-secondary);
-  font-weight: 600;
-  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  font: inherit;
   font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
 }
 
-.navbar-links button:hover {
+.site-nav button.site-nav-link:hover {
   color: var(--text-primary);
 }
 
@@ -187,7 +133,7 @@ a {
 
 .btn-primary {
   background-color: var(--primary-color);
-  color: #fff;
+  color: var(--on-primary);
   box-shadow: 0 6px 20px var(--glow-color);
 }
 
@@ -203,7 +149,7 @@ a {
 
 .btn-outline:hover {
   border-color: var(--primary-color);
-  color: var(--primary-color);
+  color: var(--primary-ink);
 }
 
 .badge-sovereign {
@@ -213,7 +159,7 @@ a {
   padding: 0.3rem 0.85rem;
   border: 1px solid currentColor;
   border-radius: var(--radius-sm);
-  color: var(--primary-color);
+  color: var(--primary-ink);
   font-family: var(--font-mono);
   font-size: 0.7rem;
   font-weight: 600;
@@ -234,7 +180,7 @@ a {
   width: 64px;
   height: 64px;
   margin: 0 auto 1.25rem;
-  color: var(--primary-color);
+  color: var(--primary-ink);
 }
 
 .hero-logo svg {
@@ -318,7 +264,7 @@ h2 {
 
 .source-mode-tabs button.active {
   background-color: var(--primary-color);
-  color: #fff;
+  color: var(--on-primary);
   border-color: var(--primary-color);
 }
 
@@ -359,7 +305,7 @@ h2 {
 }
 
 .clear-input:hover {
-  color: var(--primary-color);
+  color: var(--primary-ink);
 }
 
 .clear-input.visible {
@@ -394,7 +340,7 @@ h2 {
 
 .record-btn:hover {
   background-color: var(--primary-color);
-  color: #fff;
+  color: var(--on-primary);
 }
 
 .record-btn.recording {
@@ -420,7 +366,7 @@ h2 {
   max-width: 600px;
   padding: 1rem;
   background-color: var(--primary-color);
-  color: #fff;
+  color: var(--on-primary);
   border: none;
   border-radius: var(--radius-pill);
   font-size: 1rem;
@@ -643,7 +589,7 @@ h2 {
 .category-pill.active {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
-  color: #fff;
+  color: var(--on-primary);
 }
 
 .category-pill-icon {
@@ -658,7 +604,7 @@ h2 {
   background-color: color-mix(in srgb, var(--primary-color) 18%, transparent);
   background-size: cover;
   background-position: center;
-  color: var(--primary-color);
+  color: var(--primary-ink);
 }
 
 .category-pill.active .category-pill-icon {
@@ -680,7 +626,7 @@ h2 {
   margin-top: 0.35rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--primary-ink);
   cursor: pointer;
   text-align: left;
 }
@@ -702,7 +648,7 @@ h2 {
   margin-top: 0.35rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--primary-ink);
   text-decoration: none;
 }
 
@@ -728,7 +674,7 @@ h2 {
 .controls button {
   background: none;
   border: none;
-  color: var(--primary-color);
+  color: var(--primary-ink);
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 4px;
@@ -742,7 +688,7 @@ h2 {
 }
 
 .controls button:hover {
-  color: var(--primary-light);
+  color: var(--primary-ink);
   background-color: var(--input-bg);
 }
 
@@ -751,13 +697,13 @@ h2 {
   width: 48px;
   height: 48px;
   background-color: var(--primary-color);
-  color: #fff;
+  color: var(--on-primary);
   border-radius: 50%;
 }
 
 .controls button.play-pause-btn:hover {
   background-color: var(--primary-light);
-  color: #fff;
+  color: var(--on-primary);
   transform: scale(1.05);
 }
 
@@ -843,7 +789,7 @@ h2 {
   height: 44px;
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--primary-color) 14%, transparent);
-  color: var(--primary-color);
+  color: var(--primary-ink);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -861,39 +807,6 @@ h2 {
   font-size: 0.9rem;
 }
 
-/* Pied de page */
-.site-footer {
-  border-top: 1px solid var(--border-color);
-  margin-top: 3rem;
-  padding: 2rem 1rem;
-}
-
-.site-footer-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 2rem;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-}
-
-.site-footer-links {
-  display: flex;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-}
-
-.site-footer-links a {
-  color: var(--text-secondary);
-  text-decoration: none;
-}
-
-.site-footer-links a:hover {
-  color: var(--text-primary);
-}
 
 @media (max-width: 1024px) {
   .container {
@@ -905,11 +818,6 @@ h2 {
   .container {
     padding: 0 1rem 1rem;
     min-width: 250px;
-  }
-
-  .navbar-links {
-    gap: 0.85rem;
-    font-size: 0.85rem;
   }
 
   .form-container {

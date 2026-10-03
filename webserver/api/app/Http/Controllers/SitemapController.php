@@ -21,6 +21,8 @@ class SitemapController extends Controller
         $base = config('vokso.public_url');
         $urls = [
             ['loc' => $base.'/', 'changefreq' => 'daily', 'priority' => '1.0'],
+            ['loc' => $base.'/discotheque', 'changefreq' => 'daily', 'priority' => '0.8'],
+            ['loc' => $base.'/comment-ca-marche', 'changefreq' => 'monthly', 'priority' => '0.6'],
             ['loc' => $base.'/app/contact', 'changefreq' => 'monthly', 'priority' => '0.3'],
             ['loc' => $base.'/app/politique-de-confidentialite', 'changefreq' => 'yearly', 'priority' => '0.2'],
         ];

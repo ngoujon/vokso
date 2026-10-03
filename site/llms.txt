@@ -6,8 +6,10 @@ Vokso s'adresse à toute personne qui veut explorer un sujet (histoire, science,
 
 ## Pages principales
 
-- [Accueil](https://vokso.fr/) : présentation du produit, fonctionnement en quatre étapes, positionnement souverain (hébergement UE).
-- [Générer un épisode](https://vokso.fr/app/) : Vokso est entièrement gratuit et sans inscription (nombre de générations limité par jour pour éviter les abus).
+- [Accueil](https://vokso.fr/) : création d'un épisode, sélection du jour, catégories.
+- [La discothèque](https://vokso.fr/discotheque) : tous les épisodes publiés, filtrables par catégorie (?categorie=...).
+- [Comment ça marche ?](https://vokso.fr/comment-ca-marche) : fonctionnement en quatre étapes, positionnement souverain (hébergement UE), questions fréquentes.
+- [Générer un épisode](https://vokso.fr/#creer) : Vokso est entièrement gratuit et sans inscription (nombre de générations limité par jour pour éviter les abus).
 - [Contact](https://vokso.fr/app/contact) : formulaire de contact.
 - [Politique de confidentialité](https://vokso.fr/app/politique-de-confidentialite) : traitement des données, droits RGPD.
 - [Sitemap](https://vokso.fr/sitemap.xml) : liste complète et à jour des épisodes publiés, chacun sur sa propre page (/podcast/{id}-{titre}).

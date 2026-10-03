@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ApiError, errorMessage } from '../api';
 import { useAuth } from '../AuthContext';
 import NavBar from '../components/NavBar';
@@ -88,7 +88,7 @@ export default function Login() {
               {loading ? 'Chargement...' : 'Se connecter'}
             </button>
           </form>
-          <Link to="/" className="auth-back">← Retour à l'accueil</Link>
+          <a href="/" className="auth-back">← Retour à l'accueil</a>
         </div>
       </div>
       <Footer />

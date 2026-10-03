@@ -1,6 +1,5 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Home from './pages/Home';
+import React, { useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Contact from './pages/Contact';
@@ -13,16 +12,27 @@ import CookieConsentBanner from './components/CookieConsentBanner';
 import { AuthProvider } from './AuthContext';
 import './styles/App.css';
 
+/**
+ * L'accueil (création d'un épisode, sélection, discothèque) vit désormais
+ * sur la vitrine, à la racine du site : /app/ y renvoie.
+ */
+function SiteHome() {
+  useEffect(() => {
+    window.location.replace('/');
+  }, []);
+  return null;
+}
+
 function App() {
   return (
     <AuthProvider>
       <div className="App">
         <CookieConsentBanner />
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<SiteHome />} />
           <Route path="/login" element={<Login />} />
           {/* Ancienne page de tarifs : le service est désormais gratuit. */}
-          <Route path="/tarifs" element={<Navigate to="/" replace />} />
+          <Route path="/tarifs" element={<SiteHome />} />
           <Route path="/politique-de-confidentialite" element={<PrivacyPolicy />} />
           <Route path="/contact" element={<Contact />} />
           <Route

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comment ça marche ? — Vokso</title>
+<meta name="description" content="Comment Vokso transforme un sujet en podcast : écriture du texte, pochette, voix de synthèse. Hébergement européen, IA Mistral, aucune revente de données.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://vokso.fr/comment-ca-marche">
+<meta name="theme-color" content="#f3eee4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/assets/favicon.ico?v=3" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=3">
+<link rel="apple-touch-icon" href="/assets/vokso-icon-180.png?v=3">
+<link rel="preload" href="/assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/design-system.css?v=20261004">
+<link rel="stylesheet" href="/assets/site.css?v=20261004">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vokso">
+<meta property="og:title" content="Comment ça marche ? — Vokso">
+<meta property="og:description" content="D'un sujet en une phrase à un podcast complet : les coulisses de Vokso, et pourquoi tout reste en Europe.">
+<meta property="og:url" content="https://vokso.fr/comment-ca-marche">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:image" content="https://vokso.fr/assets/og-image.png">
+<style>
+  .how-head { padding: 4rem 0 1rem; }
+  .how-head h1 { font-size: clamp(2.8rem, 7vw, 5.6rem); line-height: 0.92; margin-top: 0.8rem; }
+  .how-head h1 em { font-style: normal; background: var(--vk-signal); color: var(--vk-on-signal); -webkit-box-decoration-break: clone; box-decoration-break: clone; padding: 0 0.08em; }
+  .how-head p { max-width: 62ch; color: var(--vk-ink-2); font-size: 1.15rem; margin: 1.2rem 0 0; }
+
+  .tracklist { list-style: none; margin: 0; padding: 0; }
+  .tracklist li { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) minmax(0, 1.4fr); gap: 1.5rem; padding: 1.8rem 0; border-bottom: 1px solid var(--vk-line); align-items: baseline; }
+  .tracklist .num { justify-self: start; font-family: var(--vk-mono); font-size: 0.85rem; font-weight: 600; background: var(--vk-signal); color: var(--vk-on-signal); padding: 0.1rem 0.45rem; border-radius: 3px; }
+  .tracklist strong { font-size: 1.7rem; font-stretch: 80%; font-weight: 700; line-height: 1.1; }
+  .tracklist p { margin: 0; color: var(--vk-ink-2); }
+  .tracklist p + p { margin-top: 0.6rem; }
+
+  .specs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 3rem; }
+  .spec { padding: 1.5rem 0; border-top: 1px solid var(--vk-line); }
+  .spec h3 { font-size: 1.2rem; font-weight: 700; margin: 0.4rem 0; }
+  .spec p { margin: 0; color: var(--vk-ink-2); }
+  .specs.is-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  .sovereign { background: var(--vk-console); color: var(--vk-on-console); }
+  .sovereign .section-head { border-bottom-color: var(--vk-on-console); }
+  .sovereign .section-head p, .sovereign .spec p { color: color-mix(in srgb, var(--vk-on-console) 72%, transparent); }
+  .sovereign .vk-label { color: var(--vk-signal); }
+  .sovereign .spec { border-top-color: color-mix(in srgb, var(--vk-on-console) 18%, transparent); }
+  .sovereign-flag { display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding: 0.35rem 0.7rem; border: 1px solid var(--vk-signal); border-radius: var(--vk-radius-sm); color: var(--vk-signal); font-family: var(--vk-mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+
+  .faq { max-width: 52rem; }
+  .faq details { border-bottom: 1px solid var(--vk-line); }
+  .faq summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 1rem; padding: 1.2rem 0; font-size: 1.15rem; font-weight: 700; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; font-family: var(--vk-mono); font-size: 1.3rem; line-height: 1; transition: transform 0.2s ease; }
+  .faq details[open] summary::after { transform: rotate(45deg); }
+  .faq details p { margin: 0 0 1.3rem; color: var(--vk-ink-2); max-width: 65ch; }
+
+  .how-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem; padding: 2.5rem; border: 1.5px solid var(--vk-ink); border-radius: var(--vk-radius); box-shadow: 6px 6px 0 var(--vk-signal); background: var(--vk-card); }
+  .how-cta h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); }
+  .how-cta p { margin: 0.5rem 0 0; color: var(--vk-ink-2); }
+
+  @media (max-width: 900px) {
+    .tracklist li { grid-template-columns: 3.5rem minmax(0, 1fr); }
+    .tracklist li > div { grid-column: 2; }
+    .specs, .specs.is-three { grid-template-columns: 1fr; }
+  }
+</style>
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="vk-page">
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="site-brand" href="/" aria-label="Vokso, accueil">
+      <span class="site-brand-mark" aria-hidden="true">
+        <svg viewBox="218 312 588 382" fill="currentColor">
+          <rect x="258" y="432" width="52" height="160" rx="26" />
+          <rect x="336" y="352" width="52" height="320" rx="26" />
+          <rect x="414" y="402" width="52" height="220" rx="26" />
+          <rect x="500" y="362" width="266" height="52" rx="26" opacity="0.55" />
+          <rect x="500" y="442" width="200" height="52" rx="26" opacity="0.55" />
+          <rect x="500" y="522" width="266" height="52" rx="26" opacity="0.55" />
+          <rect x="500" y="602" width="160" height="52" rx="26" opacity="0.55" />
+        </svg>
+      </span>
+      Vokso
+    </a>
+    <button class="site-nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><span></span></button>
+    <nav class="site-nav" id="site-nav" aria-label="Navigation principale">
+      <a class="site-nav-link" href="/#selection">Sélection du jour</a>
+      <a class="site-nav-link" href="/discotheque">Discothèque</a>
+      <a class="site-nav-link" href="/comment-ca-marche" aria-current="page">Comment ça marche ?</a>
+      <a class="vk-btn vk-btn-signal" href="/#creer">Créer un épisode</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap how-head">
+    <span class="vk-label">Les coulisses</span>
+    <h1 class="display">Comment<br>ça <em>marche</em> ?</h1>
+    <p>Un épisode de podcast demande d'habitude trois métiers : l'écriture, l'illustration et la voix. Vokso les enchaîne derrière un seul champ de saisie, en une à deux minutes.</p>
+  </div>
+
+  <section class="section" id="etapes">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div>
+          <span class="vk-label">Face A</span>
+          <h2 class="display">De l'idée à l'antenne</h2>
+        </div>
+      </div>
+      <ol class="tracklist">
+        <li class="reveal"><span class="num">A1</span><strong>Vous donnez le sujet</strong><div><p>Une phrase écrite suffit : « l'histoire du café », « la photosynthèse », « pourquoi le ciel est bleu ». Vous préférez parler ? Dictez votre sujet en message vocal, Vokso le retranscrit.</p><p>Le fichier audio est supprimé dès qu'il a été retranscrit.</p></div></li>
+        <li class="reveal"><span class="num">A2</span><strong>Le texte est écrit</strong><div><p>Un épisode complet en français d'environ cinq minutes d'écoute : une accroche, le contexte et les grandes dates, les notions clés illustrées d'exemples, les enjeux actuels, puis une conclusion.</p><p>Quand le sujet touche à l'actualité, une recherche web vérifie les faits récents avant l'écriture.</p></div></li>
+        <li class="reveal"><span class="num">A3</span><strong>La pochette et la voix</strong><div><p>À partir du texte, une illustration originale est dessinée et la narration est enregistrée par une voix de synthèse française. Les deux sont produites en même temps pour gagner du temps.</p></div></li>
+        <li class="reveal"><span class="num">A4</span><strong>Diffusion</strong><div><p>L'épisode reçoit un titre, est rangé dans une catégorie et obtient sa propre page, avec son lecteur, sa transcription complète et des boutons de partage. Il rejoint la <a href="/discotheque">discothèque</a>, ouverte à tous.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div>
+          <span class="vk-label">Face B</span>
+          <h2 class="display">Ce que vous obtenez</h2>
+        </div>
+      </div>
+      <div class="specs is-three">
+        <div class="spec reveal"><span class="vk-label">Écoute</span><h3>Un épisode de 5 minutes</h3><p>Environ 700 mots lus par une voix naturelle, à écouter en ligne depuis n'importe quel appareil.</p></div>
+        <div class="spec reveal"><span class="vk-label">Lecture</span><h3>La transcription complète</h3><p>Le texte intégral accompagne l'audio sur la page de l'épisode, pour lire, citer ou réviser.</p></div>
+        <div class="spec reveal"><span class="vk-label">Partage</span><h3>Une page à partager</h3><p>Un lien unique, une pochette et un aperçu soigné sur les réseaux sociaux et les messageries.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section sovereign" id="souverainete">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div>
+          <span class="sovereign-flag">Souverain par conception</span>
+          <h2 class="display">Émis depuis l'Europe</h2>
+          <p>Vokso reste indépendant des grands acteurs non européens du cloud et de l'IA : hébergement européen, IA française et aucune revente de vos données.</p>
+        </div>
+      </div>
+      <div class="specs">
+        <div class="spec reveal"><span class="vk-label">Hébergement</span><h3>Serveurs dans l'Union européenne</h3><p>Textes, images et audios sont générés et stockés sur une infrastructure basée dans l'Union européenne, soumise au droit européen.</p></div>
+        <div class="spec reveal"><span class="vk-label">Modèles</span><h3>IA française</h3><p>Texte, image, voix et transcription passent par Mistral AI, avec un traitement dans l'Union européenne.</p></div>
+        <div class="spec reveal"><span class="vk-label">Données</span><h3>Vos contenus restent les vôtres</h3><p>Vos sujets ne servent jamais à entraîner un modèle tiers et ne sont jamais revendus ni utilisés à des fins publicitaires. Pas de compte, pas de traceur.</p></div>
+        <div class="spec reveal"><span class="vk-label">Conformité</span><h3>RGPD par construction</h3><p>Minimisation des données collectées : seule l'adresse IP est conservée, quelques heures, pour limiter les abus. Droit à l'effacement intégré dès la conception.</p></div>
+        <div class="spec reveal"><span class="vk-label">Technologie</span><h3>Indépendance technologique</h3><p>Des briques ouvertes et un hébergement européen plutôt qu'une dépendance exclusive aux grands clouds non européens.</p></div>
+        <div class="spec reveal"><span class="vk-label">Sécurité</span><h3>Le strict nécessaire</h3><p>Aucune inscription n'est demandée pour écouter ou créer : il n'y a donc aucun mot de passe ni profil à protéger de votre côté.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="questions">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div>
+          <span class="vk-label">Courrier des auditeurs</span>
+          <h2 class="display">Vos questions</h2>
+        </div>
+      </div>
+      <div class="faq">
+        <details><summary>C'est vraiment gratuit ?</summary><p>Oui. Créer et écouter des épisodes est gratuit et ne demande aucun compte. Pour éviter les abus, le nombre de créations est limité chaque jour.</p></details>
+        <details><summary>Combien de temps faut-il pour créer un épisode ?</summary><p>En général une à deux minutes. Une barre de progression vous indique l'étape en cours : écriture, pochette et voix, puis mise en ligne.</p></details>
+        <details><summary>Mes épisodes sont-ils publics ?</summary><p>Oui : chaque épisode créé rejoint la discothèque et dispose d'une page publique que vous pouvez partager. Évitez donc d'y mettre des informations personnelles.</p></details>
+        <details><summary>Les informations sont-elles fiables ?</summary><p>Les textes sont rédigés par une intelligence artificielle, appuyée sur une recherche web pour les faits récents. Ils sont soignés mais peuvent contenir des erreurs : vérifiez les points importants avant de les réutiliser.</p></details>
+        <details><summary>Que devient mon message vocal ?</summary><p>Il est retranscrit en texte, puis le fichier audio est supprimé. Seul le sujet retranscrit est conservé pour créer l'épisode.</p></details>
+        <details><summary>Une question qui n'est pas ici ?</summary><p>Écrivez-nous depuis la <a href="/app/contact">page de contact</a>, nous répondons rapidement.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="wrap">
+      <div class="how-cta reveal">
+        <div>
+          <h2 class="display">À vous l'antenne.</h2>
+          <p>Un sujet, une minute ou deux, et votre épisode est prêt.</p>
+        </div>
+        <a class="vk-btn vk-btn-signal" href="/#creer">Créer un épisode</a>
+      </div>
+    </div>
+  </section>
+
+<section class="bulletin" id="bulletin" aria-labelledby="bulletin-title">
+  <div class="wrap">
+    <div class="bulletin-card reveal">
+      <div>
+        <span class="bulletin-kicker">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16v10H4z"/><path d="m4 7 8 6 8-6"/></svg>
+          Le bulletin Vokso
+        </span>
+        <h2 class="display" id="bulletin-title">Restez<br>à l'écoute.</h2>
+        <p>Un e-mail quand Vokso s'enrichit : une nouvelle voix, un nouveau format d'épisode, une nouvelle fonctionnalité. Rien d'autre.</p>
+        <ul class="bulletin-points">
+          <li>Les nouveautés avant tout le monde</li>
+          <li>Aucune publicité, aucun partage de votre adresse</li>
+          <li>Une adresse suffit, aucun compte à créer</li>
+        </ul>
+      </div>
+      <form class="bulletin-form" id="bulletin-form" novalidate>
+        <label class="bulletin-label" for="bulletin-email">Votre adresse e-mail</label>
+        <div class="bulletin-field">
+          <input type="email" id="bulletin-email" name="email" placeholder="vous@exemple.fr" autocomplete="email" required>
+          <button type="submit" class="vk-btn">Je m'abonne</button>
+        </div>
+        <!-- Piège à robots : masqué visuellement et aux lecteurs d'écran, jamais rempli par un humain. -->
+        <div class="vk-honeypot" aria-hidden="true">
+          <label for="bulletin-website">Site web</label>
+          <input type="text" id="bulletin-website" name="website" tabindex="-1" autocomplete="off">
+        </div>
+        <p class="bulletin-note">Votre adresse sert uniquement à ce bulletin. Voir la <a href="/app/politique-de-confidentialite">politique de confidentialité</a>.</p>
+        <p class="bulletin-msg" id="bulletin-msg" role="status"></p>
+      </form>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="site-footer-top">
+      <div class="site-footer-about">
+        <a class="site-brand" href="/" aria-label="Vokso, accueil">
+          <span class="site-brand-mark" aria-hidden="true">
+            <svg viewBox="218 312 588 382" fill="currentColor">
+              <rect x="258" y="432" width="52" height="160" rx="26" />
+              <rect x="336" y="352" width="52" height="320" rx="26" />
+              <rect x="414" y="402" width="52" height="220" rx="26" />
+              <rect x="500" y="362" width="266" height="52" rx="26" opacity="0.55" />
+              <rect x="500" y="442" width="200" height="52" rx="26" opacity="0.55" />
+              <rect x="500" y="522" width="266" height="52" rx="26" opacity="0.55" />
+              <rect x="500" y="602" width="160" height="52" rx="26" opacity="0.55" />
+            </svg>
+          </span>
+          Vokso
+        </a>
+        <p class="site-footer-pitch">Un sujet en une phrase, un podcast complet en retour : texte, pochette et voix générés par IA, sur une infrastructure européenne.</p>
+        <div class="site-footer-badges"><span>Gratuit</span><span>Sans inscription</span><span>Hébergé en Europe</span></div>
+      </div>
+      <nav class="site-footer-col" aria-label="Écouter">
+        <p class="site-footer-title">Écouter</p>
+        <ul>
+          <li><a href="/#selection">Sélection du jour</a></li>
+          <li><a href="/discotheque">Toute la discothèque</a></li>
+          <li><a href="/discotheque#categories">Par catégorie</a></li>
+        </ul>
+      </nav>
+      <nav class="site-footer-col" aria-label="Créer">
+        <p class="site-footer-title">Créer</p>
+        <ul>
+          <li><a href="/#creer">Générer un épisode</a></li>
+          <li><a href="/comment-ca-marche">Comment ça marche ?</a></li>
+          <li><a href="/comment-ca-marche#souverainete">Souveraineté et données</a></li>
+        </ul>
+      </nav>
+      <nav class="site-footer-col" aria-label="Vokso">
+        <p class="site-footer-title">Vokso</p>
+        <ul>
+          <li><a href="/app/contact">Contact</a></li>
+          <li><a href="/app/politique-de-confidentialite">Confidentialité</a></li>
+          <li><a href="/app/admin">Administration</a></li>
+        </ul>
+      </nav>
+    </div>
+    <p class="site-footer-wordmark" aria-hidden="true">Vokso</p>
+    <div class="site-footer-bottom">
+      <p>© <span data-year>2026</span> Vokso — podcasts générés par IA, hébergés en Europe.</p>
+      <p>Texte, image et voix : Mistral AI · Émis depuis l'Union européenne</p>
+    </div>
+  </div>
+</footer>
+
+<script src="/assets/site.js?v=20261004"></script>
+</body>
+</html>

@@ -38,6 +38,8 @@ class PublicPagesTest extends TestCase
         $this->publish('gen_3', 'Brouillon volcanique', 'Science', 'off');
 
         $this->getJson('/listing?limit=10')->assertOk()->assertJsonCount(2, 'data');
+        $this->getJson('/listing?limit=1&offset=1')->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson('/listing?limit=10&offset=2')->assertOk()->assertJsonCount(0, 'data');
         $this->getJson('/listing?category=Science')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', 'gen_1');
 
         $this->getJson('/search?query=volcan')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('success', true);

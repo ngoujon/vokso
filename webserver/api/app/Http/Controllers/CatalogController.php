@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\DB;
 /** Lecture publique des podcasts publiés : derniers épisodes, recherche, catégories. */
 class CatalogController extends Controller
 {
-    // Par défaut les 3 derniers épisodes ; ?category= et ?limit= servent à la
-    // navigation par catégorie. Plafonné pour qu'un ?limit= abusif ne charge
+    // Par défaut les 3 derniers épisodes ; ?category=, ?limit= et ?offset=
+    // servent à la navigation par catégorie. Plafonné pour qu'un ?limit= abusif ne charge
     // pas toute la table.
     private const DEFAULT_LIMIT = 3;
     private const MAX_LIMIT = 60;
@@ -22,7 +22,9 @@ class CatalogController extends Controller
         $limit = (int) $request->query('limit', self::DEFAULT_LIMIT);
         $limit = min($limit > 0 ? $limit : self::DEFAULT_LIMIT, self::MAX_LIMIT);
 
-        $query = $this->episodes()->limit($limit);
+        // ?offset= pagine la discothèque (bouton « Afficher plus »).
+        $offset = max(0, (int) $request->query('offset', 0));
+        $query = $this->episodes()->limit($limit)->offset($offset);
 
         $category = $request->query('category');
         if (is_string($category) && trim($category) !== '') {

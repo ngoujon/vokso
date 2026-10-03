@@ -9,10 +9,12 @@
 <link rel="canonical" href="https://vokso.fr/">
 <meta name="theme-color" content="#f3eee4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)">
-<link rel="icon" href="/assets/favicon.ico?v=2" sizes="any">
-<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2">
-<link rel="apple-touch-icon" href="/assets/vokso-icon-180.png?v=2">
-
+<link rel="icon" href="/assets/favicon.ico?v=3" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=3">
+<link rel="apple-touch-icon" href="/assets/vokso-icon-180.png?v=3">
+<link rel="preload" href="/assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/design-system.css?v=20261004">
+<link rel="stylesheet" href="/assets/site.css?v=20261004">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Vokso">
 <meta property="og:title" content="Vokso — Générez des podcasts par IA, hébergés en Europe">
@@ -55,287 +57,171 @@
   "description": "Vokso, générateur de podcasts par IA hébergé en Europe."
 }
 </script>
-<link rel="preload" href="/assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/design-system.css?v=20261001">
 <style>
-  * { box-sizing: border-box; }
-  [hidden] { display: none !important; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    background: var(--vk-paper);
-    color: var(--vk-ink);
-    font-family: var(--vk-font);
-    font-size: 1.02rem;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-  }
-  a { color: inherit; }
-  img { max-width: 100%; display: block; }
-  .wrap { width: min(1160px, 100% - 2.5rem); margin-inline: auto; }
-  h1, h2, h3 { margin: 0; line-height: 1.05; }
-  .display {
-    font-stretch: 72%;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: -0.01em;
-  }
-
-  /* ---- En-tête ---------------------------------------------------------- */
-  header.site {
-    position: sticky; top: 0; z-index: 20;
-    background: color-mix(in srgb, var(--vk-paper) 90%, transparent);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--vk-line);
-  }
-  header.site .wrap { display: flex; align-items: center; gap: 1.5rem; padding: 0.8rem 0; }
-  .brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; font-weight: 800; font-size: 1.45rem; font-stretch: 85%; letter-spacing: 0.02em; text-transform: uppercase; }
-  .brand svg { width: 52px; height: 34px; color: var(--vk-signal); }
-  nav.site { display: flex; align-items: center; gap: 1.4rem; margin-left: auto; }
-  nav.site a:not(.vk-btn) { text-decoration: none; font-size: 0.92rem; font-weight: 500; color: var(--vk-ink-2); }
-  nav.site a:not(.vk-btn):hover { color: var(--vk-ink); }
-  nav.site .vk-btn { padding: 0.55rem 1rem; font-size: 0.9rem; }
-
-  /* ---- Ouverture -------------------------------------------------------- */
-  .hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 3.5rem; align-items: center; padding: 4.5rem 0 4rem; }
-  .hero .kicker { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 1.6rem; }
-  .hero h1 { font-size: clamp(2.7rem, 6.2vw, 5.4rem); line-height: 0.92; }
+  /* ---- Ouverture : studio de création + poste ---------------------------- */
+  .hero { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 3.5rem; align-items: start; padding: 4rem 0 3rem; }
+  .hero .kicker { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+  .hero h1 { font-size: clamp(2.6rem, 5.6vw, 4.9rem); line-height: 0.92; }
   .hero h1 .line { display: block; overflow: hidden; padding-bottom: 0.06em; }
   .hero h1 .line > span { display: inline-block; }
-  .hero h1 em { font-style: normal; color: var(--vk-signal); }
-  .hero .lead { max-width: 52ch; margin: 1.6rem 0 2rem; color: var(--vk-ink-2); font-size: 1.12rem; }
-  .cta { display: flex; gap: 0.8rem; flex-wrap: wrap; }
-
+  .hero h1 em { font-style: normal; background: var(--vk-signal); color: var(--vk-on-signal); -webkit-box-decoration-break: clone; box-decoration-break: clone; padding: 0 0.08em; }
+  .hero .lead { max-width: 52ch; margin: 1.4rem 0 1.8rem; color: var(--vk-ink-2); font-size: 1.1rem; }
   .js .hero h1 .line > span { transform: translateY(105%); animation: rise 0.9s var(--vk-ease) forwards; }
   .js .hero h1 .line:nth-child(2) > span { animation-delay: 0.12s; }
   .js .hero h1 .line:nth-child(3) > span { animation-delay: 0.24s; }
   @keyframes rise { to { transform: none; } }
 
-  /* Le poste : cadran de tuner + épisode à l'antenne. */
-  .tuner {
-    background: var(--vk-console);
-    color: var(--vk-on-console);
-    border-radius: var(--vk-radius-lg);
-    padding: 1.3rem;
-    box-shadow: var(--vk-shadow);
+  .studio { scroll-margin-top: 6rem; background: var(--vk-card); border: 1.5px solid var(--vk-ink); border-radius: var(--vk-radius); padding: 1.2rem; box-shadow: 6px 6px 0 var(--vk-signal); }
+  .studio-tabs { display: flex; gap: 0.4rem; margin-bottom: 1rem; }
+  .studio-tabs button {
+    flex: 1; padding: 0.6rem 0.8rem; border: 1px solid var(--vk-line); border-radius: var(--vk-radius-sm);
+    background: none; color: var(--vk-ink-2); font: 600 0.9rem/1.2 var(--vk-font); cursor: pointer;
   }
+  .studio-tabs button[aria-selected="true"] { background: var(--vk-ink); border-color: var(--vk-ink); color: var(--vk-paper); }
+  .studio-input { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .studio-input input {
+    flex: 1 1 240px; min-width: 0; padding: 0.95rem 1rem; font: inherit; font-size: 1.05rem;
+    border: 1.5px solid var(--vk-line); border-radius: var(--vk-radius-sm); background: var(--vk-paper); color: var(--vk-ink);
+  }
+  .studio-input input:focus { outline: none; border-color: var(--vk-ink); }
+  .studio-input .vk-btn { flex: 0 0 auto; padding-inline: 1.4rem; }
+  .studio-ideas { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; margin-top: 0.9rem; }
+  .studio-ideas button {
+    padding: 0.32rem 0.7rem; border: 1px dashed var(--vk-ink-3); border-radius: 999px; background: none;
+    color: var(--vk-ink-2); font: 500 0.82rem/1.2 var(--vk-font); cursor: pointer;
+  }
+  .studio-ideas button:hover { border-style: solid; border-color: var(--vk-ink); color: var(--vk-ink); }
+  .studio-voice { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .rec-btn {
+    display: grid; place-items: center; width: 4rem; height: 4rem; flex: none; border-radius: 50%;
+    border: 2px solid var(--vk-ink); background: var(--vk-paper); color: var(--vk-ink); cursor: pointer;
+  }
+  .rec-btn svg { width: 1.6rem; height: 1.6rem; }
+  .rec-btn.is-recording { background: var(--vk-danger); border-color: var(--vk-danger); color: #fff; animation: rec-pulse 1.4s ease-in-out infinite; }
+  @keyframes rec-pulse { 50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--vk-danger) 18%, transparent); } }
+  .rec-status { flex: 1 1 200px; margin: 0; color: var(--vk-ink-2); }
+  .rec-status strong { color: var(--vk-ink); font-family: var(--vk-mono); }
+  .studio-voice-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; width: 100%; }
+  .studio-voice-actions audio { flex: 1 1 220px; height: 2.5rem; }
+  .studio-note { margin: 0.9rem 0 0; font-size: 0.85rem; color: var(--vk-ink-2); }
+  .studio-error { margin: 0.9rem 0 0; color: var(--vk-danger); font-weight: 600; }
+  .studio-error:empty { display: none; }
+
+  .studio-progress ol { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 0.55rem; }
+  .studio-progress li { display: flex; align-items: center; gap: 0.7rem; color: var(--vk-ink-3); }
+  .studio-progress li::before { content: ""; width: 0.75rem; height: 0.75rem; border-radius: 50%; border: 2px solid currentColor; flex: none; }
+  .studio-progress li.is-active { color: var(--vk-ink); font-weight: 600; }
+  .studio-progress li.is-active::before { background: var(--vk-signal); border-color: var(--vk-signal); animation: vk-lamp 1.2s ease-in-out infinite; }
+  .studio-progress li.is-done { color: var(--vk-ink-2); }
+  .studio-progress li.is-done::before { background: var(--vk-ink-2); border-color: var(--vk-ink-2); }
+  .studio-bar { height: 6px; border-radius: 3px; background: var(--vk-paper-2); overflow: hidden; }
+  .studio-bar span { display: block; height: 100%; width: 0; background: var(--vk-signal); transition: width 0.6s var(--vk-ease); }
+  .studio-wait { margin: 0.8rem 0 0; font-size: 0.88rem; color: var(--vk-ink-2); }
+
+  .studio-result { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 1rem; align-items: center; }
+  .studio-result img { width: 7rem; height: 7rem; object-fit: cover; border-radius: var(--vk-radius-sm); }
+  .studio-result h2 { font-size: 1.25rem; font-stretch: 85%; margin: 0.3rem 0 0.8rem; text-wrap: balance; }
+  .studio-result-actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .studio-result-actions .vk-btn { padding: 0.6rem 0.9rem; font-size: 0.9rem; }
+
+  /* Le poste : cadran de tuner + épisode à l'antenne. */
+  .hero > .tuner { position: sticky; top: 6rem; }
+  .tuner { background: var(--vk-console); color: var(--vk-on-console); border-radius: var(--vk-radius-lg); padding: 1.3rem; box-shadow: var(--vk-shadow); }
   .tuner .vk-label { color: color-mix(in srgb, var(--vk-on-console) 62%, transparent); }
   .tuner-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-  .tuner .vk-onair { color: #ff5a3c; }
-  .dial {
-    position: relative; height: 3.6rem; margin-bottom: 1.2rem;
-    border-radius: var(--vk-radius-sm);
-    background: color-mix(in srgb, var(--vk-on-console) 6%, transparent);
-    overflow: hidden;
-  }
+  .dial { position: relative; height: 3.6rem; margin-bottom: 1.2rem; border-radius: var(--vk-radius-sm); background: color-mix(in srgb, var(--vk-on-console) 6%, transparent); overflow: hidden; }
   .dial-ticks {
-    position: absolute; inset: 0.55rem 0.8rem auto;
-    height: 1rem;
+    position: absolute; inset: 0.55rem 0.8rem auto; height: 1rem;
     background:
       repeating-linear-gradient(90deg, color-mix(in srgb, var(--vk-on-console) 55%, transparent) 0 1px, transparent 1px 10%),
       repeating-linear-gradient(90deg, color-mix(in srgb, var(--vk-on-console) 25%, transparent) 0 1px, transparent 1px 2%);
-    background-size: 100% 100%, 100% 55%;
-    background-repeat: no-repeat;
+    background-size: 100% 100%, 100% 55%; background-repeat: no-repeat;
   }
-  .dial-nums {
-    position: absolute; left: 0.8rem; right: 0.8rem; bottom: 0.45rem;
-    display: flex; justify-content: space-between;
-    font-family: var(--vk-mono); font-size: 0.66rem;
-    color: color-mix(in srgb, var(--vk-on-console) 55%, transparent);
-  }
-  .dial-needle {
-    position: absolute; top: 0.25rem; bottom: 0.25rem; left: 50%;
-    width: 2px; margin-left: -1px;
-    background: #ff5a3c;
-    box-shadow: 0 0 10px #ff5a3c;
-    transition: left 0.9s var(--vk-ease);
-  }
+  .dial-nums { position: absolute; left: 0.8rem; right: 0.8rem; bottom: 0.45rem; display: flex; justify-content: space-between; font-family: var(--vk-mono); font-size: 0.66rem; color: color-mix(in srgb, var(--vk-on-console) 55%, transparent); }
+  .dial-needle { position: absolute; top: 0.25rem; bottom: 0.25rem; left: 50%; width: 2px; margin-left: -1px; background: var(--vk-signal); box-shadow: 0 0 10px var(--vk-signal); transition: left 0.9s var(--vk-ease); }
+  .tuner-onair { color: var(--vk-signal); }
   .tuner-body { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: 1.1rem; align-items: center; }
   .tuner-cover { aspect-ratio: 1; border-radius: var(--vk-radius-sm); overflow: hidden; background: color-mix(in srgb, var(--vk-on-console) 10%, transparent); }
   .tuner-cover img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.35s ease; }
-  .tuner-title { font-size: 1.3rem; font-stretch: 85%; font-weight: 700; margin: 0.35rem 0 0.9rem; text-wrap: balance; }
+  .tuner-title { font-size: 1.3rem; font-stretch: 85%; font-weight: 700; margin: 0.35rem 0 0.9rem; text-wrap: balance; transition: opacity 0.35s ease; }
   .tuner-title a { text-decoration: none; }
   .tuner-title a:hover { text-decoration: underline; text-underline-offset: 3px; }
   .tuner-controls { display: flex; align-items: center; gap: 0.9rem; }
   .tuner-next {
-    margin-left: auto; padding: 0.45rem 0.7rem;
-    background: none; border: 1px solid color-mix(in srgb, var(--vk-on-console) 30%, transparent);
+    margin-left: auto; padding: 0.45rem 0.7rem; background: none; border: 1px solid color-mix(in srgb, var(--vk-on-console) 30%, transparent);
     border-radius: var(--vk-radius-sm); color: inherit; cursor: pointer;
     font-family: var(--vk-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
   }
-  .tuner-next:hover { border-color: var(--vk-on-console); }
+  .tuner-next:hover { border-color: var(--vk-signal); color: var(--vk-signal); }
   .tuner.is-switching .tuner-cover img, .tuner.is-switching .tuner-title { opacity: 0.2; }
-  .tuner-title { transition: opacity 0.35s ease; }
-  .tuner-empty { padding: 1rem 0; color: color-mix(in srgb, var(--vk-on-console) 70%, transparent); }
+  .tuner-empty { padding: 1rem 0; margin: 0; color: color-mix(in srgb, var(--vk-on-console) 70%, transparent); }
+  .tuner-foot { margin: 1.1rem 0 0; padding-top: 1rem; border-top: 1px solid color-mix(in srgb, var(--vk-on-console) 14%, transparent); font-size: 0.88rem; color: color-mix(in srgb, var(--vk-on-console) 70%, transparent); }
 
-  /* ---- Sections --------------------------------------------------------- */
-  section { padding: 5rem 0; }
-  .section-head { display: flex; align-items: end; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 2.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--vk-ink); }
-  .section-head h2 { font-size: clamp(2.1rem, 5vw, 3.4rem); }
-  .section-head p { margin: 0.5rem 0 0; color: var(--vk-ink-2); max-width: 55ch; }
-  .link-arrow { font-weight: 600; text-decoration: none; border-bottom: 1.5px solid currentColor; padding-bottom: 2px; white-space: nowrap; }
-  .link-arrow:hover { color: var(--vk-signal); }
-
-  /* Sélection du jour : pochettes, le disque sort au survol et tourne en lecture. */
-  .crate { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3rem 2.2rem; }
-  .sleeve-art { position: relative; padding-right: 16%; }
-  .vinyl {
-    position: absolute; top: 3%; bottom: 3%; left: 0;
-    aspect-ratio: 1;
-    border-radius: 50%;
-    background:
-      radial-gradient(circle, var(--vk-paper) 0 2.2%, transparent 2.4%),
-      radial-gradient(circle, transparent 0 17%, #0e0d0b 17.5%),
-      repeating-radial-gradient(circle, #191714 0 1.5px, #24211c 1.5px 3px);
-    transform: translateX(6%);
-    transition: transform 0.6s var(--vk-ease);
+  /* ---- Catégories ----------------------------------------------------------- */
+  .shelves { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+  .shelf {
+    position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: 9.5rem;
+    padding: 1rem; border-radius: var(--vk-radius); overflow: hidden; text-decoration: none;
+    background: var(--vk-console) center / cover; color: #fff; isolation: isolate;
   }
-  .vinyl::after {
-    content: ""; position: absolute; inset: 33%;
-    border-radius: 50%;
-    background: var(--cover, var(--vk-signal)) center / cover;
-    -webkit-mask: radial-gradient(circle, transparent 0 7%, #000 7.5%);
-            mask: radial-gradient(circle, transparent 0 7%, #000 7.5%);
+  .shelf::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(10,9,7,.05) 20%, rgba(10,9,7,.82)); transition: background 0.3s ease; }
+  .shelf:hover::before { background: linear-gradient(180deg, rgba(10,9,7,.15) 0%, rgba(10,9,7,.9)); }
+  .shelf strong { font-size: 1.25rem; font-stretch: 85%; line-height: 1.1; }
+  .shelf span { font-family: var(--vk-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; margin-top: 0.3rem; }
+  .shelf::after { content: "→"; position: absolute; top: 0.8rem; right: 0.9rem; width: 2rem; height: 2rem; display: grid; place-items: center; border-radius: 50%; background: var(--vk-signal); color: var(--vk-on-signal); font-weight: 700; transform: scale(0.6); opacity: 0; transition: transform 0.25s var(--vk-ease), opacity 0.25s ease; }
+  .shelf:hover::after, .shelf:focus-visible::after { transform: none; opacity: 1; }
+
+  /* ---- Comment ça marche (résumé) ----------------------------------------- */
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; counter-reset: step; }
+  .steps li { border-top: 2px solid var(--vk-ink); padding-top: 1rem; }
+  .steps .num { font-family: var(--vk-mono); font-size: 0.85rem; font-weight: 600; background: var(--vk-signal); color: var(--vk-on-signal); padding: 0.1rem 0.4rem; border-radius: 3px; }
+  .steps strong { display: block; font-size: 1.45rem; font-stretch: 80%; line-height: 1.1; margin: 0.8rem 0 0.4rem; }
+  .steps p { margin: 0; color: var(--vk-ink-2); }
+
+  @media (max-width: 960px) {
+    .hero > .tuner { position: static; }
+    .hero { grid-template-columns: 1fr; gap: 2.5rem; padding-top: 2.5rem; }
+    .shelves { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .steps { grid-template-columns: 1fr; gap: 1.5rem; }
   }
-  .vinyl-spin { position: absolute; inset: 0; border-radius: 50%; }
-  .sleeve:hover .vinyl, .sleeve.is-playing .vinyl { transform: translateX(19%); }
-  .sleeve.is-playing .vinyl { animation: spin 3.2s linear infinite; }
-  @keyframes spin { from { transform: translateX(19%) rotate(0); } to { transform: translateX(19%) rotate(360deg); } }
-  .sleeve-cover {
-    position: relative; aspect-ratio: 1; width: 100%;
-    border-radius: var(--vk-radius-sm); overflow: hidden;
-    background: var(--vk-paper-2);
-    box-shadow: var(--vk-shadow);
-  }
-  .sleeve-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s var(--vk-ease); }
-  .sleeve:hover .sleeve-cover img { transform: scale(1.03); }
-  .sleeve-cover .vk-play { position: absolute; left: 0.8rem; bottom: 0.8rem; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
-  .sleeve-meta { display: flex; justify-content: space-between; gap: 1rem; margin: 1.1rem 16% 0.4rem 0; }
-  .sleeve h3 { margin-right: 16%; font-size: 1.28rem; font-weight: 700; font-stretch: 88%; line-height: 1.15; text-wrap: balance; }
-  .sleeve h3 a { text-decoration: none; }
-  .sleeve h3 a:hover { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
-  .sleeve .vk-meter { margin-left: 0.5rem; vertical-align: -1px; }
-  .sleeve:not(.is-playing) .vk-meter { display: none; }
-  .crate-empty { color: var(--vk-ink-2); }
-
-  /* Conducteur : « Comment ça marche » façon liste de titres. */
-  .tracklist { list-style: none; margin: 0; padding: 0; }
-  .tracklist li {
-    display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) minmax(0, 1.4fr); gap: 1.5rem;
-    padding: 1.6rem 0; border-bottom: 1px solid var(--vk-line);
-    align-items: baseline;
-  }
-  .tracklist .num { font-family: var(--vk-mono); font-size: 0.9rem; color: var(--vk-signal); font-weight: 600; }
-  .tracklist strong { font-size: 1.6rem; font-stretch: 80%; font-weight: 700; line-height: 1.1; }
-  .tracklist p { margin: 0; color: var(--vk-ink-2); }
-
-  /* Fiche technique : souveraineté. */
-  .specs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 3rem; }
-  .spec { padding: 1.4rem 0; border-top: 1px solid var(--vk-line); }
-  .spec h3 { font-size: 1.15rem; font-weight: 700; margin: 0.4rem 0 0.4rem; }
-  .spec p { margin: 0; color: var(--vk-ink-2); }
-
-  /* Fin d'émission : appel à l'action + newsletter. */
-  .signoff { background: var(--vk-console); color: var(--vk-on-console); border-radius: var(--vk-radius-lg); padding: clamp(2rem, 5vw, 4rem); display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 3rem; align-items: center; }
-  .signoff h2 { font-size: clamp(2.2rem, 5vw, 3.6rem); }
-  .signoff p { color: color-mix(in srgb, var(--vk-on-console) 72%, transparent); margin: 1rem 0 1.6rem; }
-  .signoff .vk-btn:not(.vk-btn-signal) { border-color: var(--vk-on-console); color: var(--vk-on-console); }
-  .newsletter h3 { font-size: 1.2rem; margin-bottom: 0.4rem; }
-  .newsletter-form { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
-  .newsletter-form input[type=email] {
-    flex: 1 1 200px; min-width: 0; padding: 0.8rem 1rem;
-    border-radius: var(--vk-radius-sm); border: 1px solid color-mix(in srgb, var(--vk-on-console) 30%, transparent);
-    background: transparent; color: var(--vk-on-console); font: inherit;
-  }
-  .newsletter-form input[type=email]::placeholder { color: color-mix(in srgb, var(--vk-on-console) 45%, transparent); }
-  .newsletter-msg { margin: 0.8rem 0 0; font-size: 0.9rem; min-height: 1.2em; }
-  .newsletter-msg.ok { color: #7ed69f; }
-  .newsletter-msg.err { color: #ff8a73; }
-
-  footer.site { padding: 2.5rem 0 7rem; color: var(--vk-ink-2); font-size: 0.9rem; }
-  footer.site .wrap { display: flex; gap: 1rem 2rem; flex-wrap: wrap; justify-content: space-between; border-top: 1px solid var(--vk-line); padding-top: 1.5rem; }
-  footer.site nav { display: flex; gap: 1.4rem; flex-wrap: wrap; }
-  footer.site a { color: var(--vk-ink-2); }
-  footer.site a:hover { color: var(--vk-ink); }
-
-  /* Lecteur persistant, apparaît à la première écoute. */
-  .deck {
-    position: fixed; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); z-index: 30;
-    width: min(760px, 100% - 1.5rem);
-    display: grid; grid-template-columns: 3rem auto minmax(0, 1fr) auto; gap: 0.9rem; align-items: center;
-    padding: 0.6rem 0.9rem 0.6rem 0.6rem;
-    background: var(--vk-console); color: var(--vk-on-console);
-    border: 1px solid color-mix(in srgb, var(--vk-on-console) 14%, transparent);
-    border-radius: var(--vk-radius); box-shadow: 0 18px 40px -12px rgba(0,0,0,.55);
-    transform: translate(-50%, 160%); visibility: hidden;
-    transition: transform 0.5s var(--vk-ease), visibility 0s linear 0.5s;
-  }
-  .deck.is-visible { transform: translate(-50%, 0); visibility: visible; transition-delay: 0s; }
-  .deck img { width: 3rem; height: 3rem; border-radius: var(--vk-radius-sm); object-fit: cover; }
-  .deck .vk-play { width: 2.4rem; height: 2.4rem; }
-  .deck-title { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .deck-bar { position: relative; height: 4px; margin-top: 0.45rem; border-radius: 2px; background: color-mix(in srgb, var(--vk-on-console) 18%, transparent); cursor: pointer; }
-  .deck-bar::before { content: ""; position: absolute; inset: -8px 0; }
-  .deck-bar span { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; background: var(--vk-signal); }
-  .deck-time { font-family: var(--vk-mono); font-size: 0.75rem; color: color-mix(in srgb, var(--vk-on-console) 65%, transparent); white-space: nowrap; }
-
-  /* Apparition au défilement (uniquement si le JS tourne). */
-  .js .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.8s var(--vk-ease), transform 0.8s var(--vk-ease); }
-  .js .reveal.in { opacity: 1; transform: none; }
-
-  @media (max-width: 900px) {
-    .hero { grid-template-columns: 1fr; gap: 2.5rem; padding-top: 3rem; }
-    .crate { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .signoff { grid-template-columns: 1fr; }
-    .tracklist li { grid-template-columns: 3rem minmax(0, 1fr); }
-    .tracklist p { grid-column: 2; }
-  }
-  @media (max-width: 640px) {
-    nav.site a:not(.vk-btn) { display: none; }
-    section { padding: 3.5rem 0; }
-    .crate { grid-template-columns: 1fr; }
-    .specs { grid-template-columns: 1fr; }
+  @media (max-width: 560px) {
     .tuner-body { grid-template-columns: 6.5rem minmax(0, 1fr); }
     .tuner-title { font-size: 1.1rem; }
     .tuner-next { margin-left: 0; }
     .tuner-controls { flex-wrap: wrap; }
-    .deck { grid-template-columns: auto minmax(0, 1fr); }
-    .deck img, .deck-time { display: none; }
+    .studio-input .vk-btn { width: 100%; }
+    .studio-result { grid-template-columns: 1fr; }
   }
   @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
     .js .hero h1 .line > span { transform: none; }
-    .js .reveal { opacity: 1; transform: none; }
   }
 </style>
 <script>document.documentElement.classList.add('js');</script>
 </head>
-<body>
+<body class="vk-page">
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-play" viewBox="0 0 16 16"><path d="M4 2.5v11a.5.5 0 0 0 .77.42l8.5-5.5a.5.5 0 0 0 0-.84l-8.5-5.5A.5.5 0 0 0 4 2.5z" fill="currentColor"/></symbol>
-  <symbol id="i-pause" viewBox="0 0 16 16"><rect x="3" y="2" width="3.6" height="12" rx="1" fill="currentColor"/><rect x="9.4" y="2" width="3.6" height="12" rx="1" fill="currentColor"/></symbol>
-</svg>
-
-<header class="site">
+<header class="site-header">
   <div class="wrap">
-    <a class="brand" href="/">
-      <svg viewBox="218 312 588 382" fill="currentColor" aria-hidden="true">
-        <rect x="258" y="432" width="52" height="160" rx="26" />
-        <rect x="336" y="352" width="52" height="320" rx="26" />
-        <rect x="414" y="402" width="52" height="220" rx="26" />
-        <rect x="500" y="362" width="266" height="52" rx="26" opacity="0.5" />
-        <rect x="500" y="442" width="200" height="52" rx="26" opacity="0.5" />
-        <rect x="500" y="522" width="266" height="52" rx="26" opacity="0.5" />
-        <rect x="500" y="602" width="160" height="52" rx="26" opacity="0.5" />
-      </svg>
+    <a class="site-brand" href="/" aria-label="Vokso, accueil">
+      <span class="site-brand-mark" aria-hidden="true">
+        <svg viewBox="218 312 588 382" fill="currentColor">
+          <rect x="258" y="432" width="52" height="160" rx="26" />
+          <rect x="336" y="352" width="52" height="320" rx="26" />
+          <rect x="414" y="402" width="52" height="220" rx="26" />
+          <rect x="500" y="362" width="266" height="52" rx="26" opacity="0.55" />
+          <rect x="500" y="442" width="200" height="52" rx="26" opacity="0.55" />
+          <rect x="500" y="522" width="266" height="52" rx="26" opacity="0.55" />
+          <rect x="500" y="602" width="160" height="52" rx="26" opacity="0.55" />
+        </svg>
+      </span>
       Vokso
     </a>
-    <nav class="site" aria-label="Navigation principale">
-      <a href="#selection">Sélection du jour</a>
-      <a href="#fonctionnement">Comment ça marche</a>
-      <a href="#souverainete">Souveraineté</a>
-      <a class="vk-btn vk-btn-signal" href="/app/">Créer un épisode</a>
+    <button class="site-nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><span></span></button>
+    <nav class="site-nav" id="site-nav" aria-label="Navigation principale">
+      <a class="site-nav-link" href="/#selection" aria-current="page">Sélection du jour</a>
+      <a class="site-nav-link" href="/discotheque">Discothèque</a>
+      <a class="site-nav-link" href="/comment-ca-marche">Comment ça marche ?</a>
+      <a class="vk-btn vk-btn-signal" href="/#creer">Créer un épisode</a>
     </nav>
   </div>
 </header>
@@ -356,15 +242,74 @@
         Vokso écrit le texte, dessine la pochette et enregistre la voix. Donnez un thème,
         l'épisode est prêt à écouter quelques instants plus tard. Gratuit, sans inscription.
       </p>
-      <div class="cta">
-        <a class="vk-btn vk-btn-signal" href="/app/">Créer mon épisode</a>
-        <a class="vk-btn" href="#selection">Écouter la sélection</a>
+
+      <div class="studio" id="creer">
+        <div class="studio-tabs" role="tablist" aria-label="Façon de donner le sujet">
+          <button type="button" role="tab" id="tab-text" aria-selected="true" aria-controls="panel-text">Écrire un sujet</button>
+          <button type="button" role="tab" id="tab-audio" aria-selected="false" aria-controls="panel-audio">Dicter un message vocal</button>
+        </div>
+
+        <form id="studio-form" novalidate>
+          <div id="panel-text" role="tabpanel" aria-labelledby="tab-text">
+            <div class="studio-input">
+              <label class="vk-sr" for="studio-subject">Sujet de l'épisode</label>
+              <input type="text" id="studio-subject" maxlength="300" autocomplete="off" placeholder="Ex. : l'histoire du café, les trous noirs…">
+              <button type="submit" class="vk-btn vk-btn-signal">Générer l'épisode</button>
+            </div>
+            <div class="studio-ideas">
+              <span class="vk-label">Idées :</span>
+              <button type="button">L'histoire du café</button>
+              <button type="button">Pourquoi le ciel est bleu</button>
+              <button type="button">La photosynthèse</button>
+              <button type="button">Les premiers pas sur la Lune</button>
+            </div>
+          </div>
+          <div id="panel-audio" role="tabpanel" aria-labelledby="tab-audio" hidden>
+            <div class="studio-voice">
+              <button type="button" class="rec-btn" id="rec-btn" aria-label="Commencer l'enregistrement">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 17.5V21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+              <p class="rec-status" id="rec-status">Appuyez sur le bouton et dites votre sujet en une ou deux phrases (2 minutes maximum).</p>
+              <div class="studio-voice-actions" id="rec-ready" hidden>
+                <audio id="rec-preview" controls></audio>
+                <button type="submit" class="vk-btn vk-btn-signal">Générer l'épisode</button>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <div class="studio-progress" id="studio-progress" hidden>
+          <ol>
+            <li data-step="transcription" hidden>Écoute de votre message</li>
+            <li data-step="text">Écriture du texte</li>
+            <li data-step="media">Pochette et enregistrement de la voix</li>
+            <li data-step="finalizing">Mise en ligne</li>
+          </ol>
+          <div class="studio-bar"><span id="studio-bar"></span></div>
+          <p class="studio-wait" role="status" id="studio-wait">Votre épisode est en préparation, cela prend en général une à deux minutes.</p>
+        </div>
+
+        <div class="studio-result" id="studio-result" hidden>
+          <img id="result-img" alt="" width="112" height="112">
+          <div>
+            <span class="vk-label">Votre épisode est prêt</span>
+            <h2 id="result-title"></h2>
+            <div class="studio-result-actions">
+              <span id="result-play"></span>
+              <a class="vk-btn vk-btn-signal" id="result-link" href="#">Ouvrir l'épisode</a>
+              <button type="button" class="vk-btn" id="result-again">En créer un autre</button>
+            </div>
+          </div>
+        </div>
+
+        <p class="studio-error" id="studio-error" role="alert"></p>
+        <p class="studio-note">Gratuit, sans inscription, nombre de créations limité par jour. Les épisodes créés rejoignent la <a href="/discotheque">discothèque</a>.</p>
       </div>
     </div>
 
     <aside class="tuner" id="tuner" aria-label="Épisode à l'antenne">
       <div class="tuner-head">
-        <span class="vk-label">Vokso FM</span>
+        <span class="vk-onair tuner-onair">Vokso FM</span>
         <span class="vk-label" id="tuner-freq">— MHz</span>
       </div>
       <div class="dial" aria-hidden="true">
@@ -378,19 +323,18 @@
           <span class="vk-label" id="tuner-cat"></span>
           <h2 class="tuner-title"><a id="tuner-title" href="#"></a></h2>
           <div class="tuner-controls">
-            <button class="vk-play" id="tuner-play" type="button" aria-pressed="false" aria-label="Écouter">
-              <svg class="i-play"><use href="#i-play"/></svg><svg class="i-pause"><use href="#i-pause"/></svg>
-            </button>
+            <span id="tuner-play-slot"></span>
             <span class="vk-meter" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
             <button class="tuner-next" id="tuner-next" type="button">Station suivante →</button>
           </div>
         </div>
       </div>
       <p class="tuner-empty" id="tuner-empty">Réglage de la fréquence…</p>
+      <p class="tuner-foot">En attendant votre épisode, écoutez ceux des autres.</p>
     </aside>
   </div>
 
-  <section id="selection">
+  <section class="section" id="selection">
     <div class="wrap">
       <div class="section-head reveal">
         <div>
@@ -398,7 +342,7 @@
           <h2 class="display">La sélection du jour</h2>
           <p>Six épisodes tirés de la discothèque Vokso, renouvelés chaque matin.</p>
         </div>
-        <a class="link-arrow" href="/app/">Toute la discothèque →</a>
+        <a class="link-arrow" href="/discotheque">Toute la discothèque →</a>
       </div>
       <div class="crate" id="crate">
         <p class="crate-empty">Chargement de la sélection…</p>
@@ -406,86 +350,131 @@
     </div>
   </section>
 
-  <section id="fonctionnement">
+  <section class="section" id="categories" hidden>
     <div class="wrap">
       <div class="section-head reveal">
         <div>
-          <span class="vk-label">Face A</span>
-          <h2 class="display">Comment ça marche</h2>
-          <p>Trois métiers habituellement séparés — l'écriture, l'illustration et la voix — enchaînés derrière un seul champ de saisie.</p>
+          <span class="vk-label">Les rayons</span>
+          <h2 class="display">Parcourir par thème</h2>
+          <p>Sciences, histoire, culture… choisissez un rayon et écoutez tout ce qu'il contient.</p>
         </div>
+        <a class="link-arrow" href="/discotheque#categories">Toutes les catégories →</a>
       </div>
-      <ol class="tracklist">
-        <li class="reveal"><span class="num">A1</span><strong>Vous donnez le sujet</strong><p>Une phrase ou un message vocal suffit : « l'histoire du café », « la photosynthèse », « pourquoi le ciel est bleu ».</p></li>
-        <li class="reveal"><span class="num">A2</span><strong>Le texte est écrit</strong><p>Un épisode complet en français, avec contexte, repères, notions clés et mise en perspective, appuyé sur une recherche web.</p></li>
-        <li class="reveal"><span class="num">A3</span><strong>La pochette et la voix</strong><p>L'illustration et la narration sont produites en parallèle à partir du texte.</p></li>
-        <li class="reveal"><span class="num">A4</span><strong>Diffusion</strong><p>L'épisode rejoint la discothèque, classé par thème, avec sa propre page et son lecteur.</p></li>
+      <div class="shelves" id="shelves"></div>
+    </div>
+  </section>
+
+  <section class="section" id="fonctionnement">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div>
+          <span class="vk-label">En trois temps</span>
+          <h2 class="display">Comment ça marche ?</h2>
+        </div>
+        <a class="link-arrow" href="/comment-ca-marche">Tout comprendre →</a>
+      </div>
+      <ol class="steps">
+        <li class="reveal"><span class="num">01</span><strong>Vous donnez le sujet</strong><p>Une phrase écrite ou un message vocal suffit.</p></li>
+        <li class="reveal"><span class="num">02</span><strong>Vokso produit l'épisode</strong><p>Texte vérifié par une recherche web, pochette illustrée et voix de synthèse.</p></li>
+        <li class="reveal"><span class="num">03</span><strong>Vous écoutez et partagez</strong><p>L'épisode a sa propre page, son lecteur et rejoint la discothèque.</p></li>
       </ol>
     </div>
   </section>
 
-  <section id="souverainete">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <div>
-          <span class="vk-label">Fiche technique</span>
-          <h2 class="display">Émis depuis l'Europe</h2>
-          <p>Vokso reste indépendant des grands acteurs non européens du cloud et de l'IA.</p>
+<section class="bulletin" id="bulletin" aria-labelledby="bulletin-title">
+  <div class="wrap">
+    <div class="bulletin-card reveal">
+      <div>
+        <span class="bulletin-kicker">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16v10H4z"/><path d="m4 7 8 6 8-6"/></svg>
+          Le bulletin Vokso
+        </span>
+        <h2 class="display" id="bulletin-title">Restez<br>à l'écoute.</h2>
+        <p>Un e-mail quand Vokso s'enrichit : une nouvelle voix, un nouveau format d'épisode, une nouvelle fonctionnalité. Rien d'autre.</p>
+        <ul class="bulletin-points">
+          <li>Les nouveautés avant tout le monde</li>
+          <li>Aucune publicité, aucun partage de votre adresse</li>
+          <li>Une adresse suffit, aucun compte à créer</li>
+        </ul>
+      </div>
+      <form class="bulletin-form" id="bulletin-form" novalidate>
+        <label class="bulletin-label" for="bulletin-email">Votre adresse e-mail</label>
+        <div class="bulletin-field">
+          <input type="email" id="bulletin-email" name="email" placeholder="vous@exemple.fr" autocomplete="email" required>
+          <button type="submit" class="vk-btn">Je m'abonne</button>
         </div>
-      </div>
-      <div class="specs">
-        <div class="spec reveal"><span class="vk-label">Hébergement</span><h3>Serveurs dans l'Union européenne</h3><p>Textes, images et audios sont générés et stockés sur une infrastructure soumise au droit européen.</p></div>
-        <div class="spec reveal"><span class="vk-label">Modèles</span><h3>IA française</h3><p>Texte, image, voix et transcription passent par Mistral AI, traitement dans l'Union européenne.</p></div>
-        <div class="spec reveal"><span class="vk-label">Données</span><h3>Rien n'est revendu</h3><p>Vos sujets ne servent jamais à entraîner un modèle tiers ni à de la publicité. Pas de compte, pas de traceur.</p></div>
-        <div class="spec reveal"><span class="vk-label">Conformité</span><h3>RGPD par construction</h3><p>Minimisation des données collectées : seule l'adresse IP est conservée, quelques heures, pour limiter les abus.</p></div>
-      </div>
+        <!-- Piège à robots : masqué visuellement et aux lecteurs d'écran, jamais rempli par un humain. -->
+        <div class="vk-honeypot" aria-hidden="true">
+          <label for="bulletin-website">Site web</label>
+          <input type="text" id="bulletin-website" name="website" tabindex="-1" autocomplete="off">
+        </div>
+        <p class="bulletin-note">Votre adresse sert uniquement à ce bulletin. Voir la <a href="/app/politique-de-confidentialite">politique de confidentialité</a>.</p>
+        <p class="bulletin-msg" id="bulletin-msg" role="status"></p>
+      </form>
     </div>
-  </section>
-
-  <section id="essayer">
-    <div class="wrap">
-      <div class="signoff reveal">
-        <div>
-          <span class="vk-onair">Micro ouvert</span>
-          <h2 class="display" style="margin-top:1.2rem">Votre émission,<br>dans une minute.</h2>
-          <p>Choisissez un sujet, Vokso s'occupe du reste. Gratuit et sans inscription.</p>
-          <a class="vk-btn vk-btn-signal" href="/app/">Créer mon épisode</a>
-        </div>
-        <div class="newsletter" id="newsletter">
-          <h3>Restez à l'écoute</h3>
-          <p style="margin:0">Un mail quand un nouveau mode ou une nouvelle voix arrive. Rien d'autre.</p>
-          <form class="newsletter-form" id="newsletter-form" novalidate>
-            <label for="newsletter-email" class="vk-label" style="position:absolute;left:-9999px">Adresse e-mail</label>
-            <input type="email" id="newsletter-email" name="email" placeholder="vous@exemple.fr" required>
-            <button type="submit" class="vk-btn">S'inscrire</button>
-            <!-- Piège à robots : masqué visuellement et aux lecteurs d'écran, jamais rempli par un humain. -->
-            <div aria-hidden="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
-              <label for="newsletter-website">Site web</label>
-              <input type="text" id="newsletter-website" name="website" tabindex="-1" autocomplete="off">
-            </div>
-          </form>
-          <p class="newsletter-msg" id="newsletter-msg" role="status"></p>
-        </div>
-      </div>
-    </div>
-  </section>
+  </div>
+</section>
 </main>
 
-<footer class="site">
+<footer class="site-footer">
   <div class="wrap">
-    <span>© <span id="year">2026</span> Vokso — podcasts générés par IA, hébergés en Europe.</span>
-    <nav aria-label="Liens de pied de page">
-      <a href="/app/contact">Contact</a>
-      <a href="/app/politique-de-confidentialite">Confidentialité</a>
-      <a href="/app/admin">Administration</a>
-    </nav>
+    <div class="site-footer-top">
+      <div class="site-footer-about">
+        <a class="site-brand" href="/" aria-label="Vokso, accueil">
+          <span class="site-brand-mark" aria-hidden="true">
+            <svg viewBox="218 312 588 382" fill="currentColor">
+              <rect x="258" y="432" width="52" height="160" rx="26" />
+              <rect x="336" y="352" width="52" height="320" rx="26" />
+              <rect x="414" y="402" width="52" height="220" rx="26" />
+              <rect x="500" y="362" width="266" height="52" rx="26" opacity="0.55" />
+              <rect x="500" y="442" width="200" height="52" rx="26" opacity="0.55" />
+              <rect x="500" y="522" width="266" height="52" rx="26" opacity="0.55" />
+              <rect x="500" y="602" width="160" height="52" rx="26" opacity="0.55" />
+            </svg>
+          </span>
+          Vokso
+        </a>
+        <p class="site-footer-pitch">Un sujet en une phrase, un podcast complet en retour : texte, pochette et voix générés par IA, sur une infrastructure européenne.</p>
+        <div class="site-footer-badges"><span>Gratuit</span><span>Sans inscription</span><span>Hébergé en Europe</span></div>
+      </div>
+      <nav class="site-footer-col" aria-label="Écouter">
+        <p class="site-footer-title">Écouter</p>
+        <ul>
+          <li><a href="/#selection">Sélection du jour</a></li>
+          <li><a href="/discotheque">Toute la discothèque</a></li>
+          <li><a href="/discotheque#categories">Par catégorie</a></li>
+        </ul>
+      </nav>
+      <nav class="site-footer-col" aria-label="Créer">
+        <p class="site-footer-title">Créer</p>
+        <ul>
+          <li><a href="/#creer">Générer un épisode</a></li>
+          <li><a href="/comment-ca-marche">Comment ça marche ?</a></li>
+          <li><a href="/comment-ca-marche#souverainete">Souveraineté et données</a></li>
+        </ul>
+      </nav>
+      <nav class="site-footer-col" aria-label="Vokso">
+        <p class="site-footer-title">Vokso</p>
+        <ul>
+          <li><a href="/app/contact">Contact</a></li>
+          <li><a href="/app/politique-de-confidentialite">Confidentialité</a></li>
+          <li><a href="/app/admin">Administration</a></li>
+        </ul>
+      </nav>
+    </div>
+    <p class="site-footer-wordmark" aria-hidden="true">Vokso</p>
+    <div class="site-footer-bottom">
+      <p>© <span data-year>2026</span> Vokso — podcasts générés par IA, hébergés en Europe.</p>
+      <p>Texte, image et voix : Mistral AI · Émis depuis l'Union européenne</p>
+    </div>
   </div>
 </footer>
 
 <div class="deck" id="deck" aria-label="Lecteur">
   <img id="deck-img" alt="">
   <button class="vk-play" id="deck-play" type="button" aria-pressed="false" aria-label="Lecture">
-    <svg class="i-play"><use href="#i-play"/></svg><svg class="i-pause"><use href="#i-pause"/></svg>
+    <svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11a.5.5 0 0 0 .77.42l8.5-5.5a.5.5 0 0 0 0-.84l-8.5-5.5A.5.5 0 0 0 4 2.5z" fill="currentColor"/></svg>
+    <svg class="i-pause" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.6" height="12" rx="1" fill="currentColor"/><rect x="9.4" y="2" width="3.6" height="12" rx="1" fill="currentColor"/></svg>
   </button>
   <div style="min-width:0">
     <div class="deck-title" id="deck-title"></div>
@@ -494,53 +483,14 @@
   <span class="deck-time" id="deck-time">0:00</span>
 </div>
 
+<script src="/assets/site.js?v=20261004"></script>
 <script>
 (function () {
   'use strict';
 
-  var SELECTION_SIZE = 6;
-  var STATIC = '/static';
+  var V = window.Vokso;
   var $ = function (id) { return document.getElementById(id); };
-
-  document.getElementById('year').textContent = new Date().getFullYear();
-
-  // ---- Utilitaires (mêmes règles que webserver/src/utils/text.ts) ----------
-  function cleanTitle(t) {
-    return (t || '').replace(/(\*\*|__)(.*?)\1/g, '$2').replace(/[*_`#]/g, '').replace(/\s+/g, ' ').trim();
-  }
-  function slugify(t) {
-    return (t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
-  }
-  function episodeUrl(ep) {
-    var slug = slugify(ep.title);
-    return '/podcast/' + ep.id + (slug ? '-' + slug : '');
-  }
-  function fmt(sec) {
-    if (!isFinite(sec)) return '';
-    var m = Math.floor(sec / 60), s = Math.floor(sec % 60);
-    return m + ':' + (s < 10 ? '0' : '') + s;
-  }
-  function el(tag, cls, text) {
-    var n = document.createElement(tag);
-    if (cls) n.className = cls;
-    if (text != null) n.textContent = text;
-    return n;
-  }
-  function playButton(label) {
-    var b = el('button', 'vk-play');
-    b.type = 'button';
-    b.setAttribute('aria-pressed', 'false');
-    b.setAttribute('aria-label', label);
-    b.innerHTML = '<svg class="i-play"><use href="#i-play"/></svg><svg class="i-pause"><use href="#i-pause"/></svg>';
-    return b;
-  }
-  function meter() {
-    var m = el('span', 'vk-meter');
-    m.setAttribute('aria-hidden', 'true');
-    m.innerHTML = '<i></i><i></i><i></i><i></i>';
-    return m;
-  }
+  var SELECTION_SIZE = 6;
 
   // Tirage déterministe par date : tout le monde voit la même sélection
   // dans la journée, et elle change chaque jour.
@@ -561,74 +511,26 @@
     return a.slice(0, n);
   }
 
-  // ---- Lecteur unique -----------------------------------------------------
-  var audio = new Audio();
-  audio.preload = 'none';
-  var current = null;
-  var deck = $('deck');
-
-  function syncButtons() {
-    var playing = !audio.paused;
-    document.querySelectorAll('[data-ep]').forEach(function (node) {
-      var on = current && node.getAttribute('data-ep') === current.id && playing;
-      node.classList.toggle('is-playing', !!on);
-      var btn = node.matches('.vk-play') ? node : node.querySelector('.vk-play');
-      if (btn) btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
-    $('deck-play').setAttribute('aria-pressed', playing ? 'true' : 'false');
-    deck.classList.toggle('is-playing', playing);
-  }
-
-  function toggle(ep) {
-    if (current && current.id === ep.id) {
-      if (audio.paused) audio.play(); else audio.pause();
-      return;
-    }
-    current = ep;
-    audio.src = STATIC + '/audios/' + ep.audio_url;
-    audio.play();
-    $('deck-img').src = STATIC + '/images/' + ep.image_url;
-    $('deck-title').textContent = cleanTitle(ep.title);
-    deck.classList.add('is-visible');
-  }
-
-  audio.addEventListener('play', syncButtons);
-  audio.addEventListener('pause', syncButtons);
-  audio.addEventListener('ended', syncButtons);
-  audio.addEventListener('timeupdate', function () {
-    var pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
-    $('deck-progress').style.width = pct + '%';
-    $('deck-bar').setAttribute('aria-valuenow', Math.round(pct));
-    $('deck-time').textContent = fmt(audio.currentTime) + ' / ' + (fmt(audio.duration) || '–');
-  });
-  $('deck-play').addEventListener('click', function () { if (current) toggle(current); });
-  $('deck-bar').addEventListener('click', function (e) {
-    if (!audio.duration) return;
-    var r = this.getBoundingClientRect();
-    audio.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * audio.duration;
-  });
-  $('deck-bar').addEventListener('keydown', function (e) {
-    if (!audio.duration) return;
-    if (e.key === 'ArrowRight') audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
-    if (e.key === 'ArrowLeft') audio.currentTime = Math.max(0, audio.currentTime - 10);
-  });
-
   // ---- Poste (ouverture) --------------------------------------------------
   var station = 0;
+  var tunerPlay = V.playButton('Écouter');
+  tunerPlay.id = 'tuner-play';
+  $('tuner-play-slot').replaceWith(tunerPlay);
+
   function tune(selection, i, animate) {
     station = i;
     var ep = selection[i];
     var tuner = $('tuner');
     var apply = function () {
-      $('tuner-img').src = STATIC + '/images/' + ep.image_url;
-      $('tuner-title').textContent = cleanTitle(ep.title);
-      $('tuner-title').href = episodeUrl(ep);
+      $('tuner-img').src = V.image(ep);
+      $('tuner-title').textContent = V.cleanTitle(ep.title);
+      $('tuner-title').href = V.episodeUrl(ep);
       $('tuner-cat').textContent = ep.category || 'Épisode';
-      $('tuner-play').setAttribute('data-ep', ep.id);
-      $('tuner-play').setAttribute('aria-label', 'Écouter « ' + cleanTitle(ep.title) + ' »');
+      tunerPlay.setAttribute('data-ep', ep.id);
+      tunerPlay.setAttribute('aria-label', 'Écouter « ' + V.cleanTitle(ep.title) + ' »');
       tuner.setAttribute('data-ep', ep.id);
       tuner.classList.remove('is-switching');
-      syncButtons();
+      V.syncButtons();
     };
     var pos = (i + 0.5) / selection.length;
     $('dial-needle').style.left = 'calc(0.8rem + (100% - 1.6rem) * ' + pos + ')';
@@ -640,67 +542,23 @@
     $('tuner-empty').hidden = true;
     $('tuner-body').hidden = false;
     tune(selection, 0, false);
-    $('tuner-play').addEventListener('click', function () { toggle(selection[station]); });
+    tunerPlay.addEventListener('click', function () { V.toggle(selection[station]); });
     $('tuner-next').addEventListener('click', function () {
       var next = (station + 1) % selection.length;
-      var wasPlaying = !audio.paused && current && current.id === selection[station].id;
+      var wasPlaying = V.isPlaying(selection[station]);
       tune(selection, next, true);
-      if (wasPlaying) toggle(selection[next]);
+      if (wasPlaying) V.toggle(selection[next]);
     });
   }
 
-  // ---- Sélection du jour ----------------------------------------------------
   function renderCrate(selection) {
     var crate = $('crate');
     crate.textContent = '';
     selection.forEach(function (ep, i) {
-      var card = el('article', 'sleeve reveal');
-      card.setAttribute('data-ep', ep.id);
-      card.style.transitionDelay = (i % 3) * 90 + 'ms';
-
-      var art = el('div', 'sleeve-art');
-      var vinyl = el('div', 'vinyl');
-      vinyl.setAttribute('aria-hidden', 'true');
-      vinyl.style.setProperty('--cover', 'url("' + STATIC + '/images/' + ep.image_url + '")');
-      var cover = el('div', 'sleeve-cover');
-      var img = el('img');
-      img.src = STATIC + '/images/' + ep.image_url;
-      img.alt = '';
-      img.loading = 'lazy';
-      img.width = 400; img.height = 400;
-      var btn = playButton('Écouter « ' + cleanTitle(ep.title) + ' »');
-      btn.addEventListener('click', function () { toggle(ep); });
-      cover.appendChild(img);
-      cover.appendChild(btn);
-      art.appendChild(vinyl);
-      art.appendChild(cover);
-
-      var meta = el('div', 'sleeve-meta');
-      var cat = el('span', 'vk-label', (i + 1 < 10 ? '0' : '') + (i + 1) + ' · ' + (ep.category || 'Épisode'));
-      var dur = el('span', 'vk-label', '');
-      meta.appendChild(cat);
-      var right = el('span');
-      right.appendChild(dur);
-      right.appendChild(meter());
-      meta.appendChild(right);
-
-      var h3 = el('h3');
-      var a = el('a', null, cleanTitle(ep.title) || 'Sans titre');
-      a.href = episodeUrl(ep);
-      h3.appendChild(a);
-
-      card.appendChild(art);
-      card.appendChild(meta);
-      card.appendChild(h3);
-      crate.appendChild(card);
-
-      // Durée affichée sans télécharger le fichier : métadonnées seules.
-      var probe = new Audio();
-      probe.preload = 'metadata';
-      probe.addEventListener('loadedmetadata', function () { dur.textContent = fmt(probe.duration); });
-      probe.src = STATIC + '/audios/' + ep.audio_url;
+      var label = (i + 1 < 10 ? '0' : '') + (i + 1) + ' · ' + (ep.category || 'Épisode');
+      crate.appendChild(V.sleeve(ep, label, (i % 3) * 90));
     });
-    observeReveals();
+    V.observeReveals();
   }
 
   function showDate() {
@@ -720,50 +578,197 @@
     })
     .catch(function () {
       $('tuner-empty').textContent = 'Le signal ne passe pas pour le moment. Réessayez dans un instant.';
-      $('crate').innerHTML = '';
-      $('crate').appendChild(el('p', 'crate-empty', 'La sélection du jour est momentanément indisponible.'));
+      $('crate').textContent = '';
+      $('crate').appendChild(V.el('p', 'crate-empty', 'La sélection du jour est momentanément indisponible.'));
     });
 
-  // ---- Apparitions au défilement ------------------------------------------
-  var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
-    });
-  }, { rootMargin: '0px 0px -8% 0px' }) : null;
-  function observeReveals() {
-    document.querySelectorAll('.reveal:not(.in)').forEach(function (n) {
-      if (io) io.observe(n); else n.classList.add('in');
-    });
-  }
-  observeReveals();
-
-  // ---- Newsletter -----------------------------------------------------------
-  $('newsletter-form').addEventListener('submit', async function (e) {
-    e.preventDefault();
-    var email = $('newsletter-email').value.trim();
-    var website = $('newsletter-website').value.trim();
-    var msg = $('newsletter-msg');
-    msg.className = 'newsletter-msg';
-    msg.textContent = 'Envoi en cours…';
-    try {
-      var res = await fetch('/api/newsletter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, website: website })
+  // ---- Rayons (catégories) ---------------------------------------------------
+  fetch('/api/categories')
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+    .then(function (data) {
+      var cats = (data && data.data) || [];
+      if (cats.length < 2) return;
+      var shelves = $('shelves');
+      cats.slice(0, 8).forEach(function (cat, i) {
+        var a = V.el('a', 'shelf reveal');
+        a.href = '/discotheque?categorie=' + encodeURIComponent(cat.label);
+        a.style.transitionDelay = (i % 4) * 70 + 'ms';
+        if (cat.cover_image) a.style.backgroundImage = 'url("' + V.STATIC + '/images/' + cat.cover_image + '")';
+        a.appendChild(V.el('strong', null, cat.label));
+        var n = Number(cat.podcast_count) || 0;
+        a.appendChild(V.el('span', null, n + (n > 1 ? ' épisodes' : ' épisode')));
+        shelves.appendChild(a);
       });
-      var data = await res.json().catch(function () { return {}; });
-      if (res.ok) {
-        msg.className = 'newsletter-msg ok';
-        msg.textContent = data.message || 'Inscription confirmée, vérifiez vos mails.';
-        e.target.reset();
-      } else {
-        msg.className = 'newsletter-msg err';
-        msg.textContent = data.message || "L'inscription a échoué, réessayez.";
-      }
-    } catch (err) {
-      msg.className = 'newsletter-msg err';
-      msg.textContent = "L'inscription a échoué, réessayez.";
+      $('categories').hidden = false;
+      V.observeReveals();
+    })
+    .catch(function () { /* Rayons facultatifs : la page reste utilisable sans. */ });
+
+  // ---- Studio : création d'un épisode -------------------------------------
+  var mode = 'text';
+  var recorder = null, chunks = [], recorded = null, recTimer = null, recStart = 0;
+  var MAX_REC_MS = 120000;
+  var STEP_ORDER = ['queued', 'transcription', 'text', 'media', 'finalizing', 'done'];
+
+  function setError(msg) { $('studio-error').textContent = msg || ''; }
+
+  function selectMode(next) {
+    mode = next;
+    $('tab-text').setAttribute('aria-selected', next === 'text' ? 'true' : 'false');
+    $('tab-audio').setAttribute('aria-selected', next === 'audio' ? 'true' : 'false');
+    $('panel-text').hidden = next !== 'text';
+    $('panel-audio').hidden = next !== 'audio';
+    setError('');
+  }
+  $('tab-text').addEventListener('click', function () { selectMode('text'); });
+  $('tab-audio').addEventListener('click', function () { selectMode('audio'); });
+
+  document.querySelectorAll('.studio-ideas button').forEach(function (b) {
+    b.addEventListener('click', function () { $('studio-subject').value = b.textContent; $('studio-subject').focus(); });
+  });
+
+  // Lien direct /#creer : place le curseur dans le champ.
+  if (location.hash === '#creer') setTimeout(function () { $('studio-subject').focus({ preventScroll: true }); }, 400);
+  document.querySelectorAll('a[href="/#creer"]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      $('creer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.replaceState(null, '', '#creer');
+      setTimeout(function () { if (mode === 'text') $('studio-subject').focus({ preventScroll: true }); }, 450);
+    });
+  });
+
+  function extensionFor(type) {
+    if (/ogg/.test(type)) return 'ogg';
+    if (/mp4|m4a|aac/.test(type)) return 'm4a';
+    return 'webm';
+  }
+
+  function stopRecording() {
+    if (recorder && recorder.state !== 'inactive') recorder.stop();
+  }
+
+  $('rec-btn').addEventListener('click', function () {
+    setError('');
+    if (recorder && recorder.state === 'recording') { stopRecording(); return; }
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      setError("Votre navigateur ne permet pas l'enregistrement : écrivez plutôt votre sujet.");
+      return;
     }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      chunks = [];
+      recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = function (e) { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = function () {
+        clearInterval(recTimer);
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        var type = recorder.mimeType || 'audio/webm';
+        recorded = new File([new Blob(chunks, { type: type })], 'message-' + Date.now() + '.' + extensionFor(type), { type: type });
+        $('rec-preview').src = URL.createObjectURL(recorded);
+        $('rec-ready').hidden = false;
+        $('rec-btn').classList.remove('is-recording');
+        $('rec-btn').setAttribute('aria-label', "Recommencer l'enregistrement");
+        $('rec-status').textContent = 'Message enregistré. Réécoutez-le, puis lancez la création — ou appuyez à nouveau pour recommencer.';
+      };
+      recorder.start();
+      recStart = Date.now();
+      $('rec-ready').hidden = true;
+      $('rec-btn').classList.add('is-recording');
+      $('rec-btn').setAttribute('aria-label', "Arrêter l'enregistrement");
+      $('rec-status').innerHTML = 'Enregistrement… <strong id="rec-time">0:00</strong> — appuyez à nouveau pour arrêter.';
+      recTimer = setInterval(function () {
+        var ms = Date.now() - recStart;
+        var t = $('rec-time');
+        if (t) t.textContent = V.fmt(ms / 1000);
+        if (ms >= MAX_REC_MS) stopRecording();
+      }, 250);
+    }).catch(function () {
+      setError("Impossible d'accéder au micro. Autorisez-le dans votre navigateur, ou écrivez plutôt votre sujet.");
+    });
+  });
+
+  function showProgress(step, progress) {
+    $('studio-progress').hidden = false;
+    var idx = STEP_ORDER.indexOf(step);
+    document.querySelectorAll('.studio-progress li').forEach(function (li) {
+      var i = STEP_ORDER.indexOf(li.getAttribute('data-step'));
+      li.classList.toggle('is-active', i === idx || (idx <= 0 && i === STEP_ORDER.indexOf(mode === 'audio' ? 'transcription' : 'text')));
+      li.classList.toggle('is-done', idx > i);
+    });
+    $('studio-bar').style.width = Math.max(4, progress || 0) + '%';
+  }
+
+  function resetStudio() {
+    $('studio-form').hidden = false;
+    $('studio-progress').hidden = true;
+    $('studio-result').hidden = true;
+    document.querySelector('.studio-tabs').hidden = false;
+  }
+
+  function showResult(job) {
+    var ep = { id: job.generation_id, title: job.title, image_url: job.image, audio_url: job.audio };
+    $('studio-progress').hidden = true;
+    $('studio-result').hidden = false;
+    $('studio-result').setAttribute('data-ep', ep.id);
+    $('result-img').src = V.image(ep);
+    $('result-title').textContent = V.cleanTitle(ep.title) || 'Votre épisode';
+    $('result-link').href = V.episodeUrl(ep);
+    var slot = $('result-play');
+    slot.textContent = '';
+    var btn = V.playButton('Écouter votre épisode');
+    btn.addEventListener('click', function () { V.toggle(ep); });
+    slot.appendChild(btn);
+    V.syncButtons();
+  }
+
+  function poll(jobId) {
+    var failures = 0;
+    var timer = setInterval(function () {
+      fetch('/api/generation-status?id=' + encodeURIComponent(jobId))
+        .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Suivi impossible'); return d; }); })
+        .then(function (job) {
+          failures = 0;
+          showProgress(job.step, job.progress);
+          if (job.status === 'done') { clearInterval(timer); showResult(job); }
+          else if (job.status === 'error') { clearInterval(timer); resetStudio(); setError(job.error || 'La création a échoué. Réessayez dans un instant.'); }
+        })
+        .catch(function (err) {
+          if (++failures >= 3) { clearInterval(timer); resetStudio(); setError(err.message || 'La connexion a été perdue.'); }
+        });
+    }, 2000);
+  }
+
+  $('studio-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    setError('');
+    var request;
+    if (mode === 'text') {
+      var subject = $('studio-subject').value.trim();
+      if (!subject) { setError('Indiquez un sujet pour votre épisode.'); $('studio-subject').focus(); return; }
+      request = fetch('/api/generation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ input: subject }) });
+    } else {
+      if (!recorded) { setError('Enregistrez d\'abord votre message vocal.'); return; }
+      var fd = new FormData();
+      fd.append('audio', recorded);
+      request = fetch('/api/generation-audio', { method: 'POST', body: fd });
+    }
+    $('studio-form').hidden = true;
+    document.querySelector('.studio-tabs').hidden = true;
+    $('studio-progress').querySelector('[data-step="transcription"]').hidden = mode !== 'audio';
+    showProgress('queued', 0);
+    request
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || 'La création a échoué.'); return d; }); })
+      .then(function (d) { poll(d.job_id); })
+      .catch(function (err) { resetStudio(); setError(err.message); });
+  });
+
+  $('result-again').addEventListener('click', function () {
+    $('studio-subject').value = '';
+    recorded = null;
+    $('rec-ready').hidden = true;
+    $('rec-status').textContent = 'Appuyez sur le bouton et dites votre sujet en une ou deux phrases (2 minutes maximum).';
+    resetStudio();
+    if (mode === 'text') $('studio-subject').focus();
   });
 })();
 </script>

@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <!-- Design system « studio radio » : marque crème sur le rouge « ON AIR ». -->
-  <rect width="1024" height="1024" rx="200" fill="#d93a22" />
-  <g fill="#fbf8f2" transform="translate(512 512) scale(1.18) translate(-512 -512)">
+  <!-- Design system « studio radio » : marque encre sur le jaune « ON AIR ». -->
+  <rect width="1024" height="1024" rx="200" fill="#f5c400" />
+  <g fill="#17140f" transform="translate(512 512) scale(1.18) translate(-512 -512)">
     <rect x="258" y="432" width="52" height="160" rx="26" />
     <rect x="336" y="352" width="52" height="320" rx="26" />
     <rect x="414" y="402" width="52" height="220" rx="26" />
