@@ -89,8 +89,8 @@
     border-bottom: 1px solid var(--vk-line);
   }
   header.site .wrap { display: flex; align-items: center; gap: 1.5rem; padding: 0.8rem 0; }
-  .brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; font-weight: 800; font-size: 1.15rem; font-stretch: 85%; letter-spacing: 0.02em; text-transform: uppercase; }
-  .brand svg { width: 30px; height: 20px; color: var(--vk-signal); }
+  .brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; font-weight: 800; font-size: 1.45rem; font-stretch: 85%; letter-spacing: 0.02em; text-transform: uppercase; }
+  .brand svg { width: 52px; height: 34px; color: var(--vk-signal); }
   nav.site { display: flex; align-items: center; gap: 1.4rem; margin-left: auto; }
   nav.site a:not(.vk-btn) { text-decoration: none; font-size: 0.92rem; font-weight: 500; color: var(--vk-ink-2); }
   nav.site a:not(.vk-btn):hover { color: var(--vk-ink); }
@@ -167,14 +167,6 @@
   .tuner.is-switching .tuner-cover img, .tuner.is-switching .tuner-title { opacity: 0.2; }
   .tuner-title { transition: opacity 0.35s ease; }
   .tuner-empty { padding: 1rem 0; color: color-mix(in srgb, var(--vk-on-console) 70%, transparent); }
-
-  /* ---- Bandeau défilant ------------------------------------------------- */
-  .ticker { background: var(--vk-ink); color: var(--vk-paper); overflow: hidden; border-block: 1px solid var(--vk-ink); }
-  .ticker-track { display: flex; width: max-content; animation: ticker 70s linear infinite; }
-  .ticker:hover .ticker-track { animation-play-state: paused; }
-  .ticker-track span { padding: 0.7rem 1.4rem; white-space: nowrap; font-family: var(--vk-mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; }
-  .ticker-track span::before { content: "●"; color: var(--vk-signal); margin-right: 1.4rem; font-size: 0.6rem; vertical-align: 0.15em; }
-  @keyframes ticker { to { transform: translateX(-50%); } }
 
   /* ---- Sections --------------------------------------------------------- */
   section { padding: 5rem 0; }
@@ -312,7 +304,6 @@
   }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
-    .ticker-track { animation: none; }
     .js .hero h1 .line > span { transform: none; }
     .js .reveal { opacity: 1; transform: none; }
   }
@@ -398,8 +389,6 @@
       <p class="tuner-empty" id="tuner-empty">Réglage de la fréquence…</p>
     </aside>
   </div>
-
-  <div class="ticker" aria-hidden="true" hidden id="ticker"><div class="ticker-track" id="ticker-track"></div></div>
 
   <section id="selection">
     <div class="wrap">
@@ -714,14 +703,6 @@
     observeReveals();
   }
 
-  function renderTicker(episodes) {
-    var track = $('ticker-track');
-    var titles = episodes.map(function (ep) { return cleanTitle(ep.title); }).filter(Boolean);
-    // Deux copies pour une boucle sans à-coup (translateX -50 %).
-    titles.concat(titles).forEach(function (t) { track.appendChild(el('span', null, t)); });
-    $('ticker').hidden = false;
-  }
-
   function showDate() {
     var label = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
     $('selection-date').textContent = 'Programme du ' + label;
@@ -736,7 +717,6 @@
       showDate();
       renderTuner(selection);
       renderCrate(selection);
-      renderTicker(episodes);
     })
     .catch(function () {
       $('tuner-empty').textContent = 'Le signal ne passe pas pour le moment. Réessayez dans un instant.';
