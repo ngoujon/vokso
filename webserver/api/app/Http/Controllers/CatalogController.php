@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\EpisodeText;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -67,6 +68,14 @@ class CatalogController extends Controller
             ->orderBy('c.label')
             ->get(['c.idcategorie as id', 'c.label', 'c.icon', 'c.cover_image', DB::raw('COUNT(g.id) as podcast_count')]);
 
+        // Lien vers la page de la catégorie (/discotheque/{slug}), rendue côté serveur.
+        $results = $results->map(function ($row) {
+            $row->slug = EpisodeText::slugify((string) $row->label);
+            $row->url = EpisodeText::categoryPath((string) $row->label);
+
+            return $row;
+        });
+
         return response()->json(['success' => true, 'data' => $results]);
     }
 
@@ -77,7 +86,7 @@ class CatalogController extends Controller
             ->where('g.statut', 'on')
             ->orderByDesc('g.created_at')
             ->select([
-                'g.generation_id as id', 'g.title', 'g.text_content as description',
+                'g.generation_id as id', 'g.slug', 'g.title', 'g.text_content as description',
                 'g.image_url', 'g.audio_url', 'g.created_at',
                 'c.label as category', 'c.icon as category_icon',
             ]);

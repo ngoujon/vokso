@@ -483,7 +483,7 @@
   <span class="deck-time" id="deck-time">0:00</span>
 </div>
 
-<script src="/assets/site.js?v=20261004"></script>
+<script src="/assets/site.js?v=20261004s"></script>
 <script>
 (function () {
   'use strict';
@@ -591,7 +591,7 @@
       var shelves = $('shelves');
       cats.slice(0, 8).forEach(function (cat, i) {
         var a = V.el('a', 'shelf reveal');
-        a.href = '/discotheque?categorie=' + encodeURIComponent(cat.label);
+        a.href = cat.url || '/discotheque?categorie=' + encodeURIComponent(cat.label);
         a.style.transitionDelay = (i % 4) * 70 + 'ms';
         if (cat.cover_image) a.style.backgroundImage = 'url("' + V.STATIC + '/images/' + cat.cover_image + '")';
         a.appendChild(V.el('strong', null, cat.label));
@@ -706,7 +706,7 @@
   }
 
   function showResult(job) {
-    var ep = { id: job.generation_id, title: job.title, image_url: job.image, audio_url: job.audio };
+    var ep = { id: job.generation_id, slug: job.slug, title: job.title, image_url: job.image, audio_url: job.audio };
     $('studio-progress').hidden = true;
     $('studio-result').hidden = false;
     $('studio-result').setAttribute('data-ep', ep.id);

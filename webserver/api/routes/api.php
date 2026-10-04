@@ -3,10 +3,12 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\CategoryPageController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\GdprController;
 use App\Http\Controllers\GenerationController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LlmsController;
 use App\Http\Controllers\N8nController;
 use App\Http\Controllers\PodcastPageController;
 use App\Http\Controllers\SitemapController;
@@ -47,6 +49,9 @@ Route::middleware('n8n')->group(function () {
 
 // Pages rendues côté serveur (SEO), réécrites par site/.htaccess.
 Route::get('podcast/{path}', [PodcastPageController::class, 'show'])->where('path', '.*');
+Route::get('discotheque/{slug}', [CategoryPageController::class, 'show'])->where('slug', '[a-z0-9-]+');
+Route::get('llms-full', [LlmsController::class, 'full']);
+Route::get('llms-full.txt', [LlmsController::class, 'full']);
 Route::get('sitemap', [SitemapController::class, 'show']);
 // Réécritures [PT] de site/.htaccess : Laravel voit alors le chemin d'origine.
 Route::get('sitemap.xml', [SitemapController::class, 'show']);

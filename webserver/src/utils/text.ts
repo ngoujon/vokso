@@ -26,7 +26,12 @@ export function slugify(text: string | null | undefined): string {
     .slice(0, 80);
 }
 
-export function episodePath(id: string, title: string | null | undefined): string {
+// URL lisible /podcast/{slug} renvoyée par l'API ; repli sur l'ancienne forme
+// /podcast/{id}-{titre} (redirigée en 301 par l'API) pour un épisode sans slug.
+export function episodePath(id: string, title: string | null | undefined, apiSlug?: string | null): string {
+  if (apiSlug) {
+    return `/podcast/${apiSlug}`;
+  }
   const slug = slugify(cleanTitle(title));
   return `/podcast/${id}${slug ? `-${slug}` : ''}`;
 }

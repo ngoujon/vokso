@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GenerationJob;
+use App\Support\EpisodeText;
 use App\Support\GenerationLimits;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -109,7 +110,7 @@ class GenerationController extends Controller
         $row = DB::table('generation_jobs as j')
             ->leftJoin('generations as g', 'g.generation_id', '=', 'j.generation_id')
             ->where('j.job_id', $jobId)
-            ->first(['j.status', 'j.step', 'j.progress', 'j.error_message', 'j.generation_id', 'g.title', 'g.image_url', 'g.audio_url']);
+            ->first(['j.status', 'j.step', 'j.progress', 'j.error_message', 'j.generation_id', 'g.slug', 'g.title', 'g.image_url', 'g.audio_url']);
 
         if (! $row) {
             return $this->error('Suivi introuvable', 404);
@@ -121,6 +122,8 @@ class GenerationController extends Controller
             'progress' => (int) $row->progress,
             'error' => $row->error_message,
             'generation_id' => $row->generation_id,
+            'slug' => $row->slug,
+            'url' => $row->generation_id ? EpisodeText::episodePath($row->slug, $row->generation_id, (string) $row->title) : null,
             'title' => $row->title,
             'image' => $row->image_url,
             'audio' => $row->audio_url,

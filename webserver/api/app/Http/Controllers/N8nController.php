@@ -53,7 +53,7 @@ class N8nController extends GenerationController
             ->leftJoin('generations as g', 'g.generation_id', '=', 'j.generation_id')
             ->leftJoin('categorie as c', 'c.idcategorie', '=', 'g.idcategorie')
             ->where('j.job_id', $jobId)
-            ->first(['j.status', 'j.step', 'j.progress', 'j.error_message', 'j.input', 'j.generation_id', 'g.title', 'g.image_url', 'g.audio_url', 'c.label as category']);
+            ->first(['j.status', 'j.step', 'j.progress', 'j.error_message', 'j.input', 'j.generation_id', 'g.slug', 'g.title', 'g.image_url', 'g.audio_url', 'c.label as category']);
 
         if (! $row) {
             return $this->error('Suivi introuvable', 404);
@@ -67,7 +67,7 @@ class N8nController extends GenerationController
                 'id' => $row->generation_id,
                 'title' => $title,
                 'category' => $row->category,
-                'url' => EpisodeText::episodeUrl($base, $row->generation_id, $title),
+                'url' => EpisodeText::episodeUrl($base, $row->slug, $row->generation_id, $title),
                 'image_url' => $row->image_url ? $base.'/static/images/'.rawurlencode((string) $row->image_url) : null,
                 'audio_url' => $row->audio_url ? $base.'/static/audios/'.rawurlencode((string) $row->audio_url) : null,
             ];

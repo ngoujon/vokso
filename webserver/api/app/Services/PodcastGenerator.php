@@ -8,6 +8,8 @@ use App\Models\GenerationJob;
 use App\Models\Prompt;
 use App\Services\Ai\AiProviderFactory;
 use App\Support\CostEstimator;
+use App\Support\EpisodeSlug;
+use App\Support\EpisodeText;
 use Exception;
 use GuzzleHttp\Promise\Utils as PromiseUtils;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +22,12 @@ use Illuminate\Support\Facades\Log;
  */
 class PodcastGenerator
 {
+    /** Rubriques de la discothèque (liste fermée, une page thématique chacune). */
+    public const RUBRIQUES = [
+        'Sciences', 'Espace', 'Nature et environnement', 'Histoire', 'Société',
+        'Culture et arts', 'Technologie', 'Santé', 'Gastronomie', 'Sport',
+    ];
+
     private const MAX_INPUT_LENGTH = 300;
 
     // Un prompt trop long (texte intégral du podcast) noie le sujet visuel
@@ -261,6 +269,16 @@ class PodcastGenerator
 
     private function sanitizeCategory(string $rawCategory): string
     {
+        // Rubrique de la liste fermée (prompt « keyword », voir SQL/20261004000000.sql),
+        // reconnue même si le modèle change la casse, les accents ou ajoute du texte.
+        $normalized = EpisodeText::slugify($rawCategory);
+        foreach (self::RUBRIQUES as $rubrique) {
+            $slug = EpisodeText::slugify($rubrique);
+            if ($normalized === $slug || str_starts_with($normalized, $slug.'-')) {
+                return $rubrique;
+            }
+        }
+
         $category = trim(preg_replace('/[^\p{L}\p{N}\- ]/u', '', $rawCategory));
         $category = explode(' ', trim($category))[0] ?? '';
         if ($category === '') {
@@ -483,6 +501,7 @@ class PodcastGenerator
         $generationId = 'gen_' . uniqid();
         Generation::create([
             'generation_id' => $generationId,
+            'slug' => EpisodeSlug::forTitle((string) $title),
             'title' => $title,
             'text_content' => $textContent,
             'image_url' => $imageUrl,
