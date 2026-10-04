@@ -12,9 +12,12 @@ Vokso s'adresse à toute personne qui veut explorer un sujet (histoire, science,
 - [Générer un épisode](https://vokso.fr/#creer) : Vokso est entièrement gratuit et sans inscription (nombre de générations limité par jour pour éviter les abus).
 - [Contact](https://vokso.fr/app/contact) : formulaire de contact.
 - [Politique de confidentialité](https://vokso.fr/app/politique-de-confidentialite) : traitement des données, droits RGPD.
-- [Sitemap](https://vokso.fr/sitemap.xml) : liste complète et à jour des épisodes publiés, chacun sur sa propre page (/podcast/{id}-{titre}).
+- [Tous les épisodes (llms-full.txt)](https://vokso.fr/llms-full.txt) : index Markdown à jour de chaque épisode publié, par catégorie, avec un résumé et son URL.
+- [Pages par thème](https://vokso.fr/discotheque) : chaque catégorie a sa page rendue côté serveur, /discotheque/{categorie} (ex. /discotheque/histoire).
+- [Sitemap](https://vokso.fr/sitemap.xml) : liste complète et à jour des épisodes publiés, chacun sur sa propre page (/podcast/{titre-de-l-episode}).
 
 ## Notes pour les agents et robots
 
-- Chaque épisode généré par un utilisateur dispose d'une page publique dédiée sous /podcast/{id}-{slug}, avec son texte complet, sa date de publication et l'audio associé — voir le sitemap pour la liste à jour.
+- Chaque épisode dispose d'une page publique dédiée sous /podcast/{titre-de-l-episode} (ex. https://vokso.fr/podcast/les-arbres-parlent-ils-sous-terre), rendue sans JavaScript, avec la transcription complète, la date de publication, l'audio et des données structurées schema.org (PodcastEpisode). Les anciennes adresses /podcast/{id}-{titre} redirigent en 301.
+- Pour citer un épisode, utilisez son URL /podcast/... : c'est l'URL canonique stable.
 - Le contenu des épisodes est généré par un modèle de langage (IA) à partir d'un sujet fourni par l'utilisateur ; il ne s'agit pas d'un contenu éditorial rédigé par une rédaction humaine.

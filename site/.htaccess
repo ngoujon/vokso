@@ -16,10 +16,16 @@ RewriteCond %{HTTP_HOST} ^www\.vokso\.fr$ [NC]
 RewriteRule ^ https://vokso.fr%{REQUEST_URI} [L,R=301]
 
 # Épisode public rendu côté serveur (voir PodcastPageController) :
-# /podcast/{id}[-{slug}] -> /api/podcast/{id}[-{slug}]
-# generation_id est un VARCHAR (ex. "gen_6ab267b302f6d"), pas un entier
-# (voir SQL/20260818010000.sql) — d'où [A-Za-z0-9_]+ et non [0-9]+.
-RewriteRule ^podcast/([A-Za-z0-9_]+)(-[a-z0-9-]*)?/?$ /api/podcast/$1$2 [PT,L]
+# /podcast/{slug} -> /api/podcast/{slug}. Les anciennes URL
+# /podcast/{generation_id}-{titre} (ex. "gen_6ab267b302f6d-jupiter") passent
+# par la même règle et sont redirigées en 301 par le contrôleur.
+RewriteRule ^podcast/([A-Za-z0-9_-]+)/?$ /api/podcast/$1 [PT,L]
+
+# Page d'une catégorie rendue côté serveur (voir CategoryPageController).
+RewriteRule ^discotheque/([a-z0-9-]+)/?$ /api/discotheque/$1 [PT,L]
+
+# Index complet des épisodes pour les assistants IA (voir LlmsController).
+RewriteRule ^llms-full\.txt$ /api/llms-full [PT,L]
 
 # Pages de la vitrine servies sans extension (fichiers .html de site/).
 RewriteRule ^discotheque/?$ /discotheque.html [L]

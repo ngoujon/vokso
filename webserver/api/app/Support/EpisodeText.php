@@ -2,9 +2,14 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Str;
+
 /** Mise en forme partagée des titres/extraits d'épisode (pages publiques, sitemap, génération). */
 class EpisodeText
 {
+    /** Longueur maximale d'un slug d'URL (assez pour un titre complet, sans URL à rallonge). */
+    public const SLUG_MAX_LENGTH = 80;
+
     /** Titre sur une ligne, sans guillemets englobants ni Markdown. */
     public static function cleanTitle(string $rawTitle): string
     {
@@ -21,16 +26,25 @@ class EpisodeText
         return trim($title);
     }
 
-    public static function slugify(string $text): string
+    /**
+     * « Les arbres parlent-ils sous terre ? » -> « les-arbres-parlent-ils-sous-terre ».
+     * Tronqué sur une limite de mot : un slug coupé au milieu d'un mot se lit mal.
+     */
+    public static function slugify(string $text, int $maxLength = self::SLUG_MAX_LENGTH): string
     {
-        $transliterated = @iconv('UTF-8', 'ASCII//TRANSLIT', $text);
-        if ($transliterated === false) {
-            $transliterated = $text;
-        }
-        $slug = strtolower($transliterated);
+        // Str::ascii (et non iconv //TRANSLIT, dont le résultat dépend de la
+        // locale du système : « é » -> « 'e » ou « ? ») : « cœur » -> « coeur ».
+        $slug = strtolower(Str::ascii($text, 'fr'));
         $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
+        $slug = trim($slug, '-');
 
-        return mb_substr(trim($slug, '-'), 0, 80);
+        if (strlen($slug) > $maxLength) {
+            $cut = substr($slug, 0, $maxLength + 1);
+            $lastHyphen = strrpos($cut, '-');
+            $slug = $lastHyphen !== false && $lastHyphen > $maxLength / 2 ? substr($cut, 0, $lastHyphen) : substr($slug, 0, $maxLength);
+        }
+
+        return trim($slug, '-');
     }
 
     public static function excerpt(string $text, int $length): string
@@ -43,11 +57,58 @@ class EpisodeText
         return mb_substr($clean, 0, $length - 1).'…';
     }
 
-    /** URL publique d'un épisode : /podcast/{id}-{slug}. */
-    public static function episodeUrl(string $publicUrl, string $id, string $title): string
+    /**
+     * Meta description : les premières phrases entières tenant dans $length
+     * caractères (taille affichée par les moteurs), sinon une coupe sur un mot.
+     */
+    public static function metaDescription(string $text, int $length = 155): string
     {
-        $slug = self::slugify(self::cleanTitle($title));
+        $clean = trim(preg_replace('/\s+/', ' ', $text));
+        if (mb_strlen($clean) <= $length) {
+            return $clean;
+        }
 
-        return $publicUrl.'/podcast/'.$id.($slug !== '' ? '-'.$slug : '');
+        $sentences = preg_split('/(?<=[.!?…])\s+/u', $clean) ?: [];
+        $description = '';
+        foreach ($sentences as $sentence) {
+            $candidate = $description === '' ? $sentence : $description.' '.$sentence;
+            if (mb_strlen($candidate) > $length) {
+                break;
+            }
+            $description = $candidate;
+        }
+        if (mb_strlen($description) >= 70) {
+            return $description;
+        }
+
+        $cut = mb_substr($clean, 0, $length - 1);
+        $lastSpace = mb_strrpos($cut, ' ');
+
+        return rtrim($lastSpace !== false ? mb_substr($cut, 0, $lastSpace) : $cut, " ,;:—-").'…';
+    }
+
+    /**
+     * Chemin public d'un épisode : /podcast/{slug}. Les épisodes sans slug
+     * (pas encore migrés) gardent l'ancienne forme /podcast/{id}-{titre}.
+     */
+    public static function episodePath(?string $slug, string $id = '', string $title = ''): string
+    {
+        if ($slug !== null && $slug !== '') {
+            return '/podcast/'.$slug;
+        }
+        $legacy = self::slugify(self::cleanTitle($title));
+
+        return '/podcast/'.$id.($legacy !== '' ? '-'.$legacy : '');
+    }
+
+    public static function episodeUrl(string $publicUrl, ?string $slug, string $id = '', string $title = ''): string
+    {
+        return $publicUrl.self::episodePath($slug, $id, $title);
+    }
+
+    /** Page d'une catégorie : /discotheque/{slug}. */
+    public static function categoryPath(string $label): string
+    {
+        return '/discotheque/'.self::slugify($label);
     }
 }

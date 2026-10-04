@@ -30,6 +30,13 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
 <?php if ($imageUrl): ?><meta property="og:image" content="<?= $e($imageUrl) ?>">
 <?php endif; ?>
 <meta property="og:locale" content="fr_FR">
+<?php if ($audioUrl): ?><meta property="og:audio" content="<?= $e($audioUrl) ?>">
+<meta property="og:audio:type" content="audio/mpeg">
+<?php endif; ?>
+<?php if ($publishedIso !== ''): ?><meta property="article:published_time" content="<?= $e($publishedIso) ?>">
+<?php endif; ?>
+<?php if ($category !== ''): ?><meta property="article:section" content="<?= $e($category) ?>">
+<?php endif; ?>
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="<?= $e($title) ?>">
 <meta name="twitter:description" content="<?= $e($description) ?>">
@@ -39,6 +46,14 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
 <style>
   .episode { width: min(760px, 100% - 2.5rem); margin: 0 auto; padding: 3.5rem 0 2rem; }
   .episode-head { text-align: center; }
+  .breadcrumb ol { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem; margin: 0 0 1rem; padding: 0; list-style: none; font-size: 0.85rem; color: var(--vk-ink-2); }
+  .breadcrumb li + li::before { content: "›"; margin-right: 0.35rem; }
+  .breadcrumb a { color: inherit; }
+  .breadcrumb [aria-current] { max-width: 28ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .related { margin: 3rem 0 0; }
+  .related ul { margin: 1rem 0 0; padding: 0; list-style: none; display: grid; gap: 0.6rem; }
+  .related li a { font-weight: 600; }
+  .related-cat { font-size: 0.8rem; color: var(--vk-ink-2); }
   .episode-cat { display: inline-block; text-decoration: none; padding: 0.3rem 0.7rem; border-radius: var(--vk-radius-sm); background: var(--vk-signal); color: var(--vk-on-signal); }
   .episode-cat:hover { background: var(--vk-signal-hover); }
   .episode h1 { margin: 1.1rem auto 0; max-width: 22ch; font-size: clamp(2.1rem, 5.5vw, 3.6rem); line-height: 0.98; text-wrap: balance; }
@@ -116,38 +131,21 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
 </head>
 <body class="vk-page">
 
-<header class="site-header">
-  <div class="wrap">
-    <a class="site-brand" href="/" aria-label="Vokso, accueil">
-      <span class="site-brand-mark" aria-hidden="true">
-        <svg viewBox="218 312 588 382" fill="currentColor">
-          <rect x="258" y="432" width="52" height="160" rx="26" />
-          <rect x="336" y="352" width="52" height="320" rx="26" />
-          <rect x="414" y="402" width="52" height="220" rx="26" />
-          <rect x="500" y="362" width="266" height="52" rx="26" opacity="0.55" />
-          <rect x="500" y="442" width="200" height="52" rx="26" opacity="0.55" />
-          <rect x="500" y="522" width="266" height="52" rx="26" opacity="0.55" />
-          <rect x="500" y="602" width="160" height="52" rx="26" opacity="0.55" />
-        </svg>
-      </span>
-      Vokso
-    </a>
-    <button class="site-nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><span></span></button>
-    <nav class="site-nav" id="site-nav" aria-label="Navigation principale">
-      <a class="site-nav-link" href="/#selection">Sélection du jour</a>
-      <a class="site-nav-link" href="/discotheque">Discothèque</a>
-      <a class="site-nav-link" href="/comment-ca-marche">Comment ça marche ?</a>
-      <a class="vk-btn vk-btn-signal" href="/#creer">Créer un épisode</a>
-    </nav>
-  </div>
-</header>
+<?php include __DIR__.'/../partials/site-header.php'; ?>
 
 <main>
   <article class="episode">
     <header class="episode-head">
-      <?php if ($category !== ''): ?><a class="vk-label episode-cat" href="/discotheque?categorie=<?= $e(rawurlencode($category)) ?>"><?= $e($category) ?></a><?php endif; ?>
+      <nav class="breadcrumb" aria-label="Fil d'Ariane">
+        <ol>
+          <?php foreach ($breadcrumb as $i => [$label, $url]): ?>
+          <li><?php if ($i < count($breadcrumb) - 1): ?><a href="<?= $e(parse_url($url, PHP_URL_PATH) ?: '/') ?>"><?= $e($label) ?></a><?php else: ?><span aria-current="page"><?= $e($label) ?></span><?php endif; ?></li>
+          <?php endforeach; ?>
+        </ol>
+      </nav>
+      <?php if ($categoryUrl): ?><a class="vk-label episode-cat" href="<?= $e(parse_url($categoryUrl, PHP_URL_PATH)) ?>"><?= $e($category) ?></a><?php endif; ?>
       <h1 class="display"><?= $e($title) ?></h1>
-      <p class="episode-meta"><?php if ($publishedHuman !== ''): ?>Publié le <?= $e($publishedHuman) ?> · <?php endif; ?>Podcast généré par IA, hébergé en Europe</p>
+      <p class="episode-meta"><?php if ($publishedHuman !== ''): ?>Publié le <time datetime="<?= $e($publishedIso) ?>"><?= $e($publishedHuman) ?></time> · <?php endif; ?>Podcast généré par IA, hébergé en Europe</p>
       <?php if ($imageUrl): ?>
         <div class="episode-cover"><img src="<?= $e($imageUrl) ?>" alt="Illustration de l'épisode <?= $e($title) ?>" width="440" height="440"></div>
       <?php endif; ?>
@@ -214,6 +212,18 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
       <?php endforeach; ?>
     </section>
 
+    <?php if ($related): ?>
+    <section class="related" aria-labelledby="related-title">
+      <h2 class="display" id="related-title">À écouter aussi</h2>
+      <ul>
+        <?php foreach ($related as $item): ?>
+        <li><a href="<?= $e($item['url']) ?>"><?= $e($item['title']) ?></a><?php if ($item['category'] !== ''): ?> <span class="related-cat"><?= $e($item['category']) ?></span><?php endif; ?></li>
+        <?php endforeach; ?>
+      </ul>
+      <?php if ($categoryUrl): ?><p><a href="<?= $e(parse_url($categoryUrl, PHP_URL_PATH)) ?>">Tous les podcasts « <?= $e($category) ?> » →</a></p><?php endif; ?>
+    </section>
+    <?php endif; ?>
+
     <aside class="episode-cta">
       <h2 class="display">À vous l'antenne</h2>
       <p>Donnez un sujet en une phrase : Vokso écrit, illustre et enregistre votre épisode en une à deux minutes.</p>
@@ -222,61 +232,9 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
   </article>
 </main>
 
-<footer class="site-footer">
-  <div class="wrap">
-    <div class="site-footer-top">
-      <div class="site-footer-about">
-        <a class="site-brand" href="/" aria-label="Vokso, accueil">
-          <span class="site-brand-mark" aria-hidden="true">
-            <svg viewBox="218 312 588 382" fill="currentColor">
-              <rect x="258" y="432" width="52" height="160" rx="26" />
-              <rect x="336" y="352" width="52" height="320" rx="26" />
-              <rect x="414" y="402" width="52" height="220" rx="26" />
-              <rect x="500" y="362" width="266" height="52" rx="26" opacity="0.55" />
-              <rect x="500" y="442" width="200" height="52" rx="26" opacity="0.55" />
-              <rect x="500" y="522" width="266" height="52" rx="26" opacity="0.55" />
-              <rect x="500" y="602" width="160" height="52" rx="26" opacity="0.55" />
-            </svg>
-          </span>
-          Vokso
-        </a>
-        <p class="site-footer-pitch">Un sujet en une phrase, un podcast complet en retour : texte, pochette et voix générés par IA, sur une infrastructure européenne.</p>
-        <div class="site-footer-badges"><span>Gratuit</span><span>Sans inscription</span><span>Hébergé en Europe</span></div>
-      </div>
-      <nav class="site-footer-col" aria-label="Écouter">
-        <p class="site-footer-title">Écouter</p>
-        <ul>
-          <li><a href="/#selection">Sélection du jour</a></li>
-          <li><a href="/discotheque">Toute la discothèque</a></li>
-          <li><a href="/discotheque#categories">Par catégorie</a></li>
-        </ul>
-      </nav>
-      <nav class="site-footer-col" aria-label="Créer">
-        <p class="site-footer-title">Créer</p>
-        <ul>
-          <li><a href="/#creer">Générer un épisode</a></li>
-          <li><a href="/comment-ca-marche">Comment ça marche ?</a></li>
-          <li><a href="/comment-ca-marche#souverainete">Souveraineté et données</a></li>
-        </ul>
-      </nav>
-      <nav class="site-footer-col" aria-label="Vokso">
-        <p class="site-footer-title">Vokso</p>
-        <ul>
-          <li><a href="/app/contact">Contact</a></li>
-          <li><a href="/app/politique-de-confidentialite">Confidentialité</a></li>
-          <li><a href="/app/admin">Administration</a></li>
-        </ul>
-      </nav>
-    </div>
-    <p class="site-footer-wordmark" aria-hidden="true">Vokso</p>
-    <div class="site-footer-bottom">
-      <p>© <span data-year>2026</span> Vokso — podcasts générés par IA, hébergés en Europe.</p>
-      <p>Texte, image et voix : Mistral AI · Émis depuis l'Union européenne</p>
-    </div>
-  </div>
-</footer>
+<?php include __DIR__.'/../partials/site-footer.php'; ?>
 
-<script src="/assets/site.js?v=20261004"></script>
+<script src="/assets/site.js?v=20261004s"></script>
 <script>
 (function () {
   'use strict';

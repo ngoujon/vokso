@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\CategoryIndex;
 use App\Support\EpisodeText;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -9,7 +10,8 @@ use Throwable;
 
 /**
  * Sitemap dynamique (/sitemap.xml réécrit vers /api/sitemap par
- * site/.htaccess) : chaque épisode publié obtient son URL /podcast/{id}-{slug}.
+ * site/.htaccess) : chaque épisode publié obtient son URL /podcast/{slug},
+ * chaque catégorie assez fournie sa page /discotheque/{slug}.
  */
 class SitemapController extends Controller
 {
@@ -28,15 +30,21 @@ class SitemapController extends Controller
         ];
 
         try {
+            foreach (CategoryIndex::all() as $category) {
+                if ($category->count >= CategoryIndex::MIN_EPISODES_TO_INDEX) {
+                    $urls[] = ['loc' => $base.EpisodeText::categoryPath($category->label), 'changefreq' => 'weekly', 'priority' => '0.7'];
+                }
+            }
+
             $episodes = DB::table('generations')
                 ->where('statut', 'on')
                 ->orderByDesc('created_at')
                 ->limit(self::MAX_EPISODES)
-                ->get(['generation_id', 'title', 'created_at']);
+                ->get(['generation_id', 'slug', 'title', 'created_at']);
 
             foreach ($episodes as $episode) {
                 $urls[] = [
-                    'loc' => EpisodeText::episodeUrl($base, $episode->generation_id, (string) $episode->title),
+                    'loc' => EpisodeText::episodeUrl($base, $episode->slug, $episode->generation_id, (string) $episode->title),
                     'lastmod' => date('c', strtotime((string) $episode->created_at)),
                     'changefreq' => 'monthly',
                     'priority' => '0.6',
@@ -59,6 +67,6 @@ class SitemapController extends Controller
         }
         $xml .= "</urlset>\n";
 
-        return response($xml, 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+        return response($xml, 200, ['Content-Type' => 'application/xml; charset=utf-8', 'Cache-Control' => 'public, max-age=3600']);
     }
 }

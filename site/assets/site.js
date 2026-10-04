@@ -17,7 +17,10 @@
     return (t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
       .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
   }
+  // URL lisible /podcast/{slug} fournie par l'API ; repli sur l'ancienne
+  // forme /podcast/{id}-{titre} (redirigée en 301) pour un épisode sans slug.
   function episodeUrl(ep) {
+    if (ep.slug) return '/podcast/' + ep.slug;
     var slug = slugify(ep.title);
     return '/podcast/' + ep.id + (slug ? '-' + slug : '');
   }

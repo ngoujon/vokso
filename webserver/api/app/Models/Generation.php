@@ -12,7 +12,7 @@ class Generation extends Model
     public const UPDATED_AT = null;
 
     protected $fillable = [
-        'generation_id', 'title', 'text_content', 'image_url', 'audio_url', 'idcategorie',
+        'generation_id', 'slug', 'title', 'text_content', 'image_url', 'audio_url', 'idcategorie',
         'user_id', 'cost_text', 'cost_image', 'cost_audio', 'cost_total',
     ];
 

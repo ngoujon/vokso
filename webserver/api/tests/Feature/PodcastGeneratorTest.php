@@ -130,6 +130,7 @@ class PodcastGeneratorTest extends TestCase
 
         $generation = Generation::where('generation_id', $job->generation_id)->first();
         $this->assertSame('Voyage vers Mars', $generation->title);
+        $this->assertSame('voyage-vers-mars', $generation->slug);
         $this->assertSame($user->id, $generation->user_id);
         $this->assertFileExists($this->outputDir.'/audios/'.$generation->audio_url);
         $this->assertGreaterThan(0, (float) $generation->cost_total);
@@ -137,6 +138,22 @@ class PodcastGeneratorTest extends TestCase
         $category = Category::find($generation->idcategorie);
         $this->assertSame('Espace', $category->label);
         $this->assertSame('rocket', $category->icon);
+
+        // Même titre pour un second épisode : slug départagé, pas de collision d'URL.
+        GenerationJob::create(['job_id' => 'job_bis', 'input' => 'Mars encore', 'status' => 'pending']);
+        (new PodcastGenerator($this->fakeAi(), $this->outputDir))->process('job_bis');
+        $this->assertSame('voyage-vers-mars-2', Generation::where('generation_id', GenerationJob::find('job_bis')->generation_id)->value('slug'));
+    }
+
+    public function test_multi_word_rubriques_are_recognised(): void
+    {
+        $method = new \ReflectionMethod(PodcastGenerator::class, 'sanitizeCategory');
+        $generator = new PodcastGenerator($this->fakeAi(), $this->outputDir);
+
+        $this->assertSame('Nature et environnement', $method->invoke($generator, 'nature et environnement.'));
+        $this->assertSame('Culture et arts', $method->invoke($generator, 'Culture et Arts'));
+        $this->assertSame('Santé', $method->invoke($generator, 'sante'));
+        $this->assertSame('Volcanologie', $method->invoke($generator, 'Volcanologie'));
     }
 
     public function test_a_failing_step_marks_the_job_as_failed(): void
