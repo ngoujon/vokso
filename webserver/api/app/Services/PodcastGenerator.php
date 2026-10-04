@@ -358,6 +358,25 @@ class PodcastGenerator
      * générées par IA (une seule fois : les créations suivantes du même
      * podcast la réutilisent via le SELECT ci-dessus, sans nouvel appel IA).
      */
+    /**
+     * Catégorie imposée (commande vokso:seed-podcasts --categorie) : créée au
+     * besoin, et habillée (icône, couverture) si elle ne l'a jamais été — cas
+     * des catégories antérieures à la génération automatique de couvertures.
+     */
+    public function ensureCategory(string $categoryLabel): int
+    {
+        $category = Category::where('label', $categoryLabel)->first();
+        if ($category === null) {
+            return $this->saveOrGetCategory($categoryLabel);
+        }
+
+        if (empty($category->cover_image)) {
+            $this->ensureCategoryAssets((int) $category->idcategorie, $categoryLabel);
+        }
+
+        return (int) $category->idcategorie;
+    }
+
     private function saveOrGetCategory(string $categoryLabel): int
     {
         $existing = Category::where('label', $categoryLabel)->value('idcategorie');

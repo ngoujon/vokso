@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Generation;
 use App\Models\GenerationJob;
 use App\Services\Ai\AiProviderFactory;
 use App\Services\PodcastGenerator;
@@ -14,13 +15,21 @@ use Throwable;
  * avec succès sont ignorés : la commande peut être relancée sans doublon
  * après une interruption.
  *
+ * --categorie range les épisodes produits dans une catégorie donnée (au lieu
+ * de celle proposée par le modèle) ; --remplace dépublie d'anciens épisodes
+ * (statut "off", réversible) une fois que tous les sujets ont réussi, pour
+ * régénérer des épisodes sans laisser de doublons en ligne.
+ *
  * Long (plusieurs minutes par épisode) : à lancer en arrière-plan sur le
  * serveur, sous l'utilisateur d'Apache pour que les fichiers produits lui
  * appartiennent.
  */
 class SeedPodcasts extends Command
 {
-    protected $signature = 'vokso:seed-podcasts {sujets?* : Sujets à générer (par défaut, une sélection variée)}';
+    protected $signature = 'vokso:seed-podcasts
+        {sujets?* : Sujets à générer (par défaut, une sélection variée)}
+        {--categorie= : Catégorie imposée aux épisodes générés}
+        {--remplace=* : generation_id d\'épisodes à dépublier si tous les sujets réussissent}';
 
     protected $description = 'Génère une série d\'épisodes variés pour alimenter le catalogue';
 
@@ -53,6 +62,9 @@ class SeedPodcasts extends Command
         $generator = new PodcastGenerator($ai, (string) config('vokso.output_dir'));
         $failures = 0;
 
+        $category = trim((string) $this->option('categorie'));
+        $categoryId = $category !== '' ? $generator->ensureCategory($category) : null;
+
         foreach ($topics as $index => $topic) {
             $topic = trim((string) $topic);
             $label = sprintf('[%d/%d] %s', $index + 1, count($topics), $topic);
@@ -82,10 +94,23 @@ class SeedPodcasts extends Command
 
             $job = GenerationJob::find($jobId);
             if ($job->status === 'done') {
+                if ($categoryId !== null) {
+                    Generation::where('generation_id', $job->generation_id)->update(['idcategorie' => $categoryId]);
+                }
                 $this->info("$label : terminé ({$job->generation_id}).");
             } else {
                 $failures++;
                 $this->error("$label : échec ({$job->error_message}).");
+            }
+        }
+
+        $replaced = array_filter(array_map('trim', (array) $this->option('remplace')));
+        if ($replaced !== []) {
+            if ($failures > 0) {
+                $this->warn('Des sujets ont échoué : les anciens épisodes restent publiés.');
+            } else {
+                $count = Generation::whereIn('generation_id', $replaced)->update(['statut' => 'off']);
+                $this->info("$count ancien(s) épisode(s) dépublié(s).");
             }
         }
 

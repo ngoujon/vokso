@@ -11,6 +11,14 @@ on:
         description: "Sujets séparés par « | » (vide : sélection variée par défaut)"
         required: false
         default: ""
+      categorie:
+        description: "Catégorie imposée aux épisodes générés (vide : choisie par le modèle)"
+        required: false
+        default: ""
+      remplace:
+        description: "generation_id à dépublier si tout réussit, séparés par « | » (régénération)"
+        required: false
+        default: ""
 
 jobs:
   seed:
@@ -22,11 +30,13 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         env:
           SUJETS: ${{ inputs.sujets }}
+          CATEGORIE: ${{ inputs.categorie }}
+          REMPLACE: ${{ inputs.remplace }}
         with:
           host: ${{ secrets.DEPLOY_SSH_HOST }}
           username: ${{ secrets.DEPLOY_SSH_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: SUJETS
+          envs: SUJETS,CATEGORIE,REMPLACE
           command_timeout: 110m
           script: |
             set -e
@@ -40,6 +50,14 @@ jobs:
                 p="${p#"${p%%[![:space:]]*}"}"
                 p="${p%"${p##*[![:space:]]}"}"
                 if [ -n "$p" ]; then args+=("$p"); fi
+              done
+            fi
+            if [ -n "$CATEGORIE" ]; then args+=("--categorie=$CATEGORIE"); fi
+            if [ -n "$REMPLACE" ]; then
+              IFS='|' read -ra ids <<< "$REMPLACE"
+              for id in "${ids[@]}"; do
+                id="${id//[[:space:]]/}"
+                if [ -n "$id" ]; then args+=("--remplace=$id"); fi
               done
             fi
             sudo -n -u www-data php artisan vokso:seed-podcasts "${args[@]}"

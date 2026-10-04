@@ -183,4 +183,21 @@ class PodcastGeneratorTest extends TestCase
             ->assertSuccessful();
         $this->assertSame(2, GenerationJob::count());
     }
+
+    public function test_seed_command_can_force_a_category_and_unpublish_replaced_episodes(): void
+    {
+        config(['vokso.output_dir' => $this->outputDir]);
+        $this->app->instance(AiProviderFactory::class, $this->fakeAi());
+        $astronomy = Category::create(['label' => 'Astronomie']);
+        Generation::create(['generation_id' => 'gen_old', 'title' => 'Ancien', 'text_content' => 'x', 'image_url' => 'a.png', 'audio_url' => 'a.mp3', 'idcategorie' => $astronomy->idcategorie, 'statut' => 'on']);
+
+        $this->artisan('vokso:seed-podcasts', ['sujets' => ['Jupiter'], '--categorie' => 'Astronomie', '--remplace' => ['gen_old']])
+            ->expectsOutputToContain('1 ancien(s) épisode(s) dépublié(s)')
+            ->assertSuccessful();
+
+        $new = Generation::where('generation_id', GenerationJob::where('input', 'Jupiter')->value('generation_id'))->first();
+        $this->assertSame($astronomy->idcategorie, (int) $new->idcategorie);
+        $this->assertSame('off', Generation::where('generation_id', 'gen_old')->value('statut'));
+        $this->assertNotNull($astronomy->fresh()->cover_image);
+    }
 }

@@ -316,7 +316,8 @@
   fetch('/api/categories')
     .then(function (r) { return r.json(); })
     .then(function (data) {
-      categories = (data && data.data) || [];
+      // Rayons par ordre alphabétique (l'API les trie par nombre d'épisodes).
+      categories = ((data && data.data) || []).slice().sort(function (a, b) { return a.label.localeCompare(b.label, 'fr', { sensitivity: 'base' }); });
       var pills = $('pills');
       categories.forEach(function (cat) {
         var b = V.el('button', 'pill');
