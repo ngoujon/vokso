@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
  */
 class GenerationController extends Controller
 {
-    private const MAX_INPUT_LENGTH = 300;
+    protected const MAX_INPUT_LENGTH = 300;
     private const MAX_AUDIO_SIZE = 26214400; // 25 Mo
     private const ALLOWED_AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'ogg', 'webm', 'mp4', 'mpeg', 'mpga'];
 
@@ -135,7 +135,7 @@ class GenerationController extends Controller
         return $message === null ? null : $this->error($message, 429, ['code' => 'limit_reached']);
     }
 
-    private function createJob(string $sourceType, ?string $input, ?string $audioPath, ?int $userId): string
+    protected function createJob(string $sourceType, ?string $input, ?string $audioPath, ?int $userId): string
     {
         $jobId = 'job_'.bin2hex(random_bytes(16));
 
@@ -160,7 +160,7 @@ class GenerationController extends Controller
      * PHP_BINARY est vide sous mod_php (PHP chargé comme module d'Apache) :
      * PHP_BINDIR reste valide dans les deux cas.
      */
-    private function dispatch(string $jobId): void
+    protected function dispatch(string $jobId): void
     {
         if (app()->runningUnitTests()) {
             return;
@@ -172,7 +172,7 @@ class GenerationController extends Controller
         exec("$php $artisan vokso:process-job $arg > /dev/null 2>&1 &");
     }
 
-    private function sanitizeInput(string $input): string
+    protected function sanitizeInput(string $input): string
     {
         return trim(htmlspecialchars(strip_tags($input)));
     }

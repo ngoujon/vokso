@@ -33,6 +33,22 @@ return [
     // Jeton anti-spam invisible du formulaire de contact (CaptchaService).
     'captcha_secret' => (string) env('CAPTCHA_SECRET', ''),
 
+    /*
+     * API réservée au workflow n8n (POST /api/n8n/podcasts) : n8n tourne sur
+     * le même serveur (vps-3962b7dc.vps.ovh.net, même IP que vokso.fr).
+     * Double verrou : adresse d'origine dans la liste ci-dessous (IP publiques
+     * du serveur, boucle locale, réseaux Docker) ET jeton secret en
+     * « Authorization: Bearer ». Seule l'empreinte SHA-256 du jeton est
+     * versionnée ; pour changer de jeton, définir N8N_API_TOKEN_SHA256.
+     */
+    'n8n' => [
+        'token_sha256' => strtolower((string) env('N8N_API_TOKEN_SHA256', '0d91ec5c0b152a2c5948ce0b574419b56be5dee2289f1aae267536fa53656f3e')),
+        'allowed_ips' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'N8N_ALLOWED_IPS',
+            '51.254.211.144,2001:41d0:305:2100::aeed,127.0.0.1,::1,172.16.0.0/12'
+        ))))),
+    ],
+
     'contact_to' => env('CONTACT_TO', env('MAIL_FROM', 'contact@vokso.fr')),
 
     /*

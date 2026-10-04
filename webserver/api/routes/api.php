@@ -7,6 +7,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\GdprController;
 use App\Http\Controllers\GenerationController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\N8nController;
 use App\Http\Controllers\PodcastPageController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UserController;
@@ -37,6 +38,12 @@ Route::post('newsletter', [ContactController::class, 'subscribeNewsletter']);
 
 Route::post('auth-login', [AuthController::class, 'login']);
 Route::post('auth-logout', [AuthController::class, 'logout']);
+
+// Workflow n8n (même serveur) : IP autorisée + jeton secret, voir EnsureN8nCaller.
+Route::middleware('n8n')->group(function () {
+    Route::post('n8n/podcasts', [N8nController::class, 'store']);
+    Route::get('n8n/podcasts/{jobId}', [N8nController::class, 'show'])->where('jobId', 'job_[a-f0-9]+');
+});
 
 // Pages rendues côté serveur (SEO), réécrites par site/.htaccess.
 Route::get('podcast/{path}', [PodcastPageController::class, 'show'])->where('path', '.*');

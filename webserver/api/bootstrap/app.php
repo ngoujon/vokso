@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\EnsureN8nCaller;
 use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\EnsureTokenAuthenticated;
 use Illuminate\Foundation\Application;
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.token' => EnsureTokenAuthenticated::class,
             'password.changed' => EnsurePasswordChanged::class,
             'admin' => EnsureAdmin::class,
+            'n8n' => EnsureN8nCaller::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
