@@ -59,7 +59,7 @@
 </script>
 <style>
   /* ---- Ouverture : studio de création + poste ---------------------------- */
-  .hero { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 3.5rem; align-items: start; padding: 4rem 0 3rem; }
+  .hero { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 0 3.5rem; align-items: start; padding: 4rem 0 3rem; }
   .hero .kicker { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
   .hero h1 { font-size: clamp(2.6rem, 5.6vw, 4.9rem); line-height: 0.92; }
   .hero h1 .line { display: block; overflow: hidden; padding-bottom: 0.06em; }
@@ -125,7 +125,9 @@
   .studio-result-actions .vk-btn { padding: 0.6rem 0.9rem; font-size: 0.9rem; }
 
   /* Le poste : cadran de tuner + épisode à l'antenne. */
-  .hero > .tuner { position: sticky; top: 6rem; }
+  .hero > .tuner { position: sticky; top: 6rem; grid-column: 2; grid-row: 1; }
+  /* Le studio occupe toute la largeur de l'ouverture, sous le titre et le poste. */
+  .hero > .studio { grid-column: 1 / -1; }
   .tuner { background: var(--vk-console); color: var(--vk-on-console); border-radius: var(--vk-radius-lg); padding: 1.3rem; box-shadow: var(--vk-shadow); }
   .tuner .vk-label { color: color-mix(in srgb, var(--vk-on-console) 62%, transparent); }
   .tuner-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
@@ -179,8 +181,8 @@
   .steps p { margin: 0; color: var(--vk-ink-2); }
 
   @media (max-width: 960px) {
-    .hero > .tuner { position: static; }
-    .hero { grid-template-columns: 1fr; gap: 2.5rem; padding-top: 2.5rem; }
+    .hero > .tuner { position: static; grid-column: auto; grid-row: auto; margin-top: 2.5rem; }
+    .hero { grid-template-columns: 1fr; padding-top: 2.5rem; }
     .shelves { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .steps { grid-template-columns: 1fr; gap: 1.5rem; }
   }
@@ -242,69 +244,69 @@
         Vokso écrit le texte, dessine la pochette et enregistre la voix. Donnez un thème,
         l'épisode est prêt à écouter quelques instants plus tard. Gratuit, sans inscription.
       </p>
+    </div>
 
-      <div class="studio" id="creer">
-        <div class="studio-tabs" role="tablist" aria-label="Façon de donner le sujet">
-          <button type="button" role="tab" id="tab-text" aria-selected="true" aria-controls="panel-text">Écrire un sujet</button>
-          <button type="button" role="tab" id="tab-audio" aria-selected="false" aria-controls="panel-audio">Dicter un message vocal</button>
+    <div class="studio" id="creer">
+      <div class="studio-tabs" role="tablist" aria-label="Façon de donner le sujet">
+        <button type="button" role="tab" id="tab-text" aria-selected="true" aria-controls="panel-text">Écrire un sujet</button>
+        <button type="button" role="tab" id="tab-audio" aria-selected="false" aria-controls="panel-audio">Dicter un message vocal</button>
+      </div>
+
+      <form id="studio-form" novalidate>
+        <div id="panel-text" role="tabpanel" aria-labelledby="tab-text">
+          <div class="studio-input">
+            <label class="vk-sr" for="studio-subject">Sujet de l'épisode</label>
+            <input type="text" id="studio-subject" maxlength="300" autocomplete="off" placeholder="Ex. : l'histoire du café, les trous noirs…">
+            <button type="submit" class="vk-btn vk-btn-signal">Générer l'épisode</button>
+          </div>
+          <div class="studio-ideas">
+            <span class="vk-label">Idées :</span>
+            <button type="button">L'histoire du café</button>
+            <button type="button">Pourquoi le ciel est bleu</button>
+            <button type="button">La photosynthèse</button>
+            <button type="button">Les premiers pas sur la Lune</button>
+          </div>
         </div>
-
-        <form id="studio-form" novalidate>
-          <div id="panel-text" role="tabpanel" aria-labelledby="tab-text">
-            <div class="studio-input">
-              <label class="vk-sr" for="studio-subject">Sujet de l'épisode</label>
-              <input type="text" id="studio-subject" maxlength="300" autocomplete="off" placeholder="Ex. : l'histoire du café, les trous noirs…">
+        <div id="panel-audio" role="tabpanel" aria-labelledby="tab-audio" hidden>
+          <div class="studio-voice">
+            <button type="button" class="rec-btn" id="rec-btn" aria-label="Commencer l'enregistrement">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 17.5V21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <p class="rec-status" id="rec-status">Appuyez sur le bouton et dites votre sujet en une ou deux phrases (2 minutes maximum).</p>
+            <div class="studio-voice-actions" id="rec-ready" hidden>
+              <audio id="rec-preview" controls></audio>
               <button type="submit" class="vk-btn vk-btn-signal">Générer l'épisode</button>
             </div>
-            <div class="studio-ideas">
-              <span class="vk-label">Idées :</span>
-              <button type="button">L'histoire du café</button>
-              <button type="button">Pourquoi le ciel est bleu</button>
-              <button type="button">La photosynthèse</button>
-              <button type="button">Les premiers pas sur la Lune</button>
-            </div>
-          </div>
-          <div id="panel-audio" role="tabpanel" aria-labelledby="tab-audio" hidden>
-            <div class="studio-voice">
-              <button type="button" class="rec-btn" id="rec-btn" aria-label="Commencer l'enregistrement">
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 17.5V21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              </button>
-              <p class="rec-status" id="rec-status">Appuyez sur le bouton et dites votre sujet en une ou deux phrases (2 minutes maximum).</p>
-              <div class="studio-voice-actions" id="rec-ready" hidden>
-                <audio id="rec-preview" controls></audio>
-                <button type="submit" class="vk-btn vk-btn-signal">Générer l'épisode</button>
-              </div>
-            </div>
-          </div>
-        </form>
-
-        <div class="studio-progress" id="studio-progress" hidden>
-          <ol>
-            <li data-step="transcription" hidden>Écoute de votre message</li>
-            <li data-step="text">Écriture du texte</li>
-            <li data-step="media">Pochette et enregistrement de la voix</li>
-            <li data-step="finalizing">Mise en ligne</li>
-          </ol>
-          <div class="studio-bar"><span id="studio-bar"></span></div>
-          <p class="studio-wait" role="status" id="studio-wait">Votre épisode est en préparation, cela prend en général une à deux minutes.</p>
-        </div>
-
-        <div class="studio-result" id="studio-result" hidden>
-          <img id="result-img" alt="" width="112" height="112">
-          <div>
-            <span class="vk-label">Votre épisode est prêt</span>
-            <h2 id="result-title"></h2>
-            <div class="studio-result-actions">
-              <span id="result-play"></span>
-              <a class="vk-btn vk-btn-signal" id="result-link" href="#">Ouvrir l'épisode</a>
-              <button type="button" class="vk-btn" id="result-again">En créer un autre</button>
-            </div>
           </div>
         </div>
+      </form>
 
-        <p class="studio-error" id="studio-error" role="alert"></p>
-        <p class="studio-note">Gratuit, sans inscription, nombre de créations limité par jour. Les épisodes créés rejoignent la <a href="/discotheque">discothèque</a>.</p>
+      <div class="studio-progress" id="studio-progress" hidden>
+        <ol>
+          <li data-step="transcription" hidden>Écoute de votre message</li>
+          <li data-step="text">Écriture du texte</li>
+          <li data-step="media">Pochette et enregistrement de la voix</li>
+          <li data-step="finalizing">Mise en ligne</li>
+        </ol>
+        <div class="studio-bar"><span id="studio-bar"></span></div>
+        <p class="studio-wait" role="status" id="studio-wait">Votre épisode est en préparation, cela prend en général une à deux minutes.</p>
       </div>
+
+      <div class="studio-result" id="studio-result" hidden>
+        <img id="result-img" alt="" width="112" height="112">
+        <div>
+          <span class="vk-label">Votre épisode est prêt</span>
+          <h2 id="result-title"></h2>
+          <div class="studio-result-actions">
+            <span id="result-play"></span>
+            <a class="vk-btn vk-btn-signal" id="result-link" href="#">Ouvrir l'épisode</a>
+            <button type="button" class="vk-btn" id="result-again">En créer un autre</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="studio-error" id="studio-error" role="alert"></p>
+      <p class="studio-note">Gratuit, sans inscription, nombre de créations limité par jour. Les épisodes créés rejoignent la <a href="/discotheque">discothèque</a>.</p>
     </div>
 
     <aside class="tuner" id="tuner" aria-label="Épisode à l'antenne">
