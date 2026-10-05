@@ -1,6 +1,6 @@
 # Vokso
 
-> Vokso transforme un simple sujet, en une phrase, en podcast complet : un texte structuré en français, une illustration originale et une narration en voix de synthèse, générés automatiquement en quelques minutes. Hébergement et traitement des données en Europe, sans revente à des tiers ni entraînement de modèles externes.
+> Vokso transforme un simple sujet, en une phrase, en podcast complet : un texte en français d'une à quinze minutes d'écoute, du simple survol au niveau expert, une illustration originale et une narration en voix de synthèse, générés automatiquement en quelques minutes. Hébergement et traitement des données en Europe, sans revente à des tiers ni entraînement de modèles externes.
 
 Vokso s'adresse à toute personne qui veut explorer un sujet (histoire, science, économie, culture générale...) sous forme audio courte, sans avoir à l'écrire, l'illustrer ou l'enregistrer soi-même.
 

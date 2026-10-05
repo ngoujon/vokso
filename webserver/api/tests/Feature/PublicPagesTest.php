@@ -50,6 +50,23 @@ class PublicPagesTest extends TestCase
         $this->getJson('/categories')->assertOk()->assertJsonCount(2, 'data');
     }
 
+    public function test_episode_format_is_shown_in_the_listing_and_on_the_page(): void
+    {
+        $this->publish('gen_x', 'Les trous noirs', 'Espace', 'on', 'les-trous-noirs');
+        Generation::where('generation_id', 'gen_x')->update(['duration_minutes' => 12, 'level' => 5]);
+        $this->publish('gen_y', 'Ancien épisode', 'Espace', 'on', 'ancien-episode');
+
+        $episodes = collect($this->getJson('/listing?limit=10')->assertOk()->json('data'))->keyBy('id');
+        $this->assertSame(5, (int) $episodes['gen_x']['level']);
+        $this->assertSame(12, (int) $episodes['gen_x']['duration_minutes']);
+        $this->assertSame('Expert', $episodes['gen_x']['level_label']);
+        $this->assertNull($episodes['gen_y']['level_label']);
+
+        $this->get('/podcast/les-trous-noirs')->assertOk()->assertSee('Expert · 12 min');
+        $this->get('/podcast/ancien-episode')->assertOk()->assertDontSee('episode-format"', false);
+        $this->get('/discotheque/espace')->assertOk()->assertSee('Expert · 12 min');
+    }
+
     public function test_episode_page_is_server_rendered_and_escaped(): void
     {
         $this->publish('gen_abc', '**Les <volcans>**', 'Science', 'on', 'les-volcans');

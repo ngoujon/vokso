@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="/assets/vokso-icon-180.png?v=3">
 <link rel="preload" href="/assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/design-system.css?v=20261004">
-<link rel="stylesheet" href="/assets/site.css?v=20261005a">
+<link rel="stylesheet" href="/assets/site.css?v=20261005b">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Vokso">
 <meta property="og:title" content="Vokso — Générez des podcasts par IA, hébergés en Europe">
@@ -103,6 +103,19 @@
   .rec-status strong { color: var(--vk-ink); font-family: var(--vk-mono); }
   .studio-voice-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; width: 100%; }
   .studio-voice-actions audio { flex: 1 1 220px; height: 2.5rem; }
+  .studio-format { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 2rem; margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px dashed var(--vk-line); }
+  .format-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
+  .format-head label { font-weight: 600; }
+  .format-head output { padding: 0.1rem 0.6rem; border-radius: 999px; background: var(--vk-signal); color: var(--vk-on-signal); font-size: 0.85rem; font-weight: 600; }
+  .studio-format input[type=range] {
+    -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 6px; margin: 0.5rem 0; border-radius: 3px; cursor: pointer;
+    background: linear-gradient(90deg, var(--vk-signal) var(--pct, 0%), var(--vk-paper-2) var(--pct, 0%));
+  }
+  .studio-format input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--vk-signal); border: 2px solid var(--vk-ink); }
+  .studio-format input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--vk-signal); border: 2px solid var(--vk-ink); }
+  .studio-format input[type=range]:focus-visible { outline: 2px solid var(--vk-ink); outline-offset: 6px; }
+  .format-scale { display: flex; justify-content: space-between; font: 500 0.72rem/1 var(--vk-mono); color: var(--vk-ink-3); }
+  .format-hint { margin: 0.55rem 0 0; font-size: 0.85rem; color: var(--vk-ink-2); }
   .studio-note { margin: 0.9rem 0 0; font-size: 0.85rem; color: var(--vk-ink-2); }
   .studio-error { margin: 0.9rem 0 0; color: var(--vk-danger); font-weight: 600; }
   .studio-error:empty { display: none; }
@@ -192,6 +205,7 @@
     .tuner-next { margin-left: 0; }
     .tuner-controls { flex-wrap: wrap; }
     .studio-input .vk-btn { width: 100%; }
+    .studio-format { grid-template-columns: 1fr; }
     .studio-result { grid-template-columns: 1fr; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -279,6 +293,27 @@
             </div>
           </div>
         </div>
+
+        <div class="studio-format">
+          <div class="format-field">
+            <div class="format-head">
+              <label for="studio-duration">Durée</label>
+              <output id="studio-duration-out" for="studio-duration">5 min</output>
+            </div>
+            <input type="range" id="studio-duration" min="1" max="15" step="1" value="5" aria-describedby="studio-duration-hint">
+            <div class="format-scale" aria-hidden="true"><span>1 min</span><span>15 min</span></div>
+            <p class="format-hint" id="studio-duration-hint">Un format court pour l'essentiel, jusqu'à un quart d'heure pour prendre le temps.</p>
+          </div>
+          <div class="format-field">
+            <div class="format-head">
+              <label for="studio-level">Niveau</label>
+              <output id="studio-level-out" for="studio-level">Découverte</output>
+            </div>
+            <input type="range" id="studio-level" min="1" max="5" step="1" value="2" aria-describedby="studio-level-hint">
+            <div class="format-scale" aria-hidden="true"><span>Survol</span><span>Expert</span></div>
+            <p class="format-hint" id="studio-level-hint">Pour un public curieux : les notions de base expliquées simplement.</p>
+          </div>
+        </div>
       </form>
 
       <div class="studio-progress" id="studio-progress" hidden>
@@ -295,7 +330,7 @@
       <div class="studio-result" id="studio-result" hidden>
         <img id="result-img" alt="" width="112" height="112">
         <div>
-          <span class="vk-label">Votre épisode est prêt</span>
+          <span class="vk-label">Votre épisode est prêt<span id="result-format"></span></span>
           <h2 id="result-title"></h2>
           <div class="studio-result-actions">
             <span id="result-play"></span>
@@ -472,7 +507,7 @@
   </div>
 </footer>
 
-<script src="/assets/site.js?v=20261005a"></script>
+<script src="/assets/site.js?v=20261005b"></script>
 <script>
 (function () {
   'use strict';
@@ -514,7 +549,7 @@
       $('tuner-img').src = V.image(ep);
       $('tuner-title').textContent = V.cleanTitle(ep.title);
       $('tuner-title').href = V.episodeUrl(ep);
-      $('tuner-cat').textContent = ep.category || 'Épisode';
+      $('tuner-cat').textContent = [ep.category || 'Épisode', ep.level_label].filter(Boolean).join(' · ');
       tunerPlay.setAttribute('data-ep', ep.id);
       tunerPlay.setAttribute('aria-label', 'Écouter « ' + V.cleanTitle(ep.title) + ' »');
       tuner.setAttribute('data-ep', ep.id);
@@ -598,6 +633,37 @@
   var recorder = null, chunks = [], recorded = null, recTimer = null, recStart = 0;
   var MAX_REC_MS = 120000;
   var STEP_ORDER = ['queued', 'transcription', 'text', 'media', 'finalizing', 'done'];
+
+  // ---- Format : durée et niveau -------------------------------------------
+  var LEVELS = {
+    1: ['Survol', "L'essentiel en surface, sans jargon : idéal pour une première approche."],
+    2: ['Découverte', 'Pour un public curieux : les notions de base expliquées simplement.'],
+    3: ['Approfondi', 'Au-delà des bases : mécanismes, chiffres, nuances et plusieurs angles.'],
+    4: ['Avancé', 'Pour un public averti : vocabulaire du domaine, données, débats et recherches récentes.'],
+    5: ['Expert', 'Pour les spécialistes : état de l\'art, détails techniques et questions ouvertes.']
+  };
+  function rangeFill(input) {
+    var pct = (input.value - input.min) / (input.max - input.min) * 100;
+    input.style.setProperty('--pct', pct + '%');
+  }
+  function syncDuration() {
+    var d = $('studio-duration');
+    $('studio-duration-out').textContent = d.value + ' min';
+    d.setAttribute('aria-valuetext', d.value + (d.value > 1 ? ' minutes' : ' minute'));
+    rangeFill(d);
+  }
+  function syncLevel() {
+    var l = $('studio-level');
+    var info = LEVELS[l.value];
+    $('studio-level-out').textContent = info[0];
+    $('studio-level-hint').textContent = info[1];
+    l.setAttribute('aria-valuetext', info[0]);
+    rangeFill(l);
+  }
+  $('studio-duration').addEventListener('input', syncDuration);
+  $('studio-level').addEventListener('input', syncLevel);
+  syncDuration();
+  syncLevel();
 
   function setError(msg) { $('studio-error').textContent = msg || ''; }
 
@@ -702,6 +768,7 @@
     $('studio-result').setAttribute('data-ep', ep.id);
     $('result-img').src = V.image(ep);
     $('result-title').textContent = V.cleanTitle(ep.title) || 'Votre épisode';
+    $('result-format').textContent = V.formatLabel(job) ? ' · ' + V.formatLabel(job) : '';
     $('result-link').href = V.episodeUrl(ep);
     var slot = $('result-play');
     slot.textContent = '';
@@ -733,19 +800,30 @@
     e.preventDefault();
     setError('');
     var request;
+    var duration = $('studio-duration').value;
+    var level = $('studio-level').value;
     if (mode === 'text') {
       var subject = $('studio-subject').value.trim();
       if (!subject) { setError('Indiquez un sujet pour votre épisode.'); $('studio-subject').focus(); return; }
-      request = fetch('/api/generation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ input: subject }) });
+      request = fetch('/api/generation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input: subject, duration: Number(duration), level: Number(level) })
+      });
     } else {
       if (!recorded) { setError('Enregistrez d\'abord votre message vocal.'); return; }
       var fd = new FormData();
       fd.append('audio', recorded);
+      fd.append('duration', duration);
+      fd.append('level', level);
       request = fetch('/api/generation-audio', { method: 'POST', body: fd });
     }
     $('studio-form').hidden = true;
     document.querySelector('.studio-tabs').hidden = true;
     $('studio-progress').querySelector('[data-step="transcription"]').hidden = mode !== 'audio';
+    $('studio-wait').textContent = duration > 6
+      ? 'Votre épisode est en préparation. Un format long demande un peu plus de temps : comptez quelques minutes.'
+      : 'Votre épisode est en préparation, cela prend en général une à deux minutes.';
     showProgress('queued', 0);
     request
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || 'La création a échoué.'); return d; }); })

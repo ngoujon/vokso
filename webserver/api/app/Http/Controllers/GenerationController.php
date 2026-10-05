@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GenerationJob;
+use App\Support\EpisodeFormat;
 use App\Support\EpisodeText;
 use App\Support\GenerationLimits;
 use Illuminate\Http\JsonResponse;
@@ -34,12 +35,17 @@ class GenerationController extends Controller
             return $this->error('Le sujet ne doit pas dépasser '.self::MAX_INPUT_LENGTH.' caractères.', 400);
         }
 
+        [$minutes, $level, $formatError] = $this->format($request->json('duration'), $request->json('level'));
+        if ($formatError !== null) {
+            return $formatError;
+        }
+
         $refusal = $this->limitRefusal($request);
         if ($refusal !== null) {
             return $refusal;
         }
 
-        $jobId = $this->createJob('text', $userInput, null, $request->user()?->id);
+        $jobId = $this->createJob('text', $userInput, null, $request->user()?->id, $minutes, $level);
         $this->dispatch($jobId);
 
         return response()->json([
@@ -68,6 +74,11 @@ class GenerationController extends Controller
             return $this->error('Format audio non supporté.', 400);
         }
 
+        [$minutes, $level, $formatError] = $this->format($request->input('duration'), $request->input('level'));
+        if ($formatError !== null) {
+            return $formatError;
+        }
+
         // Vérifié avant de stocker le fichier : un refus ne doit pas laisser
         // d'upload orphelin.
         $refusal = $this->limitRefusal($request);
@@ -89,7 +100,7 @@ class GenerationController extends Controller
             return $this->error('Impossible d\'enregistrer le fichier audio.', 500);
         }
 
-        $jobId = $this->createJob('audio', null, $uploadDir.'/'.$storedName, $request->user()?->id);
+        $jobId = $this->createJob('audio', null, $uploadDir.'/'.$storedName, $request->user()?->id, $minutes, $level);
         $this->dispatch($jobId);
 
         return response()->json([
@@ -107,10 +118,14 @@ class GenerationController extends Controller
             return $this->error('Identifiant de suivi manquant', 400);
         }
 
+        $columns = ['j.status', 'j.step', 'j.progress', 'j.error_message', 'j.generation_id', 'g.slug', 'g.title', 'g.image_url', 'g.audio_url'];
+        if (EpisodeFormat::columnsReady()) {
+            $columns = array_merge($columns, ['g.duration_minutes', 'g.level']);
+        }
         $row = DB::table('generation_jobs as j')
             ->leftJoin('generations as g', 'g.generation_id', '=', 'j.generation_id')
             ->where('j.job_id', $jobId)
-            ->first(['j.status', 'j.step', 'j.progress', 'j.error_message', 'j.generation_id', 'g.slug', 'g.title', 'g.image_url', 'g.audio_url']);
+            ->first($columns);
 
         if (! $row) {
             return $this->error('Suivi introuvable', 404);
@@ -127,6 +142,9 @@ class GenerationController extends Controller
             'title' => $row->title,
             'image' => $row->image_url,
             'audio' => $row->audio_url,
+            'duration_minutes' => $row->duration_minutes ?? null,
+            'level' => $row->level ?? null,
+            'level_label' => EpisodeFormat::levelLabel($row->level ?? null),
         ]);
     }
 
@@ -138,11 +156,37 @@ class GenerationController extends Controller
         return $message === null ? null : $this->error($message, 429, ['code' => 'limit_reached']);
     }
 
-    protected function createJob(string $sourceType, ?string $input, ?string $audioPath, ?int $userId): string
+    /**
+     * Durée et niveau demandés (valeurs par défaut s'ils sont absents).
+     *
+     * @return array{0: int, 1: int, 2: ?JsonResponse} [minutes, niveau, erreur éventuelle]
+     */
+    protected function format(mixed $rawMinutes, mixed $rawLevel, int $errorStatus = 400): array
     {
+        $minutes = EpisodeFormat::minutes($rawMinutes);
+        if ($minutes === null) {
+            return [0, 0, $this->error('La durée doit être un nombre entier de minutes entre '.EpisodeFormat::MIN_MINUTES.' et '.EpisodeFormat::MAX_MINUTES.'.', $errorStatus)];
+        }
+
+        $level = EpisodeFormat::level($rawLevel);
+        if ($level === null) {
+            return [0, 0, $this->error('Le niveau doit être un entier entre 1 et '.count(EpisodeFormat::LEVELS).'.', $errorStatus)];
+        }
+
+        return [$minutes, $level, null];
+    }
+
+    protected function createJob(
+        string $sourceType,
+        ?string $input,
+        ?string $audioPath,
+        ?int $userId,
+        int $minutes = EpisodeFormat::DEFAULT_MINUTES,
+        int $level = EpisodeFormat::DEFAULT_LEVEL
+    ): string {
         $jobId = 'job_'.bin2hex(random_bytes(16));
 
-        GenerationJob::create([
+        $attributes = [
             'job_id' => $jobId,
             'user_id' => $userId,
             'source_type' => $sourceType,
@@ -151,7 +195,11 @@ class GenerationController extends Controller
             'progress' => 0,
             'input' => $input,
             'audio_path' => $audioPath,
-        ]);
+        ];
+        if (EpisodeFormat::columnsReady()) {
+            $attributes += ['duration_minutes' => $minutes, 'level' => $level];
+        }
+        GenerationJob::create($attributes);
 
         return $jobId;
     }

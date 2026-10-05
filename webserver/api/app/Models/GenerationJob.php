@@ -13,11 +13,11 @@ class GenerationJob extends Model
 
     protected $fillable = [
         'job_id', 'user_id', 'source_type', 'status', 'step', 'progress', 'input', 'audio_path',
-        'generation_id', 'error_message',
+        'generation_id', 'error_message', 'duration_minutes', 'level',
     ];
 
     protected function casts(): array
     {
-        return ['progress' => 'integer'];
+        return ['progress' => 'integer', 'duration_minutes' => 'integer', 'level' => 'integer'];
     }
 }

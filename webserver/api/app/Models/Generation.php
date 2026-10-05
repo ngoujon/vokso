@@ -13,7 +13,7 @@ class Generation extends Model
 
     protected $fillable = [
         'generation_id', 'slug', 'title', 'text_content', 'image_url', 'audio_url', 'idcategorie',
-        'user_id', 'cost_text', 'cost_image', 'cost_audio', 'cost_total',
+        'user_id', 'cost_text', 'cost_image', 'cost_audio', 'cost_total', 'duration_minutes', 'level',
     ];
 
     public function scopePublished(Builder $query): Builder

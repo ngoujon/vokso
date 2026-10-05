@@ -17,7 +17,7 @@ $e = fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 <link rel="apple-touch-icon" href="/assets/vokso-icon-180.png?v=3">
 <link rel="preload" href="/assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/design-system.css?v=20261004">
-<link rel="stylesheet" href="/assets/site.css?v=20261005a">
+<link rel="stylesheet" href="/assets/site.css?v=20261005b">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Vokso">
 <meta property="og:title" content="<?= $e($title) ?>">
@@ -46,6 +46,7 @@ $e = fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
   .episodes h2 a { color: inherit; text-decoration: none; }
   .episodes h2 a:hover { text-decoration: underline; }
   .episodes p { margin: 0.5rem 0 0; font-size: 0.92rem; color: var(--vk-ink-2); }
+  .episodes .ep-format { display: inline-block; margin-top: 0.7rem; padding: 0.15rem 0.55rem; border-radius: 999px; background: var(--vk-signal); color: var(--vk-on-signal); font-size: 0.78rem; font-weight: 600; }
   .episodes time { display: block; margin-top: 0.6rem; font-size: 0.8rem; color: var(--vk-ink-2); }
   .others { margin: 3rem 0 0; text-align: center; }
   .others ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin: 1rem 0 0; padding: 0; list-style: none; }
@@ -67,7 +68,7 @@ $e = fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
       </ol>
     </nav>
     <h1 class="display">Podcasts <?= $e($label) ?></h1>
-    <p class="category-intro"><?= $e(count($items)) ?> épisode<?= count($items) > 1 ? 's' : '' ?> de podcast en français sur le thème « <?= $e($label) ?> », à écouter gratuitement et sans inscription. Chaque épisode dure environ cinq minutes et propose sa transcription complète.</p>
+    <p class="category-intro"><?= $e(count($items)) ?> épisode<?= count($items) > 1 ? 's' : '' ?> de podcast en français sur le thème « <?= $e($label) ?> », à écouter gratuitement et sans inscription. Chaque épisode indique sa durée et son niveau, de la découverte à l'expertise, et propose sa transcription complète.</p>
   </header>
 
   <ul class="episodes">
@@ -77,6 +78,7 @@ $e = fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
       <div class="ep-body">
         <h2><a href="<?= $e($item['path']) ?>"><?= $e($item['title']) ?></a></h2>
         <p><?= $e($item['excerpt']) ?></p>
+        <?php if ($item['format']): ?><span class="ep-format"><?= $e($item['format']) ?></span><?php endif; ?>
         <?php if ($item['date'] !== ''): ?><time><?= $e($item['date']) ?></time><?php endif; ?>
       </div>
     </li>
@@ -97,6 +99,6 @@ $e = fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 
 <?php include __DIR__.'/../partials/site-footer.php'; ?>
 
-<script src="/assets/site.js?v=20261005a"></script>
+<script src="/assets/site.js?v=20261005b"></script>
 </body>
 </html>

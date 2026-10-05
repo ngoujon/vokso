@@ -110,6 +110,43 @@ class GenerationTest extends TestCase
         rmdir($dir);
     }
 
+    public function test_generation_records_the_requested_format(): void
+    {
+        $default = $this->postJson('/generation', ['input' => 'Les volcans'])->assertStatus(202);
+        $job = GenerationJob::find($default->json('job_id'));
+        $this->assertSame(5, $job->duration_minutes);
+        $this->assertSame(2, $job->level);
+
+        $custom = $this->postJson('/generation', ['input' => 'Les volcans', 'duration' => 12, 'level' => 5])->assertStatus(202);
+        $job = GenerationJob::find($custom->json('job_id'));
+        $this->assertSame(12, $job->duration_minutes);
+        $this->assertSame(5, $job->level);
+
+        $this->postJson('/generation', ['input' => 'Sujet', 'duration' => 16])->assertStatus(400);
+        $this->postJson('/generation', ['input' => 'Sujet', 'duration' => 0])->assertStatus(400);
+        $this->postJson('/generation', ['input' => 'Sujet', 'level' => 6])->assertStatus(400);
+        $this->postJson('/generation', ['input' => 'Sujet', 'level' => 'expert'])->assertStatus(400);
+    }
+
+    public function test_audio_generation_records_the_requested_format(): void
+    {
+        $dir = sys_get_temp_dir().'/vokso-uploads-'.uniqid();
+        config(['vokso.upload_dir' => $dir]);
+
+        $response = $this->post('/generation-audio', [
+            'audio' => UploadedFile::fake()->create('voix.webm', 10),
+            'duration' => '1',
+            'level' => '4',
+        ])->assertStatus(202);
+
+        $job = GenerationJob::find($response->json('job_id'));
+        $this->assertSame(1, $job->duration_minutes);
+        $this->assertSame(4, $job->level);
+
+        array_map('unlink', glob($dir.'/*'));
+        rmdir($dir);
+    }
+
     public function test_unknown_job_is_not_found(): void
     {
         $this->getJson('/generation-status?id=job_inconnu')->assertNotFound();

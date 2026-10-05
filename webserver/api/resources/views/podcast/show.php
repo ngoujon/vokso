@@ -21,7 +21,7 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
 <link rel="apple-touch-icon" href="/assets/vokso-icon-180.png?v=3">
 <link rel="preload" href="/assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/design-system.css?v=20261004">
-<link rel="stylesheet" href="/assets/site.css?v=20261005a">
+<link rel="stylesheet" href="/assets/site.css?v=20261005b">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Vokso">
 <meta property="og:title" content="<?= $e($title) ?>">
@@ -46,6 +46,7 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
 <style>
   .episode { width: min(760px, 100% - 2.5rem); margin: 0 auto; padding: 3.5rem 0 2rem; }
   .episode-head { text-align: center; }
+  .episode-format { display: inline-block; margin: 0.9rem 0 0; padding: 0.2rem 0.7rem; border-radius: 999px; background: var(--vk-signal); color: var(--vk-on-signal); font-size: 0.85rem; font-weight: 600; }
   .breadcrumb ol { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem; margin: 0 0 1rem; padding: 0; list-style: none; font-size: 0.85rem; color: var(--vk-ink-2); }
   .breadcrumb li + li::before { content: "›"; margin-right: 0.35rem; }
   .breadcrumb a { color: inherit; }
@@ -145,6 +146,7 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
       </nav>
       <?php if ($categoryUrl): ?><a class="vk-label episode-cat" href="<?= $e(parse_url($categoryUrl, PHP_URL_PATH)) ?>"><?= $e($category) ?></a><?php endif; ?>
       <h1 class="display"><?= $e($title) ?></h1>
+      <?php if ($format): ?><p class="episode-format"><?= $e($format) ?></p><?php endif; ?>
       <p class="episode-meta"><?php if ($publishedHuman !== ''): ?>Publié le <time datetime="<?= $e($publishedIso) ?>"><?= $e($publishedHuman) ?></time> · <?php endif; ?>Podcast généré par IA, hébergé en Europe</p>
       <?php if ($imageUrl): ?>
         <div class="episode-cover"><img src="<?= $e($imageUrl) ?>" alt="Illustration de l'épisode <?= $e($title) ?>" width="440" height="440"></div>
@@ -234,7 +236,7 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
 
 <?php include __DIR__.'/../partials/site-footer.php'; ?>
 
-<script src="/assets/site.js?v=20261005a"></script>
+<script src="/assets/site.js?v=20261005b"></script>
 <script>
 (function () {
   'use strict';

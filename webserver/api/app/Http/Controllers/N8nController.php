@@ -31,12 +31,17 @@ class N8nController extends GenerationController
             return $this->error('Le sujet ne doit pas dépasser '.self::MAX_INPUT_LENGTH.' caractères.', 422);
         }
 
+        [$minutes, $level, $formatError] = $this->format($request->json('duree', $request->json('duration')), $request->json('niveau', $request->json('level')), 422);
+        if ($formatError !== null) {
+            return $formatError;
+        }
+
         $limits = GenerationLimits::fromConfig();
         if ($limits->globalUsage() >= (int) config('vokso.generation_limits.global_daily')) {
             return $this->error('Plafond quotidien de générations atteint, réessayez demain.', 429, ['code' => 'limit_reached']);
         }
 
-        $jobId = $this->createJob('text', $subject, null, null);
+        $jobId = $this->createJob('text', $subject, null, null, $minutes, $level);
         $this->dispatch($jobId);
 
         return response()->json([

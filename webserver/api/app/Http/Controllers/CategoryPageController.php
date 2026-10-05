@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\CategoryIndex;
+use App\Support\EpisodeFormat;
 use App\Support\EpisodeText;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,7 @@ class CategoryPageController extends Controller
                 ->where('idcategorie', $category->id)
                 ->orderByDesc('created_at')
                 ->limit(self::MAX_EPISODES)
-                ->get(['generation_id', 'slug', 'title', 'text_content', 'image_url', 'created_at']) : collect();
+                ->get(['generation_id', 'slug', 'title', 'text_content', 'image_url', 'created_at', ...EpisodeFormat::columns('')]) : collect();
         } catch (Throwable $e) {
             report($e);
             $category = null;
@@ -51,6 +52,10 @@ class CategoryPageController extends Controller
                 'excerpt' => EpisodeText::metaDescription((string) $row->text_content, 180),
                 'image' => $row->image_url ? $base.'/static/images/'.rawurlencode((string) $row->image_url) : null,
                 'date' => $row->created_at ? date('d/m/Y', strtotime((string) $row->created_at)) : '',
+                'format' => EpisodeFormat::summary(
+                    isset($row->duration_minutes) ? (int) $row->duration_minutes : null,
+                    isset($row->level) ? (int) $row->level : null
+                ),
             ];
         })->all();
 

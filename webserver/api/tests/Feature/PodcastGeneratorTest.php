@@ -36,21 +36,36 @@ class PodcastGeneratorTest extends TestCase
         parent::tearDown();
     }
 
-    private function fakeAi(bool $imageFails = false, string $imageBytes = 'png'): AiProviderFactory
+    /** Appels reçus par les faux fournisseurs (prompts de texte, morceaux synthétisés). */
+    public static array $calls = [];
+
+    private function fakeAi(bool $imageFails = false, string $imageBytes = 'png', string $narration = 'Narration du podcast.'): AiProviderFactory
     {
-        $text = new class implements TextGeneratorInterface
+        self::$calls = ['text' => [], 'speech' => [], 'expand' => []];
+
+        $text = new class($narration) implements TextGeneratorInterface
         {
+            public function __construct(private string $narration) {}
+
             public function generateText(string $systemPrompt, string $userPrompt): string
             {
+                if (str_starts_with($userPrompt, 'Below is the French narration')) {
+                    PodcastGeneratorTest::$calls['expand'][] = $userPrompt;
+
+                    return trim(str_repeat('Narration développée. ', 400));
+                }
+
                 return str_starts_with($userPrompt, 'categorie_icone') ? 'bi-rocket' : 'Réponse';
             }
 
             public function generateTextAsync(string $systemPrompt, string $userPrompt): PromiseInterface
             {
+                PodcastGeneratorTest::$calls['text'][] = $userPrompt;
+
                 return Create::promiseFor(match (true) {
                     str_starts_with($userPrompt, 'keyword') => 'Espace.',
                     str_starts_with($userPrompt, 'titre') => '**Voyage vers Mars**',
-                    default => 'Narration du podcast.',
+                    default => $this->narration,
                 });
             }
         };
@@ -79,7 +94,11 @@ class PodcastGeneratorTest extends TestCase
 
             public function synthesizeAsync(string $text): PromiseInterface
             {
-                return Create::promiseFor('mp3');
+                $i = count(PodcastGeneratorTest::$calls['speech']);
+                PodcastGeneratorTest::$calls['speech'][] = $text;
+
+                // MP3 factice : étiquette ID3v2 de 4 octets puis « trames ».
+                return Create::promiseFor("ID3\x04\x00\x00\x00\x00\x00\x04TAGS" . 'frames' . $i);
             }
 
             public function audioExtension(): string
@@ -143,6 +162,57 @@ class PodcastGeneratorTest extends TestCase
         GenerationJob::create(['job_id' => 'job_bis', 'input' => 'Mars encore', 'status' => 'pending']);
         (new PodcastGenerator($this->fakeAi(), $this->outputDir))->process('job_bis');
         $this->assertSame('voyage-vers-mars-2', Generation::where('generation_id', GenerationJob::find('job_bis')->generation_id)->value('slug'));
+    }
+
+    public function test_the_requested_format_drives_the_narration_and_is_saved(): void
+    {
+        GenerationJob::create(['job_id' => 'job_f', 'input' => 'Les trous noirs', 'status' => 'pending', 'duration_minutes' => 12, 'level' => 5]);
+
+        (new PodcastGenerator($this->fakeAi(), $this->outputDir))->process('job_f');
+
+        $generation = Generation::where('generation_id', GenerationJob::find('job_f')->generation_id)->first();
+        $this->assertSame(12, (int) $generation->duration_minutes);
+        $this->assertSame(5, (int) $generation->level);
+
+        $narration = collect(self::$calls['text'])->first(fn ($p) => str_contains($p, 'Topic: Les trous noirs'));
+        $this->assertNotNull($narration);
+        $this->assertStringContainsString('about 12 minutes', $narration);
+        $this->assertStringContainsString('Level 5/5', $narration);
+        $this->assertStringContainsString('no mandatory outline', $narration);
+    }
+
+    public function test_a_too_short_narration_is_expanded_once(): void
+    {
+        GenerationJob::create(['job_id' => 'job_s', 'input' => 'Mars', 'status' => 'pending', 'duration_minutes' => 5, 'level' => 2]);
+
+        (new PodcastGenerator($this->fakeAi(), $this->outputDir))->process('job_s');
+
+        $this->assertCount(1, self::$calls['expand']);
+        $this->assertStringContainsString('between 674 and 761 words', self::$calls['expand'][0]);
+        $generation = Generation::where('generation_id', GenerationJob::find('job_s')->generation_id)->first();
+        $this->assertStringStartsWith('Narration développée.', $generation->text_content);
+    }
+
+    public function test_a_long_narration_is_synthesized_in_chunks_and_joined(): void
+    {
+        $paragraph = str_repeat('Une phrase de narration assez longue pour remplir le texte. ', 30);
+        $narration = implode("\n\n", array_fill(0, 8, trim($paragraph)));
+        GenerationJob::create(['job_id' => 'job_long', 'input' => 'Mars', 'status' => 'pending', 'duration_minutes' => 15, 'level' => 3]);
+
+        (new PodcastGenerator($this->fakeAi(narration: $narration), $this->outputDir))->process('job_long');
+
+        $chunks = self::$calls['speech'];
+        $this->assertGreaterThan(1, count($chunks));
+        foreach ($chunks as $chunk) {
+            $this->assertLessThanOrEqual(5000, mb_strlen($chunk));
+        }
+        $this->assertSame(preg_replace('/\s+/', ' ', $narration), preg_replace('/\s+/', ' ', implode(' ', $chunks)));
+
+        $generation = Generation::where('generation_id', GenerationJob::find('job_long')->generation_id)->first();
+        $audio = file_get_contents($this->outputDir.'/audios/'.$generation->audio_url);
+        // Une seule étiquette ID3 en tête, puis les trames de chaque morceau dans l'ordre.
+        $this->assertSame(1, substr_count($audio, 'ID3'));
+        $this->assertStringEndsWith(implode('', array_map(fn ($i) => 'frames'.$i, range(1, count($chunks) - 1))), substr($audio, 14 + strlen('frames0')));
     }
 
     public function test_multi_word_rubriques_are_recognised(): void

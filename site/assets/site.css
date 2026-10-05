@@ -195,6 +195,9 @@
 @media (max-width: 900px) { .crate, .crate.is-dense { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .crate, .crate.is-dense { grid-template-columns: 1fr; } }
 
+/* Niveau de l'épisode (Survol → Expert), sous le titre d'une pochette. */
+.sleeve-level { display: inline-block; margin-top: 0.55rem; padding: 0.12rem 0.55rem; border-radius: 999px; background: var(--vk-signal); color: var(--vk-on-signal); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.01em; }
+
 /* ---- Lecteur persistant, apparaît à la première écoute -------------------- */
 .deck {
   position: fixed; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); z-index: 50;

@@ -8,6 +8,7 @@ use App\Models\GenerationJob;
 use App\Models\Prompt;
 use App\Services\Ai\AiProviderFactory;
 use App\Support\CostEstimator;
+use App\Support\EpisodeFormat;
 use App\Support\EpisodeSlug;
 use App\Support\EpisodeText;
 use Exception;
@@ -35,6 +36,12 @@ class PodcastGenerator
     // script complet.
     private const IMAGE_PROMPT_EXCERPT_LENGTH = 400;
 
+    // Un épisode de 15 minutes dépasse 13 000 caractères : la synthèse vocale
+    // est faite par morceaux (coupés entre paragraphes ou phrases), en
+    // parallèle, puis les MP3 sont mis bout à bout. Un épisode de 5 minutes
+    // (≈ 4 500 caractères) reste en un seul appel, comme avant.
+    private const SPEECH_CHUNK_LENGTH = 5000;
+
     public function __construct(
         private AiProviderFactory $ai,
         private string $outputDir
@@ -49,6 +56,8 @@ class PodcastGenerator
         }
 
         $userInput = (string) $job->input;
+        $minutes = EpisodeFormat::minutes($job->duration_minutes ?? null) ?? EpisodeFormat::DEFAULT_MINUTES;
+        $level = EpisodeFormat::level($job->level ?? null) ?? EpisodeFormat::DEFAULT_LEVEL;
 
         if ($job->source_type === 'audio') {
             $this->updateJob($jobId, 'processing', 'transcription', 5);
@@ -70,7 +79,7 @@ class PodcastGenerator
         // des appels séquentiels.
         $this->updateJob($jobId, 'processing', 'text', 10);
         try {
-            [$generatedText, $categoryKeyword, $title] = $this->generateTextCategoryAndTitle($userInput);
+            [$generatedText, $categoryKeyword, $title] = $this->generateTextCategoryAndTitle($userInput, $minutes, $level);
             $this->storeOutput('responses', 'response_' . $this->getCurrentDateTime() . '.txt', $generatedText);
             $costText = CostEstimator::textCost(
                 $this->ai->textProvider(),
@@ -119,7 +128,9 @@ class PodcastGenerator
             $job->user_id,
             $costText,
             $costImage,
-            $costAudio
+            $costAudio,
+            $minutes,
+            $level
         );
 
         GenerationJob::whereKey($jobId)->update([
@@ -174,6 +185,10 @@ class PodcastGenerator
     }
 
     /**
+     * La consigne de narration (durée, niveau, structure libre) est construite
+     * par EpisodeFormat, plus lue en base : seuls titre, catégorie et
+     * protection contre les injections restent des prompts éditables.
+     *
      * Lance en parallèle la génération du texte principal, celle de la
      * catégorie et celle du titre (trois appels indépendants au même modèle
      * de texte, tous fonction du seul sujet d'entrée) et attend les trois
@@ -181,13 +196,8 @@ class PodcastGenerator
      *
      * @return array{0: string, 1: string, 2: string} [texte généré, mot-clé de catégorie, titre]
      */
-    private function generateTextCategoryAndTitle(string $userInput): array
+    private function generateTextCategoryAndTitle(string $userInput, int $minutes, int $level): array
     {
-        $textPrompt = $this->getPrompt('texte');
-        if ($textPrompt === '') {
-            throw new Exception('Le prompt de type "texte" est introuvable dans la base de données.');
-        }
-
         $injectionPrompt = $this->getPrompt('injection');
         if ($injectionPrompt === '') {
             throw new Exception('Le prompt de protection contre les injections est introuvable dans la base de données.');
@@ -211,7 +221,7 @@ class PodcastGenerator
             // rapides et sans outil.
             'text' => $this->ai->researchTextGenerator()->generateTextAsync(
                 $injectionPrompt,
-                str_replace('###REPLACE###', $userInput, $textPrompt)
+                EpisodeFormat::narrationPrompt($userInput, $minutes, $level)
             ),
             'category' => $generator->generateTextAsync(
                 'Répondez avec un seul mot décrivant la catégorie d\'activité ou le domaine correspondant au sujet donné.',
@@ -233,8 +243,27 @@ class PodcastGenerator
             throw $this->toException($results['title']['reason']);
         }
 
+        $text = $results['text']['value'];
+        if (EpisodeFormat::isTooShort($text, $minutes)) {
+            // Une seule relance : au pire, l'épisode est un peu plus court que prévu.
+            try {
+                $longer = $this->ai->researchTextGenerator()->generateText(
+                    $injectionPrompt,
+                    EpisodeFormat::expansionPrompt($text, $userInput, $minutes, $level)
+                );
+                if (EpisodeFormat::wordCount($longer) > EpisodeFormat::wordCount($text)) {
+                    $text = $longer;
+                }
+            } catch (Exception $e) {
+                Log::warning('Allongement de la narration impossible, texte initial conservé', [
+                    'service' => 'generation-worker',
+                    'reason' => $e->getMessage(),
+                ]);
+            }
+        }
+
         return [
-            $results['text']['value'],
+            $text,
             $this->sanitizeCategory($results['category']['value']),
             $this->sanitizeTitle($results['title']['value'], $userInput),
         ];
@@ -300,19 +329,106 @@ class PodcastGenerator
         $imagePrompt = str_replace('###REPLACE###', $this->imagePromptExcerpt($generatedText), $this->getPrompt('image'));
         $synthesizer = $this->ai->speechSynthesizer();
 
-        $results = PromiseUtils::settle([
-            'image' => $this->ai->imageGenerator()->generateImageAsync($imagePrompt),
-            'audio' => $synthesizer->synthesizeAsync($generatedText),
-        ])->wait();
+        $promises = ['image' => $this->ai->imageGenerator()->generateImageAsync($imagePrompt)];
+        foreach ($this->speechChunks($generatedText) as $i => $chunk) {
+            $promises['audio' . $i] = $synthesizer->synthesizeAsync($chunk);
+        }
+        $results = PromiseUtils::settle($promises)->wait();
 
         if ($results['image']['state'] !== 'fulfilled') {
             throw new Exception('Erreur lors de la génération de l\'image : ' . $this->toException($results['image']['reason'])->getMessage());
         }
-        if ($results['audio']['state'] !== 'fulfilled') {
-            throw new Exception('Erreur lors de la génération de l\'audio : ' . $this->toException($results['audio']['reason'])->getMessage());
+        $image = $results['image']['value'];
+
+        // Clés relues dans l'ordre des morceaux (settle() trie les clés comme
+        // des chaînes : "audio10" passerait avant "audio2").
+        $parts = [];
+        for ($i = 0; isset($results['audio' . $i]); $i++) {
+            $result = $results['audio' . $i];
+            if ($result['state'] !== 'fulfilled') {
+                throw new Exception('Erreur lors de la génération de l\'audio : ' . $this->toException($result['reason'])->getMessage());
+            }
+            $parts[] = $result['value'];
         }
 
-        return [$results['image']['value'], $results['audio']['value'], $synthesizer->audioExtension()];
+        return [$image, $this->joinMp3($parts), $synthesizer->audioExtension()];
+    }
+
+    /**
+     * Découpe le texte en morceaux d'au plus SPEECH_CHUNK_LENGTH caractères,
+     * entre paragraphes de préférence, sinon entre phrases.
+     *
+     * @return list<string>
+     */
+    private function speechChunks(string $text): array
+    {
+        $text = trim($text);
+        if (mb_strlen($text) <= self::SPEECH_CHUNK_LENGTH) {
+            return [$text];
+        }
+
+        $pieces = [];
+        foreach (preg_split('/\R+/u', $text) ?: [] as $paragraph) {
+            $paragraph = trim($paragraph);
+            if ($paragraph === '') {
+                continue;
+            }
+            if (mb_strlen($paragraph) <= self::SPEECH_CHUNK_LENGTH) {
+                $pieces[] = $paragraph;
+                continue;
+            }
+            // Paragraphe trop long : coupé entre phrases.
+            foreach (preg_split('/(?<=[.!?…])\s+/u', $paragraph) ?: [] as $sentence) {
+                $pieces[] = $sentence;
+            }
+        }
+
+        $chunks = [];
+        $current = '';
+        foreach ($pieces as $piece) {
+            $separator = $current === '' ? '' : "\n\n";
+            if ($current !== '' && mb_strlen($current . $separator . $piece) > self::SPEECH_CHUNK_LENGTH) {
+                $chunks[] = $current;
+                $current = $piece;
+            } else {
+                $current .= $separator . $piece;
+            }
+        }
+        if ($current !== '') {
+            $chunks[] = $current;
+        }
+
+        return $chunks;
+    }
+
+    /**
+     * Met bout à bout des MP3 en débit constant (sortie Voxtral : en-tête ID3v2
+     * puis trames brutes, sans en-tête Xing) : on retire les étiquettes ID3
+     * des morceaux suivants pour obtenir un flux continu dont la durée se
+     * déduit correctement de la taille.
+     *
+     * @param list<string> $parts
+     */
+    private function joinMp3(array $parts): string
+    {
+        if (count($parts) === 1) {
+            return $parts[0];
+        }
+
+        $joined = '';
+        foreach ($parts as $i => $part) {
+            if (strlen($part) > 128 && substr($part, -128, 3) === 'TAG') {
+                $part = substr($part, 0, -128);
+            }
+            if ($i > 0 && strlen($part) >= 10 && substr($part, 0, 3) === 'ID3') {
+                $size = ((ord($part[6]) & 0x7F) << 21) | ((ord($part[7]) & 0x7F) << 14) | ((ord($part[8]) & 0x7F) << 7) | (ord($part[9]) & 0x7F);
+                $footer = (ord($part[5]) & 0x10) ? 10 : 0;
+                $part = substr($part, 10 + $size + $footer);
+            }
+            $joined .= $part;
+        }
+
+        return $joined;
     }
 
     /** Aperçu du texte généré, coupé sur un mot entier, pour servir de base au prompt visuel. */
@@ -496,10 +612,13 @@ class PodcastGenerator
         ?int $userId,
         float $costText,
         float $costImage,
-        float $costAudio
+        float $costAudio,
+        int $minutes,
+        int $level
     ): string {
         $generationId = 'gen_' . uniqid();
-        Generation::create([
+        $format = EpisodeFormat::columnsReady() ? ['duration_minutes' => $minutes, 'level' => $level] : [];
+        Generation::create($format + [
             'generation_id' => $generationId,
             'slug' => EpisodeSlug::forTitle((string) $title),
             'title' => $title,

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\EpisodeFormat;
 use App\Support\EpisodeText;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /** Lecture publique des podcasts publiés : derniers épisodes, recherche, catégories. */
@@ -32,7 +34,7 @@ class CatalogController extends Controller
             $query->where('c.label', trim($category));
         }
 
-        return response()->json(['success' => true, 'data' => $query->get()]);
+        return response()->json(['success' => true, 'data' => $this->withFormat($query->get())]);
     }
 
     public function search(Request $request): JsonResponse
@@ -53,7 +55,7 @@ class CatalogController extends Controller
             ->limit(self::MAX_SEARCH_RESULTS)
             ->get();
 
-        return response()->json(['success' => $results->isNotEmpty(), 'data' => $results]);
+        return response()->json(['success' => $results->isNotEmpty(), 'data' => $this->withFormat($results)]);
     }
 
     /** Catégories ayant au moins un podcast publié, par nombre de podcasts décroissant. */
@@ -89,6 +91,17 @@ class CatalogController extends Controller
                 'g.generation_id as id', 'g.slug', 'g.title', 'g.text_content as description',
                 'g.image_url', 'g.audio_url', 'g.created_at',
                 'c.label as category', 'c.icon as category_icon',
+                ...EpisodeFormat::columns(),
             ]);
+    }
+
+    /** Ajoute le libellé du niveau (« Expert ») à chaque épisode. */
+    private function withFormat(Collection $rows): Collection
+    {
+        return $rows->map(function ($row) {
+            $row->level_label = EpisodeFormat::levelLabel(isset($row->level) ? (int) $row->level : null);
+
+            return $row;
+        });
     }
 }

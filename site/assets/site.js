@@ -52,6 +52,11 @@
     return m;
   }
   function image(ep) { return STATIC + '/images/' + ep.image_url; }
+  // « Expert · 12 min » (champs level_label / duration_minutes de l'API).
+  function formatLabel(ep) {
+    return [ep.level_label, ep.duration_minutes ? ep.duration_minutes + ' min' : '']
+      .filter(Boolean).join(' · ');
+  }
 
   // ---- Comportements communs, rejoués à chaque page affichée -----------------
   var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (entries) {
@@ -266,6 +271,11 @@
     card.appendChild(art);
     card.appendChild(meta);
     card.appendChild(h3);
+    if (ep.level_label) {
+      var lvl = el('span', 'sleeve-level', ep.level_label);
+      lvl.title = 'Niveau de profondeur du sujet';
+      card.appendChild(lvl);
+    }
 
     // Durée affichée sans télécharger le fichier : métadonnées seules.
     var probe = new Audio();
@@ -381,6 +391,7 @@
     fmt: fmt,
     el: el,
     image: image,
+    formatLabel: formatLabel,
     playButton: playButton,
     audio: audio,
     current: function () { return current; },

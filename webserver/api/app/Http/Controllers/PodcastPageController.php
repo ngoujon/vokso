@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\EpisodeFormat;
 use App\Support\EpisodeText;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
@@ -104,6 +105,10 @@ class PodcastPageController extends Controller
 
         $response = response()->view('podcast.show', [
             'episodeId' => $episode->id,
+            'format' => EpisodeFormat::summary(
+                isset($episode->duration_minutes) ? (int) $episode->duration_minutes : null,
+                isset($episode->level) ? (int) $episode->level : null
+            ),
             'title' => $title,
             'canonical' => $canonical,
             'description' => $description,
@@ -134,7 +139,7 @@ class PodcastPageController extends Controller
             ->leftJoin('categorie as c', 'c.idcategorie', '=', 'g.idcategorie')
             ->where($column, $value)
             ->where('g.statut', 'on')
-            ->first(['g.generation_id as id', 'g.slug', 'g.title', 'g.text_content', 'g.image_url', 'g.audio_url', 'g.created_at', 'g.idcategorie', 'c.label as category']);
+            ->first(['g.generation_id as id', 'g.slug', 'g.title', 'g.text_content', 'g.image_url', 'g.audio_url', 'g.created_at', 'g.idcategorie', 'c.label as category', ...EpisodeFormat::columns()]);
     }
 
     /**

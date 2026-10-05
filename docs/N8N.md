@@ -20,8 +20,11 @@ POST https://vokso.fr/api/n8n/podcasts
 Authorization: Bearer <jeton>
 Content-Type: application/json
 
-{"sujet": "Les anneaux de Saturne"}
+{"sujet": "Les anneaux de Saturne", "duree": 10, "niveau": 4}
 ```
+
+`duree` (minutes, 1 à 15, 5 par défaut) et `niveau` (1 Survol, 2 Découverte,
+3 Approfondi, 4 Avancé, 5 Expert ; 2 par défaut) sont facultatifs.
 
 Réponse `202` :
 
@@ -34,7 +37,8 @@ Réponse `202` :
 }
 ```
 
-Erreurs : `422` sujet vide ou de plus de 300 caractères, `429` plafond
+Erreurs : `422` sujet vide ou de plus de 300 caractères, durée ou niveau
+hors bornes, `429` plafond
 quotidien global atteint (`GENERATION_GLOBAL_DAILY_LIMIT`). Les plafonds par
 IP de la création publique ne s'appliquent pas.
 
