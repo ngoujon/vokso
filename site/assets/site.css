@@ -207,6 +207,8 @@
   transform: translate(-50%, 160%); visibility: hidden;
   transition: transform 0.5s var(--vk-ease), visibility 0s linear 0.5s;
 }
+/* Place pour la barre en bas de page, une fois qu'un épisode est chargé. */
+.vk-page.has-deck { padding-bottom: 5.5rem; }
 .deck.is-visible { transform: translate(-50%, 0); visibility: visible; transition-delay: 0s; }
 .deck img { width: 3rem; height: 3rem; border-radius: var(--vk-radius-sm); object-fit: cover; }
 .deck .vk-play { width: 2.4rem; height: 2.4rem; }

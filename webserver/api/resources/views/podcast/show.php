@@ -21,7 +21,7 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
 <link rel="apple-touch-icon" href="/assets/vokso-icon-180.png?v=3">
 <link rel="preload" href="/assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/design-system.css?v=20261004">
-<link rel="stylesheet" href="/assets/site.css?v=20261004">
+<link rel="stylesheet" href="/assets/site.css?v=20261005a">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Vokso">
 <meta property="og:title" content="<?= $e($title) ?>">
@@ -152,7 +152,7 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
     </header>
 
     <?php if ($audioUrl): ?>
-    <div class="player" id="player">
+    <div class="player" id="player" data-ep="<?= $e($episodeId) ?>" data-title="<?= $e($title) ?>" data-url="<?= $e(parse_url($canonical, PHP_URL_PATH) ?: '/') ?>" data-image="<?= $e($imageUrl ?? '') ?>">
       <audio id="player-audio" controls preload="metadata" src="<?= $e($audioUrl) ?>"></audio>
       <div class="player-ui" aria-label="Lecteur de l'épisode">
         <div class="player-row">
@@ -234,58 +234,100 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
 
 <?php include __DIR__.'/../partials/site-footer.php'; ?>
 
-<script src="/assets/site.js?v=20261004s"></script>
+<script src="/assets/site.js?v=20261005a"></script>
 <script>
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
 
   // ---- Lecteur ---------------------------------------------------------------
-  var audio = $('player-audio');
-  if (audio) {
-    var fmt = window.Vokso.fmt;
+  // Les commandes pilotent le lecteur commun du site (window.Vokso), pour que
+  // l'écoute continue quand on quitte la page. L'élément <audio> de la page ne
+  // sert plus qu'à lire la durée (et de lecteur de secours sans JavaScript).
+  var probe = $('player-audio');
+  if (probe) {
+    var V = window.Vokso;
+    var audio = V.audio;
+    var fmt = V.fmt;
+    var player = $('player');
+    var ep = {
+      id: player.getAttribute('data-ep'),
+      title: player.getAttribute('data-title'),
+      url: player.getAttribute('data-url'),
+      src: probe.getAttribute('src'),
+      image_src: player.getAttribute('data-image')
+    };
     var seek = $('player-seek');
     var rates = [1, 1.25, 1.5, 2, 0.75];
-    var rateIndex = 0;
+    var rateIndex = Math.max(0, rates.indexOf(audio.defaultPlaybackRate));
     var dragging = false;
-    audio.removeAttribute('controls');
+    var pendingSeek = null;
+    probe.removeAttribute('controls');
 
+    var mine = function () { var c = V.current(); return !!c && c.id === ep.id; };
+    var duration = function () { return (mine() && audio.duration) || probe.duration; };
+    var showRate = function () { $('player-rate').textContent = String(rates[rateIndex]).replace('.', ',') + '×'; };
     var sync = function () {
-      var playing = !audio.paused;
+      var playing = mine() && !audio.paused;
       $('player-play').setAttribute('aria-pressed', playing ? 'true' : 'false');
       $('player-play').setAttribute('aria-label', playing ? 'Pause' : 'Lecture');
-      $('player').classList.toggle('is-playing', playing);
+      player.classList.toggle('is-playing', playing);
     };
     var progress = function () {
-      if (!audio.duration) return;
-      var pct = (audio.currentTime / audio.duration) * 100;
+      var d = duration();
+      if (!d) return;
+      var t = mine() ? audio.currentTime : 0;
+      var pct = (t / d) * 100;
       if (!dragging) seek.value = Math.round(pct * 10);
       seek.style.setProperty('--pct', pct + '%');
-      $('player-cur').textContent = fmt(audio.currentTime);
+      $('player-cur').textContent = fmt(t);
     };
-    audio.addEventListener('play', sync);
-    audio.addEventListener('pause', sync);
-    audio.addEventListener('ended', sync);
-    audio.addEventListener('timeupdate', progress);
-    audio.addEventListener('loadedmetadata', function () { $('player-dur').textContent = fmt(audio.duration); });
-    $('player-play').addEventListener('click', function () { if (audio.paused) audio.play(); else audio.pause(); });
-    $('player-back').addEventListener('click', function () { audio.currentTime = Math.max(0, audio.currentTime - 15); });
-    $('player-fwd').addEventListener('click', function () { audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 15); });
+    var onMeta = function () {
+      if (!mine()) return;
+      $('player-dur').textContent = fmt(audio.duration);
+      if (pendingSeek !== null) { audio.currentTime = audio.duration * pendingSeek; pendingSeek = null; }
+    };
+    var update = function () { sync(); progress(); };
+    var listeners = { play: update, pause: update, ended: update, emptied: update, timeupdate: progress, loadedmetadata: onMeta };
+    Object.keys(listeners).forEach(function (k) { audio.addEventListener(k, listeners[k]); });
+    V.onLeave(function () { Object.keys(listeners).forEach(function (k) { audio.removeEventListener(k, listeners[k]); }); });
+
+    // Lance l'épisode de la page s'il n'est pas déjà dans le lecteur.
+    var start = function () {
+      if (mine()) return false;
+      audio.defaultPlaybackRate = rates[rateIndex];
+      V.toggle(ep);
+      audio.playbackRate = rates[rateIndex];
+      return true;
+    };
+    probe.addEventListener('loadedmetadata', function () { if (!mine()) $('player-dur').textContent = fmt(probe.duration); });
+    $('player-play').addEventListener('click', function () { if (!start()) V.toggle(ep); });
+    $('player-back').addEventListener('click', function () { if (mine()) audio.currentTime = Math.max(0, audio.currentTime - 15); });
+    $('player-fwd').addEventListener('click', function () { if (mine()) audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 15); });
     $('player-rate').addEventListener('click', function () {
       rateIndex = (rateIndex + 1) % rates.length;
-      audio.playbackRate = rates[rateIndex];
-      this.textContent = String(rates[rateIndex]).replace('.', ',') + '×';
+      showRate();
+      if (mine()) { audio.defaultPlaybackRate = rates[rateIndex]; audio.playbackRate = rates[rateIndex]; }
     });
     seek.addEventListener('input', function () {
       dragging = true;
       seek.style.setProperty('--pct', seek.value / 10 + '%');
-      if (audio.duration) $('player-cur').textContent = fmt(audio.duration * seek.value / 1000);
+      var d = duration();
+      if (d) $('player-cur').textContent = fmt(d * seek.value / 1000);
     });
     seek.addEventListener('change', function () {
       dragging = false;
+      if (start()) { pendingSeek = seek.value / 1000; return; }
       if (audio.duration) audio.currentTime = audio.duration * seek.value / 1000;
     });
-    if (audio.readyState >= 1) $('player-dur').textContent = fmt(audio.duration);
+    if (mine()) {
+      rateIndex = Math.max(0, rates.indexOf(audio.playbackRate));
+      if (audio.duration) $('player-dur').textContent = fmt(audio.duration);
+    } else if (probe.readyState >= 1) {
+      $('player-dur').textContent = fmt(probe.duration);
+    }
+    showRate();
+    update();
   }
 
   // ---- Partage ---------------------------------------------------------------

@@ -20,6 +20,7 @@
   // URL lisible /podcast/{slug} fournie par l'API ; repli sur l'ancienne
   // forme /podcast/{id}-{titre} (redirigée en 301) pour un épisode sans slug.
   function episodeUrl(ep) {
+    if (ep.url) return ep.url;
     if (ep.slug) return '/podcast/' + ep.slug;
     var slug = slugify(ep.title);
     return '/podcast/' + ep.id + (slug ? '-' + slug : '');
@@ -52,22 +53,7 @@
   }
   function image(ep) { return STATIC + '/images/' + ep.image_url; }
 
-  // ---- Année du pied de page, menu mobile ---------------------------------
-  document.querySelectorAll('[data-year]').forEach(function (n) { n.textContent = new Date().getFullYear(); });
-
-  var toggleBtn = document.querySelector('.site-nav-toggle');
-  var nav = $('site-nav');
-  if (toggleBtn && nav) {
-    toggleBtn.addEventListener('click', function () {
-      var open = nav.classList.toggle('is-open');
-      toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    });
-    nav.addEventListener('click', function (e) {
-      if (e.target.closest('a')) { nav.classList.remove('is-open'); toggleBtn.setAttribute('aria-expanded', 'false'); }
-    });
-  }
-
-  // ---- Apparitions au défilement ------------------------------------------
+  // ---- Comportements communs, rejoués à chaque page affichée -----------------
   var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
       if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
@@ -78,49 +64,101 @@
       if (io) io.observe(n); else n.classList.add('in');
     });
   }
-  observeReveals();
+
+  function initPage() {
+    // Année du pied de page, menu mobile
+    document.querySelectorAll('[data-year]').forEach(function (n) { n.textContent = new Date().getFullYear(); });
+
+    var toggleBtn = document.querySelector('.site-nav-toggle');
+    var nav = $('site-nav');
+    if (toggleBtn && nav) {
+      toggleBtn.addEventListener('click', function () {
+        var open = nav.classList.toggle('is-open');
+        toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      nav.addEventListener('click', function (e) {
+        if (e.target.closest('a')) { nav.classList.remove('is-open'); toggleBtn.setAttribute('aria-expanded', 'false'); }
+      });
+    }
+
+    observeReveals();
+    initBulletin();
+  }
 
   // ---- Bulletin -------------------------------------------------------------
-  var form = $('bulletin-form');
-  if (form) {
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var msg = $('bulletin-msg');
-      var email = $('bulletin-email').value.trim();
-      msg.className = 'bulletin-msg';
-      if (!email || !$('bulletin-email').checkValidity()) {
-        msg.className = 'bulletin-msg err';
-        msg.textContent = 'Indiquez une adresse e-mail valide.';
-        return;
-      }
-      msg.textContent = 'Envoi en cours…';
-      fetch('/api/newsletter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, website: $('bulletin-website').value.trim() })
-      }).then(function (res) {
-        return res.json().catch(function () { return {}; }).then(function (data) {
-          if (res.ok) {
-            msg.className = 'bulletin-msg ok';
-            msg.textContent = data.message || 'Inscription confirmée, vérifiez vos mails.';
-            form.reset();
-          } else {
-            msg.className = 'bulletin-msg err';
-            msg.textContent = data.message || data.error || "L'inscription a échoué, réessayez.";
-          }
+  function initBulletin() {
+    var form = $('bulletin-form');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var msg = $('bulletin-msg');
+        var email = $('bulletin-email').value.trim();
+        msg.className = 'bulletin-msg';
+        if (!email || !$('bulletin-email').checkValidity()) {
+          msg.className = 'bulletin-msg err';
+          msg.textContent = 'Indiquez une adresse e-mail valide.';
+          return;
+        }
+        msg.textContent = 'Envoi en cours…';
+        fetch('/api/newsletter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, website: $('bulletin-website').value.trim() })
+        }).then(function (res) {
+          return res.json().catch(function () { return {}; }).then(function (data) {
+            if (res.ok) {
+              msg.className = 'bulletin-msg ok';
+              msg.textContent = data.message || 'Inscription confirmée, vérifiez vos mails.';
+              form.reset();
+            } else {
+              msg.className = 'bulletin-msg err';
+              msg.textContent = data.message || data.error || "L'inscription a échoué, réessayez.";
+            }
+          });
+        }).catch(function () {
+          msg.className = 'bulletin-msg err';
+          msg.textContent = "L'inscription a échoué, réessayez.";
         });
-      }).catch(function () {
-        msg.className = 'bulletin-msg err';
-        msg.textContent = "L'inscription a échoué, réessayez.";
       });
-    });
+    }
   }
 
   // ---- Lecteur unique -------------------------------------------------------
+  // Un seul élément audio pour tout le site ; il survit à la navigation douce,
+  // tout comme la barre de lecture (#deck), construite ici une fois pour toutes.
   var audio = new Audio();
   audio.preload = 'none';
   var current = null;
-  var deck = $('deck');
+
+  var deck = el('div', 'deck');
+  deck.id = 'deck';
+  deck.setAttribute('aria-label', 'Lecteur');
+  var deckImg = el('img');
+  deckImg.alt = '';
+  var deckPlay = playButton('Lecture');
+  var deckTitle = el('div', 'deck-title');
+  var deckBar = el('div', 'deck-bar');
+  deckBar.setAttribute('role', 'slider');
+  deckBar.setAttribute('aria-label', 'Position de lecture');
+  deckBar.setAttribute('aria-valuemin', '0');
+  deckBar.setAttribute('aria-valuemax', '100');
+  deckBar.setAttribute('aria-valuenow', '0');
+  deckBar.tabIndex = 0;
+  var deckProgress = el('span');
+  deckBar.appendChild(deckProgress);
+  var deckInfo = el('div');
+  deckInfo.style.minWidth = '0';
+  deckInfo.appendChild(deckTitle);
+  deckInfo.appendChild(deckBar);
+  var deckTime = el('span', 'deck-time', '0:00');
+  deck.appendChild(deckImg);
+  deck.appendChild(deckPlay);
+  deck.appendChild(deckInfo);
+  deck.appendChild(deckTime);
+  document.body.appendChild(deck);
+
+  function audioSrc(ep) { return ep.src || STATIC + '/audios/' + ep.audio_url; }
+  function coverSrc(ep) { return ep.image_src || image(ep); }
 
   function syncButtons() {
     var playing = !audio.paused;
@@ -130,52 +168,63 @@
       var btn = node.matches('.vk-play') ? node : node.querySelector('.vk-play');
       if (btn) btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
-    if (deck) {
-      $('deck-play').setAttribute('aria-pressed', playing ? 'true' : 'false');
-      deck.classList.toggle('is-playing', playing);
-    }
+    deckPlay.setAttribute('aria-pressed', playing ? 'true' : 'false');
+    deckPlay.setAttribute('aria-label', playing ? 'Pause' : 'Lecture');
+    deck.classList.toggle('is-playing', playing);
+    document.body.classList.toggle('has-deck', !!current);
   }
+
+  // play() rejette sa promesse si une pause l'interrompt : rien à signaler.
+  function play() { var p = audio.play(); if (p && p.catch) p.catch(function () {}); }
 
   function toggle(ep) {
     if (current && current.id === ep.id) {
-      if (audio.paused) audio.play(); else audio.pause();
+      if (audio.paused) play(); else audio.pause();
       return;
     }
     current = ep;
-    audio.src = STATIC + '/audios/' + ep.audio_url;
-    audio.play();
-    if (deck) {
-      $('deck-img').src = image(ep);
-      var title = $('deck-title');
-      title.textContent = '';
-      var a = el('a', null, cleanTitle(ep.title));
-      a.href = episodeUrl(ep);
-      title.appendChild(a);
-      deck.classList.add('is-visible');
+    audio.src = audioSrc(ep);
+    play();
+    deckImg.src = coverSrc(ep);
+    deckTitle.textContent = '';
+    var a = el('a', null, cleanTitle(ep.title));
+    a.href = episodeUrl(ep);
+    deckTitle.appendChild(a);
+    deck.classList.add('is-visible');
+    if ('mediaSession' in navigator && window.MediaMetadata) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: cleanTitle(ep.title), artist: 'Vokso',
+        artwork: [{ src: new URL(coverSrc(ep), location.href).href }]
+      });
     }
+    syncButtons();
   }
 
   audio.addEventListener('play', syncButtons);
   audio.addEventListener('pause', syncButtons);
   audio.addEventListener('ended', syncButtons);
-  if (deck) {
-    audio.addEventListener('timeupdate', function () {
-      var pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
-      $('deck-progress').style.width = pct + '%';
-      $('deck-bar').setAttribute('aria-valuenow', Math.round(pct));
-      $('deck-time').textContent = fmt(audio.currentTime) + ' / ' + (fmt(audio.duration) || '–');
-    });
-    $('deck-play').addEventListener('click', function () { if (current) toggle(current); });
-    $('deck-bar').addEventListener('click', function (e) {
-      if (!audio.duration) return;
-      var r = this.getBoundingClientRect();
-      audio.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * audio.duration;
-    });
-    $('deck-bar').addEventListener('keydown', function (e) {
-      if (!audio.duration) return;
-      if (e.key === 'ArrowRight') audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
-      if (e.key === 'ArrowLeft') audio.currentTime = Math.max(0, audio.currentTime - 10);
-    });
+  audio.addEventListener('timeupdate', function () {
+    var pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+    deckProgress.style.width = pct + '%';
+    deckBar.setAttribute('aria-valuenow', Math.round(pct));
+    deckTime.textContent = fmt(audio.currentTime) + ' / ' + (fmt(audio.duration) || '–');
+  });
+  deckPlay.addEventListener('click', function () { if (current) toggle(current); });
+  deckBar.addEventListener('click', function (e) {
+    if (!audio.duration) return;
+    var r = this.getBoundingClientRect();
+    audio.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * audio.duration;
+  });
+  deckBar.addEventListener('keydown', function (e) {
+    if (!audio.duration) return;
+    if (e.key === 'ArrowRight') audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
+    if (e.key === 'ArrowLeft') audio.currentTime = Math.max(0, audio.currentTime - 10);
+  });
+  if ('mediaSession' in navigator) {
+    try {
+      navigator.mediaSession.setActionHandler('play', play);
+      navigator.mediaSession.setActionHandler('pause', function () { audio.pause(); });
+    } catch (e) { /* action non prise en charge */ }
   }
 
   // ---- Pochette d'un épisode --------------------------------------------------
@@ -226,6 +275,105 @@
     return card;
   }
 
+  // ---- Navigation douce -------------------------------------------------------
+  var leaveHooks = [];
+  function onLeave(fn) { leaveHooks.push(fn); }
+
+  var siteScript = document.querySelector('script[src*="/assets/site.js"]');
+  var siteScriptSrc = siteScript ? siteScript.getAttribute('src') : '';
+  function pageKey() { return location.pathname + location.search; }
+  var renderedKey = pageKey();
+  var navId = 0;
+
+  // Les scripts de page réécrivent l'URL (filtre de la discothèque, #creer) :
+  // on suit ces changements pour ne pas les prendre pour une navigation.
+  var nativeReplace = history.replaceState.bind(history);
+  history.replaceState = function (state, title, url) {
+    nativeReplace(state, title, url);
+    renderedKey = pageKey();
+  };
+
+  function swapHead(doc) {
+    document.title = doc.title;
+    var sel = 'style, script[type="application/ld+json"], meta[name="description"], meta[name="robots"], link[rel="canonical"], meta[property^="og:"], meta[property^="article:"], meta[name^="twitter:"]';
+    document.head.querySelectorAll(sel).forEach(function (n) { n.remove(); });
+    doc.head.querySelectorAll(sel).forEach(function (n) { document.head.appendChild(document.importNode(n, true)); });
+  }
+
+  function swapBody(doc) {
+    Array.prototype.slice.call(document.body.childNodes).forEach(function (n) { if (n !== deck) n.remove(); });
+    var scripts = [];
+    Array.prototype.slice.call(doc.body.childNodes).forEach(function (n) {
+      if (n.nodeName === 'SCRIPT') { if (!n.src) scripts.push(n.textContent); return; }
+      if (n.id === 'deck') return;
+      document.body.insertBefore(document.importNode(n, true), deck);
+    });
+    document.body.className = doc.body.className;
+    initPage();
+    scripts.forEach(function (code) {
+      var sc = document.createElement('script');
+      sc.textContent = code;
+      document.body.insertBefore(sc, deck);
+    });
+    syncButtons();
+  }
+
+  function scrollAfter(url, y) {
+    var target = url.hash && document.getElementById(decodeURIComponent(url.hash.slice(1)));
+    if (target) target.scrollIntoView();
+    else window.scrollTo(0, y || 0);
+  }
+
+  function navigate(href, push, y) {
+    var id = ++navId;
+    var fallback = function () { location.assign(href); };
+    fetch(href, { credentials: 'same-origin', headers: { Accept: 'text/html' } })
+      .then(function (res) {
+        if (!/text\/html/.test(res.headers.get('Content-Type') || '')) throw new Error('pas une page');
+        return res.text().then(function (html) { return { html: html, url: res.url || href }; });
+      })
+      .then(function (r) {
+        if (id !== navId) return;
+        var doc = new DOMParser().parseFromString(r.html, 'text/html');
+        var sc = doc.querySelector('script[src*="/assets/site.js"]');
+        // Page hors vitrine, ou servie par une autre version du site : rechargement classique.
+        if (!doc.body.classList.contains('vk-page') || !sc || sc.getAttribute('src') !== siteScriptSrc) return fallback();
+        var url = new URL(href, location.href);
+        var finalUrl = new URL(r.url, location.href);
+        finalUrl.hash = url.hash;
+        if (push) {
+          nativeReplace(Object.assign({}, history.state, { scroll: window.scrollY }), '');
+          history.pushState({ vk: 1 }, '', finalUrl.href);
+        }
+        renderedKey = pageKey();
+        leaveHooks.splice(0).forEach(function (fn) { try { fn(); } catch (e) { /* page quittée */ } });
+        swapHead(doc);
+        swapBody(doc);
+        scrollAfter(finalUrl, y);
+      })
+      .catch(function () { if (id === navId) fallback(); });
+  }
+
+  document.addEventListener('click', function (e) {
+    // Sans épisode en cours, la navigation classique suffit.
+    if (!current || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest('a[href]');
+    if (!a || (a.target && a.target !== '_self') || a.hasAttribute('download')) return;
+    var url = new URL(a.href, location.href);
+    if (url.origin !== location.origin || !/^https?:$/.test(url.protocol)) return;
+    if (/^\/(api|static|assets)\//.test(url.pathname) || /\.(?!html?$)[a-z0-9]+$/i.test(url.pathname)) return;
+    if (url.pathname === location.pathname && url.search === location.search && url.hash) return; // ancre interne
+    e.preventDefault();
+    navigate(url.href, true);
+  });
+
+  window.addEventListener('popstate', function (e) {
+    if (pageKey() === renderedKey) return; // simple changement d'ancre
+    navigate(location.href, false, e.state && e.state.scroll);
+  });
+
+  initPage();
+
   window.Vokso = {
     STATIC: STATIC,
     cleanTitle: cleanTitle,
@@ -234,8 +382,11 @@
     el: el,
     image: image,
     playButton: playButton,
+    audio: audio,
+    current: function () { return current; },
     toggle: toggle,
     syncButtons: syncButtons,
+    onLeave: onLeave,
     isPlaying: function (ep) { return !audio.paused && current && current.id === ep.id; },
     sleeve: sleeve,
     observeReveals: observeReveals

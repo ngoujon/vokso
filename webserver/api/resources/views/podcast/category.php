@@ -17,7 +17,7 @@ $e = fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 <link rel="apple-touch-icon" href="/assets/vokso-icon-180.png?v=3">
 <link rel="preload" href="/assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/design-system.css?v=20261004">
-<link rel="stylesheet" href="/assets/site.css?v=20261004">
+<link rel="stylesheet" href="/assets/site.css?v=20261005a">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Vokso">
 <meta property="og:title" content="<?= $e($title) ?>">
@@ -97,6 +97,6 @@ $e = fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 
 <?php include __DIR__.'/../partials/site-footer.php'; ?>
 
-<script src="/assets/site.js?v=20261004s"></script>
+<script src="/assets/site.js?v=20261005a"></script>
 </body>
 </html>

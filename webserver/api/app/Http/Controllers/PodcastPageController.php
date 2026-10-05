@@ -103,6 +103,7 @@ class PodcastPageController extends Controller
         $jsonLd = ['@context' => 'https://schema.org', '@graph' => [$episodeLd, $breadcrumbLd]];
 
         $response = response()->view('podcast.show', [
+            'episodeId' => $episode->id,
             'title' => $title,
             'canonical' => $canonical,
             'description' => $description,
