@@ -23,7 +23,7 @@ class EpisodeFormat
         4 => 'Avancé',
         5 => 'Expert',
     ];
-    public const DEFAULT_LEVEL = 2;
+    public const DEFAULT_LEVEL = 3;
 
     /** Débit de la voix de synthèse (≈ 720 mots pour 5 minutes, mesuré en septembre 2026). */
     public const WORDS_PER_MINUTE = 145;
@@ -67,12 +67,12 @@ class EpisodeFormat
         return $level !== null ? (self::LEVELS[$level] ?? null) : null;
     }
 
-    /** « Expert · 12 min » ; null pour un épisode sans format enregistré. */
+    /** « Expert · ≈ 12 min » (durée demandée, approximative) ; null sans format enregistré. */
     public static function summary(?int $minutes, ?int $level): ?string
     {
         $parts = array_filter([
             self::levelLabel($level),
-            $minutes ? $minutes.' min' : null,
+            $minutes ? '≈ '.$minutes.' min' : null,
         ]);
 
         return $parts ? implode(' · ', $parts) : null;

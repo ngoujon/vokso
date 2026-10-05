@@ -24,7 +24,7 @@ Content-Type: application/json
 ```
 
 `duree` (minutes, 1 à 15, 5 par défaut) et `niveau` (1 Survol, 2 Découverte,
-3 Approfondi, 4 Avancé, 5 Expert ; 2 par défaut) sont facultatifs.
+3 Approfondi, 4 Avancé, 5 Expert ; 3 par défaut) sont facultatifs.
 
 Réponse `202` :
 

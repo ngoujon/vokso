@@ -115,7 +115,7 @@ class GenerationTest extends TestCase
         $default = $this->postJson('/generation', ['input' => 'Les volcans'])->assertStatus(202);
         $job = GenerationJob::find($default->json('job_id'));
         $this->assertSame(5, $job->duration_minutes);
-        $this->assertSame(2, $job->level);
+        $this->assertSame(3, $job->level);
 
         $custom = $this->postJson('/generation', ['input' => 'Les volcans', 'duration' => 12, 'level' => 5])->assertStatus(202);
         $job = GenerationJob::find($custom->json('job_id'));

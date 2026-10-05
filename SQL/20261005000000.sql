@@ -4,7 +4,7 @@
 -- discothèque et sur la page de l'épisode (voir App\Support\EpisodeFormat).
 --
 -- Tant que cette migration n'est pas appliquée, le code tourne sans ces
--- colonnes : les épisodes sont créés au format par défaut (5 min, niveau 2)
+-- colonnes : les épisodes sont créés au format par défaut (5 min, niveau 3)
 -- et aucun format n'est affiché.
 ALTER TABLE `generations`
     ADD COLUMN `duration_minutes` TINYINT UNSIGNED NULL AFTER `audio_url`,

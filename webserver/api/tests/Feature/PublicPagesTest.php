@@ -62,9 +62,9 @@ class PublicPagesTest extends TestCase
         $this->assertSame('Expert', $episodes['gen_x']['level_label']);
         $this->assertNull($episodes['gen_y']['level_label']);
 
-        $this->get('/podcast/les-trous-noirs')->assertOk()->assertSee('Expert · 12 min');
+        $this->get('/podcast/les-trous-noirs')->assertOk()->assertSee('Expert · ≈ 12 min');
         $this->get('/podcast/ancien-episode')->assertOk()->assertDontSee('episode-format"', false);
-        $this->get('/discotheque/espace')->assertOk()->assertSee('Expert · 12 min');
+        $this->get('/discotheque/espace')->assertOk()->assertSee('Expert · ≈ 12 min');
     }
 
     public function test_episode_page_is_server_rendered_and_escaped(): void

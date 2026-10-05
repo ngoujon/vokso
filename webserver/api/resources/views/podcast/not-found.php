@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="/assets/vokso-icon-180.png?v=3">
 <link rel="preload" href="/assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/design-system.css?v=20261004">
-<link rel="stylesheet" href="/assets/site.css?v=20261005b">
+<link rel="stylesheet" href="/assets/site.css?v=20261005c">
 <style>
   .lost { padding: 6rem 0 5rem; text-align: center; }
   .lost h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); }
@@ -112,6 +112,6 @@
   </div>
 </footer>
 
-<script src="/assets/site.js?v=20261005b"></script>
+<script src="/assets/site.js?v=20261005c"></script>
 </body>
 </html>

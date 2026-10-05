@@ -52,9 +52,10 @@
     return m;
   }
   function image(ep) { return STATIC + '/images/' + ep.image_url; }
-  // « Expert · 12 min » (champs level_label / duration_minutes de l'API).
+  // « Expert · ≈ 12 min » (champs level_label / duration_minutes de l'API ;
+  // la durée demandée n'est qu'une estimation).
   function formatLabel(ep) {
-    return [ep.level_label, ep.duration_minutes ? ep.duration_minutes + ' min' : '']
+    return [ep.level_label, ep.duration_minutes ? '≈ ' + ep.duration_minutes + ' min' : '']
       .filter(Boolean).join(' · ');
   }
 

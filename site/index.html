@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="/assets/vokso-icon-180.png?v=3">
 <link rel="preload" href="/assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/design-system.css?v=20261004">
-<link rel="stylesheet" href="/assets/site.css?v=20261005b">
+<link rel="stylesheet" href="/assets/site.css?v=20261005c">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Vokso">
 <meta property="og:title" content="Vokso — Générez des podcasts par IA, hébergés en Europe">
@@ -78,13 +78,19 @@
     background: none; color: var(--vk-ink-2); font: 600 0.9rem/1.2 var(--vk-font); cursor: pointer;
   }
   .studio-tabs button[aria-selected="true"] { background: var(--vk-ink); border-color: var(--vk-ink); color: var(--vk-paper); }
-  .studio-input { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  /* Le champ du sujet est l'action principale de la page : il doit se voir d'emblée. */
+  .studio-label { display: block; margin: 0 0 0.6rem; font-size: 1.2rem; font-weight: 700; font-stretch: 90%; }
+  .studio-input { display: flex; gap: 0.6rem; flex-wrap: wrap; }
   .studio-input input {
-    flex: 1 1 240px; min-width: 0; padding: 0.95rem 1rem; font: inherit; font-size: 1.05rem;
-    border: 1.5px solid var(--vk-line); border-radius: var(--vk-radius-sm); background: var(--vk-paper); color: var(--vk-ink);
+    flex: 1 1 260px; min-width: 0; padding: 1.15rem 1.2rem; font: inherit; font-size: 1.2rem; font-weight: 500;
+    border: 2px solid var(--vk-signal); border-radius: var(--vk-radius-sm); background: var(--vk-paper); color: var(--vk-ink);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--vk-signal) 18%, transparent);
+    transition: box-shadow 0.2s var(--vk-ease), border-color 0.2s var(--vk-ease);
   }
-  .studio-input input:focus { outline: none; border-color: var(--vk-ink); }
-  .studio-input .vk-btn { flex: 0 0 auto; padding-inline: 1.4rem; }
+  .studio-input input::placeholder { color: var(--vk-ink-3); opacity: 1; }
+  .studio-input input:hover { box-shadow: 0 0 0 5px color-mix(in srgb, var(--vk-signal) 28%, transparent); }
+  .studio-input input:focus { outline: none; border-color: var(--vk-signal); box-shadow: 0 0 0 6px color-mix(in srgb, var(--vk-signal) 38%, transparent); }
+  .studio-input .vk-btn { flex: 0 0 auto; padding-inline: 1.6rem; font-size: 1.05rem; }
   .studio-ideas { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; margin-top: 0.9rem; }
   .studio-ideas button {
     padding: 0.32rem 0.7rem; border: 1px dashed var(--vk-ink-3); border-radius: 999px; background: none;
@@ -138,7 +144,7 @@
   .studio-result-actions .vk-btn { padding: 0.6rem 0.9rem; font-size: 0.9rem; }
 
   /* Le poste : cadran de tuner + épisode à l'antenne. */
-  .hero > .tuner { position: sticky; top: 6rem; grid-column: 2; grid-row: 1; }
+  .hero > .tuner { grid-column: 2; grid-row: 1; }
   /* Le studio occupe toute la largeur de l'ouverture, sous le titre et le poste. */
   .hero > .studio { grid-column: 1 / -1; }
   .tuner { background: var(--vk-console); color: var(--vk-on-console); border-radius: var(--vk-radius-lg); padding: 1.3rem; box-shadow: var(--vk-shadow); }
@@ -194,7 +200,7 @@
   .steps p { margin: 0; color: var(--vk-ink-2); }
 
   @media (max-width: 960px) {
-    .hero > .tuner { position: static; grid-column: auto; grid-row: auto; margin-top: 2.5rem; }
+    .hero > .tuner { grid-column: auto; grid-row: auto; margin-top: 2.5rem; }
     .hero { grid-template-columns: 1fr; padding-top: 2.5rem; }
     .shelves { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .steps { grid-template-columns: 1fr; gap: 1.5rem; }
@@ -268,8 +274,8 @@
 
       <form id="studio-form" novalidate>
         <div id="panel-text" role="tabpanel" aria-labelledby="tab-text">
+          <label class="studio-label" for="studio-subject">De quoi doit parler votre épisode ?</label>
           <div class="studio-input">
-            <label class="vk-sr" for="studio-subject">Sujet de l'épisode</label>
             <input type="text" id="studio-subject" maxlength="300" autocomplete="off" placeholder="Ex. : l'histoire du café, les trous noirs…">
             <button type="submit" class="vk-btn vk-btn-signal">Générer l'épisode</button>
           </div>
@@ -298,20 +304,20 @@
           <div class="format-field">
             <div class="format-head">
               <label for="studio-duration">Durée</label>
-              <output id="studio-duration-out" for="studio-duration">5 min</output>
+              <output id="studio-duration-out" for="studio-duration">≈ 5 min</output>
             </div>
             <input type="range" id="studio-duration" min="1" max="15" step="1" value="5" aria-describedby="studio-duration-hint">
-            <div class="format-scale" aria-hidden="true"><span>1 min</span><span>15 min</span></div>
-            <p class="format-hint" id="studio-duration-hint">Un format court pour l'essentiel, jusqu'à un quart d'heure pour prendre le temps.</p>
+            <div class="format-scale" aria-hidden="true"><span>≈ 1 min</span><span>≈ 15 min</span></div>
+            <p class="format-hint" id="studio-duration-hint">Durée approximative : de l'essentiel en une minute à un quart d'heure pour prendre le temps.</p>
           </div>
           <div class="format-field">
             <div class="format-head">
               <label for="studio-level">Niveau</label>
-              <output id="studio-level-out" for="studio-level">Découverte</output>
+              <output id="studio-level-out" for="studio-level">Approfondi</output>
             </div>
-            <input type="range" id="studio-level" min="1" max="5" step="1" value="2" aria-describedby="studio-level-hint">
+            <input type="range" id="studio-level" min="1" max="5" step="1" value="3" aria-describedby="studio-level-hint">
             <div class="format-scale" aria-hidden="true"><span>Survol</span><span>Expert</span></div>
-            <p class="format-hint" id="studio-level-hint">Pour un public curieux : les notions de base expliquées simplement.</p>
+            <p class="format-hint" id="studio-level-hint">Au-delà des bases : mécanismes, chiffres, nuances et plusieurs angles.</p>
           </div>
         </div>
       </form>
@@ -507,7 +513,7 @@
   </div>
 </footer>
 
-<script src="/assets/site.js?v=20261005b"></script>
+<script src="/assets/site.js?v=20261005c"></script>
 <script>
 (function () {
   'use strict';
@@ -648,8 +654,8 @@
   }
   function syncDuration() {
     var d = $('studio-duration');
-    $('studio-duration-out').textContent = d.value + ' min';
-    d.setAttribute('aria-valuetext', d.value + (d.value > 1 ? ' minutes' : ' minute'));
+    $('studio-duration-out').textContent = '≈ ' + d.value + ' min';
+    d.setAttribute('aria-valuetext', 'environ ' + d.value + (d.value > 1 ? ' minutes' : ' minute'));
     rangeFill(d);
   }
   function syncLevel() {
