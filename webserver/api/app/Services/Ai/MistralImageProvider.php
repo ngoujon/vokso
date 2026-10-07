@@ -94,8 +94,13 @@ class MistralImageProvider implements ImageGeneratorInterface
                 return $this->requestFileIdAsync($agentId, $prompt, $attempt + 1);
             }
 
+            // Types de sorties (tool.execution présent ou non ?) et texte de
+            // l'agent : de quoi comprendre, depuis le log, pourquoi l'outil
+            // n'a rien produit.
+            $types = array_map(fn ($output) => is_array($output) ? (string) ($output['type'] ?? '?') : '?', (array) ($data['outputs'] ?? []));
             $reply = trim($this->collectText($data['outputs'] ?? []));
             throw new Exception('Réponse Mistral inattendue : aucune image (tool_file) trouvée dans la conversation.'
+                . ' Sorties : [' . implode(', ', $types) . '].'
                 . ($reply !== '' ? ' Réponse de l\'agent : « ' . mb_substr($reply, 0, 300) . ' »' : ''));
         });
     }
