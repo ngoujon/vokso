@@ -66,14 +66,36 @@ class MistralImageProviderTest extends TestCase
         $this->assertSame('binary-image-2', $result);
     }
 
-    public function testGenerateImageAsyncRejectsWhenNoToolFileInResponse(): void
+    public function testGenerateImageAsyncRetriesWhenAgentAnswersWithTextOnly(): void
     {
+        $textOnly = json_encode(['outputs' => [
+            ['type' => 'message.output', 'content' => [['type' => 'text', 'text' => 'Je ne peux pas.']]],
+        ]]);
         $provider = $this->providerWithMockedResponses([
-            new Response(200, [], json_encode(['outputs' => []])),
+            new Response(200, [], $textOnly),
+            new Response(200, [], json_encode(['outputs' => [['type' => 'tool_file', 'file_id' => 'file-1']]])),
+            new Response(200, [], 'binary-image-3'),
         ], ['image_agent_id' => 'agent-preexistant']);
 
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('aucune image');
-        $provider->generateImageAsync('un prompt')->wait();
+        $this->assertSame('binary-image-3', $provider->generateImageAsync('un prompt')->wait());
+    }
+
+    public function testGenerateImageAsyncRejectsWithAgentReplyWhenNoToolFileTwice(): void
+    {
+        $textOnly = json_encode(['outputs' => [
+            ['type' => 'message.output', 'content' => [['type' => 'text', 'text' => 'Je ne peux pas.']]],
+        ]]);
+        $provider = $this->providerWithMockedResponses([
+            new Response(200, [], $textOnly),
+            new Response(200, [], $textOnly),
+        ], ['image_agent_id' => 'agent-preexistant']);
+
+        try {
+            $provider->generateImageAsync('un prompt')->wait();
+            $this->fail('Une exception était attendue.');
+        } catch (Exception $e) {
+            $this->assertStringContainsString('aucune image', $e->getMessage());
+            $this->assertStringContainsString('Je ne peux pas.', $e->getMessage());
+        }
     }
 }

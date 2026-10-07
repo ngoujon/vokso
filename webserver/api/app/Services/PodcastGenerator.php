@@ -96,14 +96,31 @@ class PodcastGenerator
         // généré, jamais l'une de l'autre, donc autant les lancer de front.
         $this->updateJob($jobId, 'processing', 'media', 45);
         try {
-            [$imageContent, $audioContent, $audioExtension] = $this->generateImageAndAudio($generatedText);
+            [$imageContent, $audioContent, $audioExtension, $imageError] = $this->generateImageAndAudio($generatedText);
 
-            $imageFileName = $this->storeOutput('images', 'image_' . $this->getCurrentDateTime() . '.png', $imageContent);
-            if ($this->convertImageToWebP($imageFileName)) {
-                @unlink($this->outputDir . '/images/' . $imageFileName);
-                $imageFileName = str_replace('.png', '.webp', $imageFileName);
+            if ($imageContent !== null) {
+                $imageFileName = $this->storeOutput('images', 'image_' . $this->getCurrentDateTime() . '.png', $imageContent);
+                if ($this->convertImageToWebP($imageFileName)) {
+                    @unlink($this->outputDir . '/images/' . $imageFileName);
+                    $imageFileName = str_replace('.png', '.webp', $imageFileName);
+                }
+                $costImage = CostEstimator::imageCost();
+            } else {
+                // Texte et audio sont déjà payés : plutôt que de tout perdre
+                // pour une vignette, l'épisode reprend la couverture de sa
+                // catégorie (copiée, pour garder un fichier par épisode).
+                $imageFileName = $this->categoryCoverCopy($categoryKeyword);
+                if ($imageFileName === null) {
+                    throw $imageError;
+                }
+                Log::warning('Image de l\'épisode remplacée par la couverture de sa catégorie', [
+                    'service' => 'generation-worker',
+                    'job_id' => $jobId,
+                    'category' => $categoryKeyword,
+                    'reason' => $imageError->getMessage(),
+                ]);
+                $costImage = 0.0;
             }
-            $costImage = CostEstimator::imageCost();
 
             $audioFileName = $this->storeOutput(
                 'audios',
@@ -322,7 +339,10 @@ class PodcastGenerator
      * appels indépendants, tous deux fonction du seul texte déjà généré) et
      * attend les deux résultats.
      *
-     * @return array{0: string, 1: string, 2: string} [image binaire, audio binaire, extension audio]
+     * L'échec de l'image n'est pas levé (l'appelant peut s'en passer) mais
+     * renvoyé avec une image nulle ; celui de l'audio, si.
+     *
+     * @return array{0: ?string, 1: string, 2: string, 3: ?Exception} [image binaire, audio binaire, extension audio, erreur image]
      */
     private function generateImageAndAudio(string $generatedText): array
     {
@@ -335,10 +355,13 @@ class PodcastGenerator
         }
         $results = PromiseUtils::settle($promises)->wait();
 
-        if ($results['image']['state'] !== 'fulfilled') {
-            throw new Exception('Erreur lors de la génération de l\'image : ' . $this->toException($results['image']['reason'])->getMessage());
+        $image = null;
+        $imageError = null;
+        if ($results['image']['state'] === 'fulfilled') {
+            $image = $results['image']['value'];
+        } else {
+            $imageError = new Exception('Erreur lors de la génération de l\'image : ' . $this->toException($results['image']['reason'])->getMessage());
         }
-        $image = $results['image']['value'];
 
         // Clés relues dans l'ordre des morceaux (settle() trie les clés comme
         // des chaînes : "audio10" passerait avant "audio2").
@@ -351,7 +374,7 @@ class PodcastGenerator
             $parts[] = $result['value'];
         }
 
-        return [$image, $this->joinMp3($parts), $synthesizer->audioExtension()];
+        return [$image, $this->joinMp3($parts), $synthesizer->audioExtension(), $imageError];
     }
 
     /**
@@ -429,6 +452,20 @@ class PodcastGenerator
         }
 
         return $joined;
+    }
+
+    /** Copie de la couverture de la catégorie (si elle existe déjà), ou null. */
+    private function categoryCoverCopy(string $categoryLabel): ?string
+    {
+        $cover = Category::where('label', $categoryLabel)->value('cover_image');
+        $source = $this->outputDir . '/images/' . $cover;
+        if (empty($cover) || !is_file($source)) {
+            return null;
+        }
+
+        $fileName = 'image_' . $this->getCurrentDateTime() . '.' . pathinfo((string) $cover, PATHINFO_EXTENSION);
+
+        return copy($source, $this->outputDir . '/images/' . $fileName) ? $fileName : null;
     }
 
     /** Aperçu du texte généré, coupé sur un mot entier, pour servir de base au prompt visuel. */

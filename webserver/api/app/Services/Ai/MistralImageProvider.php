@@ -21,6 +21,11 @@ class MistralImageProvider implements ImageGeneratorInterface
     private string $model;
     private ?string $agentId;
 
+    private const CONVERSATION_ATTEMPTS = 2;
+
+    private const AGENT_INSTRUCTIONS = 'Tu es l\'illustrateur d\'un podcast. À chaque message, tu génères exactement une image '
+        . 'avec l\'outil image_generation, sans poser de question ni répondre seulement par du texte.';
+
     public function __construct(array $config)
     {
         $this->apiKey = (string) ($config['api_key'] ?? '');
@@ -46,10 +51,7 @@ class MistralImageProvider implements ImageGeneratorInterface
 
     public function generateImage(string $prompt): string
     {
-        $agentId = $this->ensureAgent();
-        $fileId = $this->requestImageFileId($agentId, $prompt);
-
-        return (string) $this->client->get($this->baseUrl . '/files/' . $fileId . '/content')->getBody();
+        return $this->generateImageAsync($prompt)->wait();
     }
 
     public function generateImageAsync(string $prompt): PromiseInterface
@@ -60,12 +62,9 @@ class MistralImageProvider implements ImageGeneratorInterface
         // MISTRAL_IMAGE_AGENT_ID l'évite complètement.
         $agentId = $this->ensureAgent();
 
-        return $this->client->requestAsync('POST', $this->baseUrl . '/conversations', [
-            'json' => ['agent_id' => $agentId, 'inputs' => $prompt],
-        ])->then(function ($response) {
-            $fileId = $this->extractFileId($this->decodeJson($response, '/conversations'));
-            return $this->client->getAsync($this->baseUrl . '/files/' . $fileId . '/content');
-        })->then(
+        return $this->requestFileIdAsync($agentId, $prompt)->then(
+            fn (string $fileId) => $this->client->getAsync($this->baseUrl . '/files/' . $fileId . '/content')
+        )->then(
             fn ($response) => (string) $response->getBody(),
             function ($reason) {
                 $body = ($reason instanceof \GuzzleHttp\Exception\RequestException && $reason->getResponse())
@@ -74,6 +73,31 @@ class MistralImageProvider implements ImageGeneratorInterface
                 throw new Exception('Échec de la génération d\'image Mistral : ' . $reason->getMessage() . ' ' . $body);
             }
         );
+    }
+
+    /**
+     * Démarre la conversation et renvoie l'id du fichier produit. Il arrive
+     * que l'agent réponde par du texte sans appeler l'outil : une nouvelle
+     * conversation est alors tentée avant d'abandonner.
+     */
+    private function requestFileIdAsync(string $agentId, string $prompt, int $attempt = 1): PromiseInterface
+    {
+        return $this->client->requestAsync('POST', $this->baseUrl . '/conversations', [
+            'json' => ['agent_id' => $agentId, 'inputs' => $prompt],
+        ])->then(function ($response) use ($agentId, $prompt, $attempt) {
+            $data = $this->decodeJson($response, '/conversations');
+            $fileId = $this->findToolFileId($data['outputs'] ?? []);
+            if ($fileId !== null) {
+                return $fileId;
+            }
+            if ($attempt < self::CONVERSATION_ATTEMPTS) {
+                return $this->requestFileIdAsync($agentId, $prompt, $attempt + 1);
+            }
+
+            $reply = trim($this->collectText($data['outputs'] ?? []));
+            throw new Exception('Réponse Mistral inattendue : aucune image (tool_file) trouvée dans la conversation.'
+                . ($reply !== '' ? ' Réponse de l\'agent : « ' . mb_substr($reply, 0, 300) . ' »' : ''));
+        });
     }
 
     /** Crée l'agent "image_generation" au premier appel et réutilise son id ensuite. */
@@ -89,6 +113,7 @@ class MistralImageProvider implements ImageGeneratorInterface
                     'model' => $this->model,
                     'name' => 'vokso-image-generator',
                     'description' => 'Génère la vignette d\'un podcast à partir d\'un extrait de son texte.',
+                    'instructions' => self::AGENT_INSTRUCTIONS,
                     'tools' => [['type' => 'image_generation']],
                 ],
             ]);
@@ -105,35 +130,11 @@ class MistralImageProvider implements ImageGeneratorInterface
         return $this->agentId = (string) $data['id'];
     }
 
-    private function requestImageFileId(string $agentId, string $prompt): string
-    {
-        try {
-            $response = $this->client->post($this->baseUrl . '/conversations', [
-                'json' => ['agent_id' => $agentId, 'inputs' => $prompt],
-            ]);
-        } catch (\GuzzleHttp\Exception\GuzzleException $e) {
-            $body = $e->getResponse() ? (string) $e->getResponse()->getBody() : '';
-            throw new Exception('Échec de la conversation image Mistral : ' . $e->getMessage() . ' ' . $body);
-        }
-
-        return $this->extractFileId($this->decodeJson($response, '/conversations'));
-    }
-
     /**
      * Le fichier généré apparaît comme un chunk `{"type": "tool_file", "file_id": "..."}`,
      * imbriqué dans `outputs[].content` (elle-même une chaîne ou une liste de chunks).
      * On parcourt la réponse en profondeur pour rester robuste à cette API bêta.
      */
-    private function extractFileId(array $data): string
-    {
-        $fileId = $this->findToolFileId($data['outputs'] ?? []);
-        if ($fileId === null) {
-            throw new Exception('Réponse Mistral inattendue : aucune image (tool_file) trouvée dans la conversation.');
-        }
-
-        return $fileId;
-    }
-
     private function findToolFileId(mixed $node): ?string
     {
         if (is_array($node)) {
@@ -149,6 +150,23 @@ class MistralImageProvider implements ImageGeneratorInterface
         }
 
         return null;
+    }
+
+    /** Texte renvoyé par l'agent (chunks "text" ou contenu en chaîne), pour diagnostiquer un refus. */
+    private function collectText(mixed $node): string
+    {
+        if (!is_array($node)) {
+            return '';
+        }
+        if (($node['type'] ?? null) === 'text' && is_string($node['text'] ?? null)) {
+            return $node['text'] . ' ';
+        }
+        $text = is_string($node['content'] ?? null) ? $node['content'] . ' ' : '';
+        foreach ($node as $child) {
+            $text .= $this->collectText($child);
+        }
+
+        return $text;
     }
 
     private function decodeJson($response, string $path): array

@@ -238,6 +238,23 @@ class PodcastGeneratorTest extends TestCase
         $this->assertSame(0, Generation::count());
     }
 
+    public function test_a_failing_image_falls_back_to_the_category_cover(): void
+    {
+        mkdir($this->outputDir.'/images', 0775, true);
+        file_put_contents($this->outputDir.'/images/category_1_cover.webp', 'cover');
+        Category::create(['label' => 'Espace', 'cover_image' => 'category_1_cover.webp']);
+        GenerationJob::create(['job_id' => 'job_4', 'input' => 'Mars', 'status' => 'pending']);
+
+        (new PodcastGenerator($this->fakeAi(imageFails: true), $this->outputDir))->process('job_4');
+
+        $job = GenerationJob::find('job_4');
+        $this->assertSame('done', $job->status);
+        $generation = Generation::where('generation_id', $job->generation_id)->first();
+        $this->assertNotSame('category_1_cover.webp', $generation->image_url);
+        $this->assertStringEqualsFile($this->outputDir.'/images/'.$generation->image_url, 'cover');
+        $this->assertEquals(0, $generation->cost_image);
+    }
+
     public function test_a_jpeg_returned_by_the_provider_is_converted_to_webp(): void
     {
         if (! function_exists('imagewebp') && ! extension_loaded('imagick')) {
