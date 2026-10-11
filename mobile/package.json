@@ -1,0 +1,24 @@
+{
+  "name": "vokso-mobile",
+  "private": true,
+  "description": "Applications Android et iOS (iPhone, iPad, Mac) de Vokso : coquilles natives Capacitor qui chargent https://vokso.fr.",
+  "scripts": {
+    "sync": "cap sync",
+    "assets": "node scripts/render-assets.mjs && capacitor-assets generate --ios --android --iconBackgroundColor \"#f5c400\" --splashBackgroundColor \"#f5c400\" --splashBackgroundColorDark \"#f5c400\"",
+    "android:apk": "./scripts/build-android.sh",
+    "android:open": "cap open android",
+    "ios:open": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.5.3",
+    "typescript": "7.0.2"
+  }
+}

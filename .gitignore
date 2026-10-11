@@ -7,9 +7,12 @@ docker-compose.override.yml
 
 # Dépendances et builds
 webserver/node_modules/
+mobile/node_modules/
 webserver/build/
 webserver/api/vendor/
 *.tsbuildinfo
+# Sorties des builds mobiles (APK, AAB, IPA), voir mobile/README.md
+/exports/
 
 # Données générées à l'exécution
 /logs/*
