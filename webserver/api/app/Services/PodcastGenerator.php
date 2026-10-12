@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\BlockedContentException;
 use App\Models\Category;
 use App\Models\Generation;
 use App\Models\GenerationJob;
@@ -11,6 +12,7 @@ use App\Support\CostEstimator;
 use App\Support\EpisodeFormat;
 use App\Support\EpisodeSlug;
 use App\Support\EpisodeText;
+use App\Support\PromptGuard;
 use Exception;
 use GuzzleHttp\Promise\Utils as PromiseUtils;
 use Illuminate\Support\Facades\Log;
@@ -28,6 +30,19 @@ class PodcastGenerator
         'Sciences', 'Espace', 'Nature et environnement', 'Histoire', 'Société',
         'Culture et arts', 'Technologie', 'Santé', 'Gastronomie', 'Sport',
     ];
+
+    /**
+     * Rubrique retenue quand le modèle n'en renvoie aucune de la liste : un
+     * sujet ne crée jamais de catégorie publique (page, couverture IA) à
+     * partir d'un mot choisi par le modèle, donc influençable par le sujet.
+     */
+    public const DEFAULT_RUBRIQUE = 'Société';
+
+    // Messages affichés au visiteur quand les protections arrêtent la génération.
+    private const MESSAGE_INJECTION = 'Ce sujet ressemble à une consigne adressée à l\'IA : décrivez simplement le thème de l\'épisode.';
+    private const MESSAGE_REFUSED = 'Ce sujet ne peut pas être traité par Vokso.';
+    private const MESSAGE_BLOCKED = 'La génération a été bloquée par nos protections. Reformulez le sujet et réessayez.';
+    private const MESSAGE_HELD = 'Votre épisode est prêt, mais il doit être vérifié avant sa publication.';
 
     private const MAX_INPUT_LENGTH = 300;
 
@@ -73,6 +88,21 @@ class PodcastGenerator
             GenerationJob::whereKey($jobId)->update(['input' => $userInput, 'audio_path' => null]);
         }
 
+        // Contrôle du sujet avant tout appel payant. Si la modération est
+        // indisponible, la génération continue mais l'épisode n'est pas
+        // publié sans vérification.
+        $needsReview = false;
+        $userInput = PromptGuard::normalize($userInput);
+        try {
+            if (PromptGuard::looksLikeInjection($userInput)) {
+                throw new BlockedContentException(self::MESSAGE_INJECTION, 'sujet : consigne adressée à l\'IA');
+            }
+            $needsReview = ! $this->passesModeration($userInput, self::MESSAGE_REFUSED, 'sujet');
+        } catch (BlockedContentException $e) {
+            $this->blockJob($jobId, $e);
+            return;
+        }
+
         // Le texte, la catégorie et le titre ne dépendent que du sujet
         // d'entrée (pas l'un de l'autre) : les lancer en parallèle via des
         // promesses Guzzle économise des allers-retours réseau par rapport à
@@ -80,6 +110,10 @@ class PodcastGenerator
         $this->updateJob($jobId, 'processing', 'text', 10);
         try {
             [$generatedText, $categoryKeyword, $title] = $this->generateTextCategoryAndTitle($userInput, $minutes, $level);
+            // Avant l'image et la voix : un épisode refusé ne coûte que le texte.
+            if (! $this->passesModeration($title."\n\n".$generatedText, self::MESSAGE_BLOCKED, 'épisode')) {
+                $needsReview = true;
+            }
             $this->storeOutput('responses', 'response_' . $this->getCurrentDateTime() . '.txt', $generatedText);
             $costText = CostEstimator::textCost(
                 $this->ai->textProvider(),
@@ -87,6 +121,9 @@ class PodcastGenerator
                 $userInput,
                 $generatedText
             );
+        } catch (BlockedContentException $e) {
+            $this->blockJob($jobId, $e);
+            return;
         } catch (Exception $e) {
             $this->failJob($jobId, 'Erreur lors de la génération du texte', $e);
             return;
@@ -147,15 +184,65 @@ class PodcastGenerator
             $costImage,
             $costAudio,
             $minutes,
-            $level
+            $level,
+            ! $needsReview
         );
 
         GenerationJob::whereKey($jobId)->update([
-            'status' => 'done',
+            'status' => $needsReview ? 'error' : 'done',
             'step' => 'done',
             'progress' => 100,
             'generation_id' => $generationId,
+            'error_message' => $needsReview ? self::MESSAGE_HELD : null,
         ]);
+        if ($needsReview) {
+            Log::warning('Épisode gardé hors ligne : modération indisponible', [
+                'service' => 'generation-worker',
+                'job_id' => $jobId,
+                'generation_id' => $generationId,
+            ]);
+        }
+    }
+
+    /**
+     * Modération Mistral : lève BlockedContentException si le texte est
+     * signalé, renvoie false si la modération est indisponible (épisode à
+     * vérifier avant publication), true s'il est sain ou si elle est désactivée.
+     */
+    private function passesModeration(string $text, string $userMessage, string $what): bool
+    {
+        $moderator = $this->ai->moderator();
+        if ($moderator === null) {
+            return true;
+        }
+
+        try {
+            $flagged = $moderator->flaggedCategories($text);
+        } catch (Exception $e) {
+            Log::error('Modération indisponible', [
+                'service' => 'generation-worker',
+                'exception' => get_class($e),
+                'reason' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        if ($flagged !== []) {
+            throw new BlockedContentException($userMessage, $what.' signalé par la modération : '.implode(', ', $flagged));
+        }
+
+        return true;
+    }
+
+    private function blockJob(string $jobId, BlockedContentException $e): void
+    {
+        Log::warning('Génération bloquée par les protections', [
+            'service' => 'generation-worker',
+            'job_id' => $jobId,
+            'reason' => $e->reason,
+        ]);
+        GenerationJob::whereKey($jobId)->update(['status' => 'error', 'error_message' => $e->getMessage()]);
     }
 
     /**
@@ -219,6 +306,11 @@ class PodcastGenerator
         if ($injectionPrompt === '') {
             throw new Exception('Le prompt de protection contre les injections est introuvable dans la base de données.');
         }
+        // Jeton témoin propre à ce job : s'il ressort dans un texte, les
+        // consignes ont fuité.
+        $canary = PromptGuard::canary();
+        $systemPrompt = PromptGuard::systemPrompt($injectionPrompt, $canary);
+        $subject = PromptGuard::wrapSubject($userInput);
 
         $keywordPrompt = $this->getPrompt('keyword');
         if ($keywordPrompt === '') {
@@ -237,16 +329,16 @@ class PodcastGenerator
             // besoin de vérifier des faits, autant garder ces deux appels
             // rapides et sans outil.
             'text' => $this->ai->researchTextGenerator()->generateTextAsync(
-                $injectionPrompt,
+                $systemPrompt,
                 EpisodeFormat::narrationPrompt($userInput, $minutes, $level)
             ),
             'category' => $generator->generateTextAsync(
                 'Répondez avec un seul mot décrivant la catégorie d\'activité ou le domaine correspondant au sujet donné.',
-                str_replace('###REPLACE###', $userInput, $keywordPrompt)
+                str_replace('###REPLACE###', $subject, $keywordPrompt)
             ),
             'title' => $generator->generateTextAsync(
-                $injectionPrompt,
-                str_replace('###REPLACE###', $userInput, $titlePrompt)
+                $systemPrompt,
+                str_replace('###REPLACE###', $subject, $titlePrompt)
             ),
         ])->wait();
 
@@ -261,11 +353,15 @@ class PodcastGenerator
         }
 
         $text = $results['text']['value'];
+        if (PromptGuard::isRefusal($text)) {
+            // Inutile de demander une version plus longue d'un refus.
+            throw new BlockedContentException(self::MESSAGE_REFUSED, 'narration : refus');
+        }
         if (EpisodeFormat::isTooShort($text, $minutes)) {
             // Une seule relance : au pire, l'épisode est un peu plus court que prévu.
             try {
                 $longer = $this->ai->researchTextGenerator()->generateText(
-                    $injectionPrompt,
+                    $systemPrompt,
                     EpisodeFormat::expansionPrompt($text, $userInput, $minutes, $level)
                 );
                 if (EpisodeFormat::wordCount($longer) > EpisodeFormat::wordCount($text)) {
@@ -279,11 +375,18 @@ class PodcastGenerator
             }
         }
 
-        return [
-            $text,
-            $this->sanitizeCategory($results['category']['value']),
-            $this->sanitizeTitle($results['title']['value'], $userInput),
-        ];
+        $title = $this->sanitizeTitle($results['title']['value'], $userInput);
+        foreach (['narration' => $text, 'titre' => $title] as $what => $output) {
+            $problem = PromptGuard::outputProblem($output, $canary, $systemPrompt);
+            if ($problem !== null) {
+                throw new BlockedContentException(
+                    $problem === 'refus' ? self::MESSAGE_REFUSED : self::MESSAGE_BLOCKED,
+                    $what.' : '.$problem
+                );
+            }
+        }
+
+        return [$text, $this->sanitizeCategory($results['category']['value']), $title];
     }
 
     /**
@@ -325,13 +428,7 @@ class PodcastGenerator
             }
         }
 
-        $category = trim(preg_replace('/[^\p{L}\p{N}\- ]/u', '', $rawCategory));
-        $category = explode(' ', trim($category))[0] ?? '';
-        if ($category === '') {
-            throw new Exception('Aucune catégorie exploitable n\'a été renvoyée par le modèle.');
-        }
-
-        return mb_substr($category, 0, 50);
+        return self::DEFAULT_RUBRIQUE;
     }
 
     /**
@@ -651,7 +748,8 @@ class PodcastGenerator
         float $costImage,
         float $costAudio,
         int $minutes,
-        int $level
+        int $level,
+        bool $published = true
     ): string {
         $generationId = 'gen_' . uniqid();
         $format = EpisodeFormat::columnsReady() ? ['duration_minutes' => $minutes, 'level' => $level] : [];
@@ -668,6 +766,7 @@ class PodcastGenerator
             'cost_image' => $costImage,
             'cost_audio' => $costAudio,
             'cost_total' => $costText + $costImage + $costAudio,
+            'statut' => $published ? 'on' : 'off',
         ]);
 
         return $generationId;

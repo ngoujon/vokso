@@ -8,7 +8,8 @@ namespace App\Services\Ai;
  * Tout passe par Mistral : texte (avec un agent "web_search" pour la
  * narration), image (agent "image_generation"), voix (Voxtral TTS) et
  * transcription (Voxtral). Le texte peut aussi passer par Ollama Cloud
- * (AI_TEXT_PROVIDER=ollama), sans recherche web.
+ * (AI_TEXT_PROVIDER=ollama), sans recherche web. La modération (sujets et
+ * épisodes avant publication) passe toujours par Mistral.
  */
 class AiProviderFactory
 {
@@ -57,6 +58,16 @@ class AiProviderFactory
     public function speechSynthesizer(): SpeechSynthesizerInterface
     {
         return $this->instances['speech'] ??= new MistralSpeechProvider($this->mistral());
+    }
+
+    /** Null si la modération est désactivée (AI_MODERATION=false). */
+    public function moderator(): ?ModeratorInterface
+    {
+        if (! ($this->config['moderation'] ?? true)) {
+            return null;
+        }
+
+        return $this->instances['moderation'] ??= new MistralModerationProvider($this->mistral());
     }
 
     public function transcriber(): TranscriberInterface

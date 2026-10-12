@@ -6,6 +6,7 @@ use App\Models\GenerationJob;
 use App\Support\EpisodeFormat;
 use App\Support\EpisodeText;
 use App\Support\GenerationLimits;
+use App\Support\PromptGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,7 @@ use Illuminate\Support\Str;
 class GenerationController extends Controller
 {
     protected const MAX_INPUT_LENGTH = 300;
+    protected const INJECTION_REFUSAL = 'Ce sujet ressemble à une consigne adressée à l\'IA : décrivez simplement le thème de l\'épisode.';
     private const MAX_AUDIO_SIZE = 26214400; // 25 Mo
     private const ALLOWED_AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'ogg', 'webm', 'mp4', 'mpeg', 'mpga'];
 
@@ -33,6 +35,9 @@ class GenerationController extends Controller
         $userInput = $this->sanitizeInput($input);
         if (mb_strlen($userInput) > self::MAX_INPUT_LENGTH) {
             return $this->error('Le sujet ne doit pas dépasser '.self::MAX_INPUT_LENGTH.' caractères.', 400);
+        }
+        if ($userInput === '' || PromptGuard::looksLikeInjection($userInput)) {
+            return $this->error($userInput === '' ? 'Valeur manquante' : self::INJECTION_REFUSAL, 400);
         }
 
         [$minutes, $level, $formatError] = $this->format($request->json('duration'), $request->json('level'));
@@ -223,8 +228,9 @@ class GenerationController extends Controller
         exec("$php $artisan vokso:process-job $arg > /dev/null 2>&1 &");
     }
 
+    /** Sans balises ni caractères invisibles (texte caché au lecteur, mais lu par le modèle). */
     protected function sanitizeInput(string $input): string
     {
-        return trim(htmlspecialchars(strip_tags($input)));
+        return PromptGuard::normalize(htmlspecialchars(strip_tags($input)));
     }
 }

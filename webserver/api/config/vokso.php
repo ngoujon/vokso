@@ -57,6 +57,10 @@ return [
      */
     'ai' => [
         'text_provider' => strtolower(trim((string) env('AI_TEXT_PROVIDER', 'mistral'))),
+        // Modération Mistral du sujet et de l'épisode avant publication (voir
+        // PodcastGenerator). Si elle est indisponible, l'épisode est gardé
+        // hors ligne (statut "off") pour vérification au lieu d'être publié.
+        'moderation' => filter_var(env('AI_MODERATION', true), FILTER_VALIDATE_BOOL),
 
         'mistral' => [
             'api_key' => (string) env('MISTRAL_API_KEY', ''),
@@ -68,6 +72,7 @@ return [
             'transcription_model' => (string) env('MISTRAL_TRANSCRIPTION_MODEL', 'voxtral-mini-latest'),
             'speech_model' => (string) env('MISTRAL_SPEECH_MODEL', 'voxtral-mini-tts-latest'),
             'speech_voice' => (string) env('MISTRAL_SPEECH_VOICE', 'fr_marie_neutral'),
+            'moderation_model' => (string) env('MISTRAL_MODERATION_MODEL', 'mistral-moderation-latest'),
         ],
 
         'ollama' => [
