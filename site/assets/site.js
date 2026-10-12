@@ -116,6 +116,8 @@
               msg.className = 'bulletin-msg ok';
               msg.textContent = data.message || 'Inscription confirmée, vérifiez vos mails.';
               form.reset();
+              // Conversion SEO Monitor, sans donnée personnelle (jamais l'adresse e-mail).
+              if (window.seoMonitor) window.seoMonitor.track('Inscription newsletter');
             } else {
               msg.className = 'bulletin-msg err';
               msg.textContent = data.message || data.error || "L'inscription a échoué, réessayez.";

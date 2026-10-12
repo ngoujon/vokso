@@ -19,6 +19,8 @@
   .lost p { color: var(--vk-ink-2); margin: 1rem auto 2rem; max-width: 46ch; }
   .lost .cta { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
 </style>
+<!-- Mesure d'audience SEO Monitor (auto-hébergée, exemptée de consentement : voir la politique de confidentialité). -->
+<script defer src="https://vps-3962b7dc.vps.ovh.net/seo-monitor/p/s.js" data-site="6ByocZFJ" data-mode="cookie"></script>
 </head>
 <body class="vk-page">
 
@@ -112,6 +114,6 @@
   </div>
 </footer>
 
-<script src="/assets/site.js?v=20261005c"></script>
+<script src="/assets/site.js?v=20261012"></script>
 </body>
 </html>

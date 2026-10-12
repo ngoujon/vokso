@@ -129,6 +129,8 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
   }
 </style>
 <script>document.documentElement.classList.add('js');</script>
+<!-- Mesure d'audience SEO Monitor (auto-hébergée, exemptée de consentement : voir la politique de confidentialité). -->
+<script defer src="https://vps-3962b7dc.vps.ovh.net/seo-monitor/p/s.js" data-site="6ByocZFJ" data-mode="cookie"></script>
 </head>
 <body class="vk-page">
 
@@ -236,7 +238,7 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
 
 <?php include __DIR__.'/../partials/site-footer.php'; ?>
 
-<script src="/assets/site.js?v=20261005c"></script>
+<script src="/assets/site.js?v=20261012"></script>
 <script>
 (function () {
   'use strict';

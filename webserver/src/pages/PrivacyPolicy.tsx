@@ -1,15 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import '../styles/globals.css';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import { optOutOfAudience } from '../utils/audience';
+
+// TODO (à compléter par l'éditeur du site) : identité du responsable du
+// traitement, introuvable dans le projet (aucune page de mentions légales).
+const DATA_CONTROLLER = 'TODO : nom ou raison sociale, adresse et e-mail de contact du responsable du traitement';
 
 export default function PrivacyPolicy() {
+  const [optedOut, setOptedOut] = useState<null | boolean>(null);
   useCanonical();
   useDocumentMeta(
     'Politique de confidentialité — Vokso',
-    'Comment Vokso collecte et traite vos données personnelles : contenus générés par IA, newsletter, données techniques.'
+    'Comment Vokso collecte et traite vos données personnelles : contenus générés par IA, newsletter, données techniques, mesure d\'audience.'
   );
 
   return (
@@ -22,6 +28,9 @@ export default function PrivacyPolicy() {
         Cette page explique quelles données personnelles Vokso collecte lorsque vous
         utilisez le site, pourquoi, et avec qui elles sont partagées.
       </p>
+      <p>
+        <strong>Responsable du traitement</strong> : <mark>{DATA_CONTROLLER}</mark>.
+      </p>
 
       <h2>1. Données collectées</h2>
       <ul>
@@ -29,6 +38,7 @@ export default function PrivacyPolicy() {
         <li><strong>Contenus générés</strong> : les textes, images et fichiers audio produits par le site à partir de vos demandes, publiés dans le catalogue public des épisodes.</li>
         <li><strong>Newsletter</strong> : votre adresse e-mail, si vous choisissez de vous y inscrire.</li>
         <li><strong>Données techniques</strong> : adresse IP, conservée le temps nécessaire (de l'ordre de 24 heures) pour limiter le nombre de générations et de requêtes et prévenir les abus (le service est gratuit et sans inscription).</li>
+        <li><strong>Mesure d'audience</strong> : statistiques de fréquentation anonymes, détaillées dans la section 7 ci-dessous.</li>
       </ul>
 
       <h2>2. Services utilisés pour traiter vos données</h2>
@@ -76,10 +86,77 @@ export default function PrivacyPolicy() {
         vous désinscrire de la newsletter à tout moment, en nous contactant via le formulaire de contact du site.
       </p>
 
-      <h2>6. Cookies</h2>
+      <h2>6. Cookies et traceurs</h2>
       <p>
-        Le site utilise uniquement les cookies ou jetons techniques strictement nécessaires à votre connexion
-        (maintien de la session). Aucun cookie publicitaire ou de mesure d'audience tiers n'est déposé.
+        Le site utilise les cookies ou jetons techniques strictement nécessaires à votre connexion
+        (maintien de la session), ainsi qu'un traceur de mesure d'audience exempté de consentement :
+      </p>
+      <ul>
+        <li>
+          <strong>sm_vid</strong> (stockage local du navigateur) : identifiant aléatoire de mesure d'audience,
+          conservé 13 mois au maximum, exempté de consentement (voir la section 7).
+        </li>
+      </ul>
+      <p>Aucun cookie publicitaire ni traceur d'un service tiers n'est déposé.</p>
+
+      <h2 id="mesure-audience">7. Mesure d'audience</h2>
+      <p>
+        Ce site utilise SEO Monitor, un outil de mesure d'audience auto-hébergé, afin d'établir des statistiques
+        de fréquentation anonymes (pages consultées, provenance des visites, durée de consultation, type
+        d'appareil). Ces données servent uniquement au bon fonctionnement et à l'amélioration du site.
+      </p>
+      <p>
+        Un identifiant aléatoire est conservé dans votre navigateur pendant 13 mois au maximum. Votre adresse IP
+        n'est jamais enregistrée : elle sert uniquement, de manière éphémère, à déduire un pays et une ville
+        approximatifs. Les données ne sont ni recoupées avec d'autres traitements, ni transmises à des tiers, et
+        sont conservées 25 mois au maximum.
+      </p>
+      <ul>
+        <li><strong>Responsable du traitement</strong> : <mark>{DATA_CONTROLLER}</mark>.</li>
+        <li><strong>Finalité</strong> : mesure d'audience du site.</li>
+        <li>
+          <strong>Base légale</strong> : intérêt légitime de l'éditeur à mesurer la fréquentation de son site ;
+          traitement exempté de consentement au titre de l'article 82 de la loi Informatique et Libertés et des
+          lignes directrices de la CNIL relatives aux cookies et autres traceurs.
+        </li>
+        <li>
+          <strong>Données collectées</strong> : pages vues, provenance des visites, durée de consultation,
+          défilement dans la page, type d'appareil, navigateur, langue, pays et ville approximatifs. L'adresse IP
+          n'est pas conservée.
+        </li>
+        <li>
+          <strong>Durée de conservation</strong> : 25 mois au maximum pour les statistiques, 13 mois au maximum
+          pour l'identifiant stocké dans le navigateur (sm_vid).
+        </li>
+        <li>
+          <strong>Destinataires</strong> : aucun tiers ; les données sont hébergées sur un serveur OVH situé en
+          France.
+        </li>
+        <li>
+          <strong>Vos droits</strong> : accès, rectification, effacement, opposition et limitation du traitement,
+          en nous écrivant via le formulaire de contact du site. Vous pouvez aussi introduire une réclamation
+          auprès de la CNIL (<a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer">www.cnil.fr</a>).
+        </li>
+      </ul>
+      <p>
+        Conformément aux lignes directrices de la CNIL, ce traitement est exempté de consentement. Vous pouvez
+        néanmoins vous y opposer à tout moment :{' '}
+        {optedOut === null ? (
+          <a
+            href="#mesure-audience"
+            onClick={(e) => {
+              e.preventDefault();
+              setOptedOut(optOutOfAudience());
+            }}
+          >
+            ne plus être mesuré
+          </a>
+        ) : optedOut ? (
+          <span role="status">Vos visites ne sont plus mesurées.</span>
+        ) : (
+          <span role="status">La mesure d'audience n'est pas active dans ce navigateur : aucune visite n'est mesurée.</span>
+        )}
+        .
       </p>
     </div>
     <Footer />

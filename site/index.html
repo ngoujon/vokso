@@ -219,6 +219,8 @@
   }
 </style>
 <script>document.documentElement.classList.add('js');</script>
+<!-- Mesure d'audience SEO Monitor (auto-hébergée, exemptée de consentement : voir la politique de confidentialité). -->
+<script defer src="https://vps-3962b7dc.vps.ovh.net/seo-monitor/p/s.js" data-site="6ByocZFJ" data-mode="cookie"></script>
 </head>
 <body class="vk-page">
 
@@ -513,7 +515,7 @@
   </div>
 </footer>
 
-<script src="/assets/site.js?v=20261005c"></script>
+<script src="/assets/site.js?v=20261012"></script>
 <script>
 (function () {
   'use strict';
@@ -772,6 +774,8 @@
     $('studio-progress').hidden = true;
     $('studio-result').hidden = false;
     $('studio-result').setAttribute('data-ep', ep.id);
+    // Conversion SEO Monitor : format demandé uniquement, aucune donnée personnelle.
+    if (window.seoMonitor) window.seoMonitor.track('Épisode créé', { duree: job.duration_minutes || '', niveau: job.level || '' });
     $('result-img').src = V.image(ep);
     $('result-title').textContent = V.cleanTitle(ep.title) || 'Votre épisode';
     $('result-format').textContent = V.formatLabel(job) ? ' · ' + V.formatLabel(job) : '';

@@ -3,6 +3,7 @@ import { apiRequest, downloadText, errorMessage, triggerDownload } from '../api'
 import { useAuth } from '../AuthContext';
 import { staticFileUrl } from '../config';
 import GdprPanel from '../components/account/GdprPanel';
+import Footer from '../components/Footer';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import type { PodcastWithCosts } from '../types';
@@ -26,6 +27,7 @@ export default function UserDashboard() {
   }, []);
 
   return (
+    <>
     <div className="container">
       <div className="dashboard-header">
         <h1>Mon espace</h1>
@@ -77,5 +79,7 @@ export default function UserDashboard() {
         ))}
       </div>
     </div>
+    <Footer />
+    </>
   );
 }

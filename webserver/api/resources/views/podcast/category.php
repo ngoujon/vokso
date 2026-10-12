@@ -53,6 +53,8 @@ $e = fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
   .others a { display: inline-block; padding: 0.35rem 0.8rem; border-radius: var(--vk-radius-sm); background: var(--vk-paper-2); color: inherit; text-decoration: none; }
   .others a:hover { background: var(--vk-signal); color: var(--vk-on-signal); }
 </style>
+<!-- Mesure d'audience SEO Monitor (auto-hébergée, exemptée de consentement : voir la politique de confidentialité). -->
+<script defer src="https://vps-3962b7dc.vps.ovh.net/seo-monitor/p/s.js" data-site="6ByocZFJ" data-mode="cookie"></script>
 </head>
 <body class="vk-page">
 
@@ -99,6 +101,6 @@ $e = fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 
 <?php include __DIR__.'/../partials/site-footer.php'; ?>
 
-<script src="/assets/site.js?v=20261005c"></script>
+<script src="/assets/site.js?v=20261012"></script>
 </body>
 </html>

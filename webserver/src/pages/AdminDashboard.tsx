@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { apiRequest, downloadText, errorMessage, triggerDownload } from '../api';
 import { useAuth } from '../AuthContext';
+import Footer from '../components/Footer';
 import SecuritySection from '../components/SecuritySection';
 import { staticFileUrl } from '../config';
 import useCanonical from '../hooks/useCanonical';
@@ -255,6 +256,7 @@ export default function AdminDashboard() {
   const { user, logout } = useAuth();
 
   return (
+    <>
     <div className="container">
       <div className="dashboard-header">
         <h1>Espace administrateur</h1>
@@ -270,5 +272,7 @@ export default function AdminDashboard() {
       <UsersSection />
       <PodcastsSection />
     </div>
+    <Footer />
+    </>
   );
 }

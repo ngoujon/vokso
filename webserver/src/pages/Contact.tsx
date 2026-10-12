@@ -4,6 +4,7 @@ import Footer from '../components/Footer';
 import useCanonical from '../hooks/useCanonical';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import { apiRequest, errorMessage } from '../api';
+import { trackConversion } from '../utils/audience';
 import '../styles/globals.css';
 import '../styles/Dashboard.css';
 
@@ -41,6 +42,7 @@ export default function Contact() {
         body: JSON.stringify({ name, email, message, website, captchaToken }),
       });
       setSuccess(true);
+      trackConversion('Message de contact envoyé');
       setName('');
       setEmail('');
       setMessage('');
