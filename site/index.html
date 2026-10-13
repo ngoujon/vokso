@@ -112,7 +112,18 @@
     color: var(--vk-ink-2); font: 500 0.82rem/1.2 var(--vk-font); cursor: pointer;
   }
   .rec-clear:hover { border-color: var(--vk-ink); color: var(--vk-ink); }
-  .studio-format { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 2rem; margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px dashed var(--vk-line); }
+  .studio-options { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px dashed var(--vk-line); }
+  .studio-options summary {
+    display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.4rem 0.85rem; list-style: none; cursor: pointer;
+    border: 1px solid var(--vk-line); border-radius: 999px; color: var(--vk-ink-2); font: 600 0.85rem/1.2 var(--vk-font);
+  }
+  .studio-options summary::-webkit-details-marker { display: none; }
+  .studio-options summary:hover { border-color: var(--vk-ink); color: var(--vk-ink); }
+  .studio-options summary:focus-visible { outline: 2px solid var(--vk-ink); outline-offset: 3px; }
+  .studio-options summary svg { width: 0.9rem; height: 0.9rem; transition: transform 0.2s var(--vk-ease); }
+  .studio-options[open] summary svg { transform: rotate(180deg); }
+  .studio-options-value { color: var(--vk-ink); font-weight: 500; }
+  .studio-format { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 2rem; margin-top: 1rem; }
   .format-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
   .format-head label { font-weight: 600; }
   .format-head output { padding: 0.1rem 0.6rem; border-radius: 999px; background: var(--vk-signal); color: var(--vk-on-signal); font-size: 0.85rem; font-weight: 600; }
@@ -295,6 +306,12 @@
           <button type="button">Les premiers pas sur la Lune</button>
         </div>
 
+        <details class="studio-options" id="studio-options">
+          <summary>
+            Durée et niveau
+            <span class="studio-options-value" id="studio-options-value">≈ 5 min · Approfondi</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </summary>
         <div class="studio-format">
           <div class="format-field">
             <div class="format-head">
@@ -315,6 +332,7 @@
             <p class="format-hint" id="studio-level-hint">Au-delà des bases : mécanismes, chiffres, nuances et plusieurs angles.</p>
           </div>
         </div>
+        </details>
       </form>
 
       <div class="studio-progress" id="studio-progress" hidden>
@@ -652,6 +670,10 @@
     $('studio-duration-out').textContent = '≈ ' + d.value + ' min';
     d.setAttribute('aria-valuetext', 'environ ' + d.value + (d.value > 1 ? ' minutes' : ' minute'));
     rangeFill(d);
+    syncOptionsValue();
+  }
+  function syncOptionsValue() {
+    $('studio-options-value').textContent = $('studio-duration-out').textContent + ' · ' + LEVELS[$('studio-level').value][0];
   }
   function syncLevel() {
     var l = $('studio-level');
@@ -660,6 +682,7 @@
     $('studio-level-hint').textContent = info[1];
     l.setAttribute('aria-valuetext', info[0]);
     rangeFill(l);
+    syncOptionsValue();
   }
   $('studio-duration').addEventListener('input', syncDuration);
   $('studio-level').addEventListener('input', syncLevel);
@@ -686,7 +709,24 @@
   }
   $('rec-clear').addEventListener('click', function () { clearRecording(); $('studio-subject').focus(); });
 
-  document.querySelectorAll('.studio-ideas button').forEach(function (b) {
+  // Idées tirées au hasard à chaque visite (les quatre du HTML servent sans JS).
+  var IDEAS = [
+    "L'histoire du café", 'Pourquoi le ciel est bleu', 'La photosynthèse', 'Les premiers pas sur la Lune',
+    'Comment dorment les dauphins', "L'invention de l'imprimerie", 'Les trous noirs', 'La route de la soie',
+    'Pourquoi on rêve', "L'histoire du chocolat", 'Les volcans d\'Islande', 'Le fonctionnement d\'Internet',
+    'Les pyramides de Gizeh', 'La mémoire humaine', 'Les abeilles et la pollinisation', 'La naissance du jazz',
+    "L'histoire des Jeux olympiques", 'Les aurores boréales', 'Comment naissent les étoiles', 'Le microbiote intestinal',
+    'Les grandes migrations des oiseaux', "L'histoire du vélo", 'La tectonique des plaques', 'Les débuts du cinéma',
+    'Pourquoi la mer est salée', 'Les secrets des pieuvres', "L'intelligence artificielle", 'La Révolution française',
+    "L'histoire de la pizza", 'Le sommeil des enfants', 'Les énergies renouvelables', 'Les mystères de Stonehenge'
+  ];
+  var ideaButtons = document.querySelectorAll('.studio-ideas button');
+  for (var k = 0; k < ideaButtons.length; k++) {
+    var r = k + Math.floor(Math.random() * (IDEAS.length - k));
+    var pick = IDEAS[r]; IDEAS[r] = IDEAS[k]; IDEAS[k] = pick;
+    ideaButtons[k].textContent = pick;
+  }
+  ideaButtons.forEach(function (b) {
     b.addEventListener('click', function () { $('studio-subject').value = b.textContent; $('studio-subject').focus(); });
   });
 
