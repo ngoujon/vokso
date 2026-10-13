@@ -72,12 +72,6 @@
   @keyframes rise { to { transform: none; } }
 
   .studio { scroll-margin-top: 6rem; background: var(--vk-card); border: 1.5px solid var(--vk-ink); border-radius: var(--vk-radius); padding: 1.2rem; box-shadow: 6px 6px 0 var(--vk-signal); }
-  .studio-tabs { display: flex; gap: 0.4rem; margin-bottom: 1rem; }
-  .studio-tabs button {
-    flex: 1; padding: 0.6rem 0.8rem; border: 1px solid var(--vk-line); border-radius: var(--vk-radius-sm);
-    background: none; color: var(--vk-ink-2); font: 600 0.9rem/1.2 var(--vk-font); cursor: pointer;
-  }
-  .studio-tabs button[aria-selected="true"] { background: var(--vk-ink); border-color: var(--vk-ink); color: var(--vk-paper); }
   /* Le champ du sujet est l'action principale de la page : il doit se voir d'emblée. */
   .studio-label { display: block; margin: 0 0 0.6rem; font-size: 1.2rem; font-weight: 700; font-stretch: 90%; }
   .studio-input { display: flex; gap: 0.6rem; flex-wrap: wrap; }
@@ -97,18 +91,27 @@
     color: var(--vk-ink-2); font: 500 0.82rem/1.2 var(--vk-font); cursor: pointer;
   }
   .studio-ideas button:hover { border-style: solid; border-color: var(--vk-ink); color: var(--vk-ink); }
-  .studio-voice { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
   .rec-btn {
-    display: grid; place-items: center; width: 4rem; height: 4rem; flex: none; border-radius: 50%;
-    border: 2px solid var(--vk-ink); background: var(--vk-paper); color: var(--vk-ink); cursor: pointer;
+    display: grid; place-items: center; align-self: stretch; width: 3.9rem; min-height: 3.4rem; flex: none;
+    border: 2px solid var(--vk-ink); border-radius: var(--vk-radius-sm); background: var(--vk-paper); color: var(--vk-ink); cursor: pointer;
+    transition: background 0.2s var(--vk-ease), color 0.2s var(--vk-ease), border-color 0.2s var(--vk-ease);
   }
-  .rec-btn svg { width: 1.6rem; height: 1.6rem; }
+  .rec-btn:hover { background: var(--vk-ink); color: var(--vk-paper); }
+  .rec-btn svg { width: 1.5rem; height: 1.5rem; }
+  .rec-btn .ico-stop { display: none; }
   .rec-btn.is-recording { background: var(--vk-danger); border-color: var(--vk-danger); color: #fff; animation: rec-pulse 1.4s ease-in-out infinite; }
-  @keyframes rec-pulse { 50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--vk-danger) 18%, transparent); } }
-  .rec-status { flex: 1 1 200px; margin: 0; color: var(--vk-ink-2); }
-  .rec-status strong { color: var(--vk-ink); font-family: var(--vk-mono); }
-  .studio-voice-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; width: 100%; }
-  .studio-voice-actions audio { flex: 1 1 220px; height: 2.5rem; }
+  .rec-btn.is-recording .ico-mic { display: none; }
+  .rec-btn.is-recording .ico-stop { display: block; }
+  @keyframes rec-pulse { 50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--vk-danger) 20%, transparent); } }
+  .studio-input input:disabled { color: var(--vk-ink-2); background: color-mix(in srgb, var(--vk-signal) 8%, var(--vk-paper)); }
+  .rec-bar { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.7rem; color: var(--vk-ink-2); font-size: 0.92rem; }
+  .rec-bar strong { color: var(--vk-ink); font-family: var(--vk-mono); }
+  .rec-bar audio { flex: 1 1 220px; height: 2.4rem; }
+  .rec-clear {
+    padding: 0.35rem 0.8rem; border: 1px solid var(--vk-line); border-radius: 999px; background: none;
+    color: var(--vk-ink-2); font: 500 0.82rem/1.2 var(--vk-font); cursor: pointer;
+  }
+  .rec-clear:hover { border-color: var(--vk-ink); color: var(--vk-ink); }
   .studio-format { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 2rem; margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px dashed var(--vk-line); }
   .format-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
   .format-head label { font-weight: 600; }
@@ -210,7 +213,7 @@
     .tuner-title { font-size: 1.1rem; }
     .tuner-next { margin-left: 0; }
     .tuner-controls { flex-wrap: wrap; }
-    .studio-input .vk-btn { width: 100%; }
+    .studio-input .vk-btn { flex: 1 1 auto; }
     .studio-format { grid-template-columns: 1fr; }
     .studio-result { grid-template-columns: 1fr; }
   }
@@ -269,37 +272,27 @@
     </div>
 
     <div class="studio" id="creer">
-      <div class="studio-tabs" role="tablist" aria-label="Façon de donner le sujet">
-        <button type="button" role="tab" id="tab-text" aria-selected="true" aria-controls="panel-text">Écrire un sujet</button>
-        <button type="button" role="tab" id="tab-audio" aria-selected="false" aria-controls="panel-audio">Dicter un message vocal</button>
-      </div>
-
       <form id="studio-form" novalidate>
-        <div id="panel-text" role="tabpanel" aria-labelledby="tab-text">
-          <label class="studio-label" for="studio-subject">De quoi doit parler votre épisode ?</label>
-          <div class="studio-input">
-            <input type="text" id="studio-subject" maxlength="300" autocomplete="off" placeholder="Ex. : l'histoire du café, les trous noirs…">
-            <button type="submit" class="vk-btn vk-btn-signal">Générer l'épisode</button>
-          </div>
-          <div class="studio-ideas">
-            <span class="vk-label">Idées :</span>
-            <button type="button">L'histoire du café</button>
-            <button type="button">Pourquoi le ciel est bleu</button>
-            <button type="button">La photosynthèse</button>
-            <button type="button">Les premiers pas sur la Lune</button>
-          </div>
+        <label class="studio-label" for="studio-subject">De quoi doit parler votre épisode ?</label>
+        <div class="studio-input">
+          <input type="text" id="studio-subject" maxlength="300" autocomplete="off" placeholder="Écrivez un sujet, ou dictez-le au micro">
+          <button type="button" class="rec-btn" id="rec-btn" aria-label="Dicter le sujet au micro" title="Dicter le sujet au micro">
+            <svg class="ico-mic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 17.5V21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <svg class="ico-stop" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+          </button>
+          <button type="submit" class="vk-btn vk-btn-signal">Générer l'épisode</button>
         </div>
-        <div id="panel-audio" role="tabpanel" aria-labelledby="tab-audio" hidden>
-          <div class="studio-voice">
-            <button type="button" class="rec-btn" id="rec-btn" aria-label="Commencer l'enregistrement">
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 17.5V21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            </button>
-            <p class="rec-status" id="rec-status">Appuyez sur le bouton et dites votre sujet en une ou deux phrases (2 minutes maximum).</p>
-            <div class="studio-voice-actions" id="rec-ready" hidden>
-              <audio id="rec-preview" controls></audio>
-              <button type="submit" class="vk-btn vk-btn-signal">Générer l'épisode</button>
-            </div>
-          </div>
+        <div class="rec-bar" id="rec-bar" role="status" hidden>
+          <span id="rec-status"></span>
+          <audio id="rec-preview" controls hidden></audio>
+          <button type="button" class="rec-clear" id="rec-clear" hidden>Supprimer le message</button>
+        </div>
+        <div class="studio-ideas" id="studio-ideas">
+          <span class="vk-label">Idées :</span>
+          <button type="button">L'histoire du café</button>
+          <button type="button">Pourquoi le ciel est bleu</button>
+          <button type="button">La photosynthèse</button>
+          <button type="button">Les premiers pas sur la Lune</button>
         </div>
 
         <div class="studio-format">
@@ -675,16 +668,23 @@
 
   function setError(msg) { $('studio-error').textContent = msg || ''; }
 
-  function selectMode(next) {
-    mode = next;
-    $('tab-text').setAttribute('aria-selected', next === 'text' ? 'true' : 'false');
-    $('tab-audio').setAttribute('aria-selected', next === 'audio' ? 'true' : 'false');
-    $('panel-text').hidden = next !== 'text';
-    $('panel-audio').hidden = next !== 'audio';
-    setError('');
+  var SUBJECT_PLACEHOLDER = $('studio-subject').placeholder;
+
+  // Le micro remplace le sujet écrit tant qu'un message vocal est enregistré.
+  function clearRecording() {
+    stopRecording();
+    recorded = null;
+    mode = 'text';
+    $('rec-bar').hidden = true;
+    $('rec-preview').hidden = true;
+    $('rec-preview').removeAttribute('src');
+    $('rec-clear').hidden = true;
+    $('studio-ideas').hidden = false;
+    $('studio-subject').disabled = false;
+    $('studio-subject').placeholder = SUBJECT_PLACEHOLDER;
+    $('rec-btn').setAttribute('aria-label', 'Dicter le sujet au micro');
   }
-  $('tab-text').addEventListener('click', function () { selectMode('text'); });
-  $('tab-audio').addEventListener('click', function () { selectMode('audio'); });
+  $('rec-clear').addEventListener('click', function () { clearRecording(); $('studio-subject').focus(); });
 
   document.querySelectorAll('.studio-ideas button').forEach(function (b) {
     b.addEventListener('click', function () { $('studio-subject').value = b.textContent; $('studio-subject').focus(); });
@@ -728,18 +728,28 @@
         stream.getTracks().forEach(function (t) { t.stop(); });
         var type = recorder.mimeType || 'audio/webm';
         recorded = new File([new Blob(chunks, { type: type })], 'message-' + Date.now() + '.' + extensionFor(type), { type: type });
+        mode = 'audio';
         $('rec-preview').src = URL.createObjectURL(recorded);
-        $('rec-ready').hidden = false;
+        $('rec-preview').hidden = false;
+        $('rec-clear').hidden = false;
         $('rec-btn').classList.remove('is-recording');
-        $('rec-btn').setAttribute('aria-label', "Recommencer l'enregistrement");
-        $('rec-status').textContent = 'Message enregistré. Réécoutez-le, puis lancez la création — ou appuyez à nouveau pour recommencer.';
+        $('rec-btn').setAttribute('aria-label', 'Recommencer la dictée');
+        $('studio-subject').placeholder = 'Message vocal enregistré';
+        $('rec-status').textContent = 'Message vocal prêt :';
       };
       recorder.start();
       recStart = Date.now();
-      $('rec-ready').hidden = true;
+      recorded = null;
+      $('studio-subject').value = '';
+      $('studio-subject').disabled = true;
+      $('studio-subject').placeholder = 'Je vous écoute…';
+      $('studio-ideas').hidden = true;
+      $('rec-bar').hidden = false;
+      $('rec-preview').hidden = true;
+      $('rec-clear').hidden = true;
       $('rec-btn').classList.add('is-recording');
-      $('rec-btn').setAttribute('aria-label', "Arrêter l'enregistrement");
-      $('rec-status').innerHTML = 'Enregistrement… <strong id="rec-time">0:00</strong> — appuyez à nouveau pour arrêter.';
+      $('rec-btn').setAttribute('aria-label', 'Arrêter la dictée');
+      $('rec-status').innerHTML = 'Dictez votre sujet… <strong id="rec-time">0:00</strong> / 2:00 — touchez le carré pour arrêter.';
       recTimer = setInterval(function () {
         var ms = Date.now() - recStart;
         var t = $('rec-time');
@@ -747,6 +757,7 @@
         if (ms >= MAX_REC_MS) stopRecording();
       }, 250);
     }).catch(function () {
+      clearRecording();
       setError("Impossible d'accéder au micro. Autorisez-le dans votre navigateur, ou écrivez plutôt votre sujet.");
     });
   });
@@ -766,7 +777,6 @@
     $('studio-form').hidden = false;
     $('studio-progress').hidden = true;
     $('studio-result').hidden = true;
-    document.querySelector('.studio-tabs').hidden = false;
   }
 
   function showResult(job) {
@@ -812,6 +822,7 @@
     var request;
     var duration = $('studio-duration').value;
     var level = $('studio-level').value;
+    if (recorder && recorder.state === 'recording') { setError('Arrêtez d\'abord la dictée en touchant le carré rouge.'); return; }
     if (mode === 'text') {
       var subject = $('studio-subject').value.trim();
       if (!subject) { setError('Indiquez un sujet pour votre épisode.'); $('studio-subject').focus(); return; }
@@ -821,7 +832,7 @@
         body: JSON.stringify({ input: subject, duration: Number(duration), level: Number(level) })
       });
     } else {
-      if (!recorded) { setError('Enregistrez d\'abord votre message vocal.'); return; }
+      if (!recorded) { setError('Arrêtez d\'abord la dictée.'); return; }
       var fd = new FormData();
       fd.append('audio', recorded);
       fd.append('duration', duration);
@@ -829,7 +840,6 @@
       request = fetch('/api/generation-audio', { method: 'POST', body: fd });
     }
     $('studio-form').hidden = true;
-    document.querySelector('.studio-tabs').hidden = true;
     $('studio-progress').querySelector('[data-step="transcription"]').hidden = mode !== 'audio';
     $('studio-wait').textContent = duration > 6
       ? 'Votre épisode est en préparation. Un format long demande un peu plus de temps : comptez quelques minutes.'
@@ -843,11 +853,9 @@
 
   $('result-again').addEventListener('click', function () {
     $('studio-subject').value = '';
-    recorded = null;
-    $('rec-ready').hidden = true;
-    $('rec-status').textContent = 'Appuyez sur le bouton et dites votre sujet en une ou deux phrases (2 minutes maximum).';
+    clearRecording();
     resetStudio();
-    if (mode === 'text') $('studio-subject').focus();
+    $('studio-subject').focus();
   });
 })();
 </script>
