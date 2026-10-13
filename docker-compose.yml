@@ -22,7 +22,7 @@ services:
 
   db:
     image: mysql:8.0
-    container_name: mysql_db
+    container_name: vokso_mysql_db
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?La variable MYSQL_ROOT_PASSWORD doit être définie dans .env}
@@ -63,3 +63,7 @@ services:
 
 volumes:
   db_data:
+
+networks:
+  app_network:
+    driver: bridge

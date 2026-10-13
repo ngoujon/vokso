@@ -3,7 +3,7 @@
 # (base de données + fichiers utilisateurs).
 #
 # Cible automatiquement le bon backend selon l'environnement, comme
-# scripts/backup.sh : conteneur Docker "mysql_db" en dev local, ou MariaDB
+# scripts/backup.sh : conteneur Docker "vokso_mysql_db" en dev local, ou MariaDB
 # en paquet système en production (identifiants dans webserver/api/.env).
 #
 # Utilisation :
@@ -16,7 +16,7 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_DIR"
 
-DB_CONTAINER="mysql_db"
+DB_CONTAINER="vokso_mysql_db"
 
 BACKUP_PATH="${1:-}"
 if [ -z "$BACKUP_PATH" ]; then

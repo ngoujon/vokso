@@ -3,7 +3,7 @@
 # uploadés, médias générés).
 #
 # Cible automatiquement le bon backend selon l'environnement :
-#   - dev local  : MySQL via le conteneur Docker "mysql_db" (docker-compose)
+#   - dev local  : MySQL via le conteneur Docker "vokso_mysql_db" (docker-compose)
 #   - production : MariaDB installée en paquet système (scripts/setup-server.sh),
 #                   dump en local via mysqldump avec les identifiants de
 #                   webserver/api/.env (DB_HOST/DB_NAME/DB_USER/DB_PASS)
@@ -29,7 +29,7 @@ RETENTION_DAYS="${RETENTION_DAYS:-14}"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
 DEST="$BACKUP_DIR/$TIMESTAMP"
 
-DB_CONTAINER="mysql_db"
+DB_CONTAINER="vokso_mysql_db"
 
 # Dev local (docker-compose) : variables MYSQL_* dans le .env à la racine.
 if [ -f "$PROJECT_DIR/.env" ]; then

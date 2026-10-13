@@ -3,7 +3,7 @@
 ## Ce qui est sauvegardé
 
 - **Base de données** (toutes les tables : générations, utilisateurs, prompts, catégories, etc.). `scripts/backup.sh` détecte automatiquement l'environnement :
-  - en dev local, dump via le conteneur Docker `mysql_db` (docker-compose) ;
+  - en dev local, dump via le conteneur Docker `vokso_mysql_db` (docker-compose) ;
   - en production, dump en local avec `mysqldump` contre la MariaDB installée en paquet système (`scripts/setup-server.sh`), avec les identifiants de `webserver/api/.env` (`DB_HOST`/`DB_NAME`/`DB_USER`/`DB_PASS`).
 - **Fichiers utilisateurs** : les fichiers audio uploadés (`webserver/api/storage/uploads`) et les médias générés (`webserver/public/output`).
 
@@ -44,7 +44,7 @@ Cela exécute la sauvegarde chaque nuit à 3h. Adapter la fréquence selon le vo
 ⚠️ Cette opération écrase la base de données et les fichiers actuels avec le contenu de la sauvegarde choisie.
 
 Le script :
-1. Restaure la base de données à partir de `database.sql.gz` (conteneur `mysql_db` en dev local, MariaDB locale en production — même détection automatique que `backup.sh`).
+1. Restaure la base de données à partir de `database.sql.gz` (conteneur `vokso_mysql_db` en dev local, MariaDB locale en production — même détection automatique que `backup.sh`).
 2. Réextrait les fichiers utilisateurs à partir de `files.tar.gz`.
 
 ## Test de restauration effectué
@@ -55,5 +55,5 @@ Il est recommandé de refaire ce test de restauration périodiquement (par exemp
 
 ## Prérequis
 
-- **Dev local** : le conteneur Docker `mysql_db` doit être démarré (`docker compose up -d`), et le fichier `.env` à la racine du projet doit contenir `MYSQL_ROOT_PASSWORD` et `MYSQL_DATABASE`.
+- **Dev local** : le conteneur Docker `vokso_mysql_db` doit être démarré (`docker compose up -d`), et le fichier `.env` à la racine du projet doit contenir `MYSQL_ROOT_PASSWORD` et `MYSQL_DATABASE`.
 - **Production** : le paquet client `mariadb-client` (fournissant `mysqldump`/`mysql`, installé avec `mariadb-server` par `scripts/setup-server.sh`) doit être présent, et `webserver/api/.env` doit contenir `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`.
