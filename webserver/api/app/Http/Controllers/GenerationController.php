@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GenerationJob;
+use App\Services\PodcastGenerator;
 use App\Support\EpisodeFormat;
 use App\Support\EpisodeText;
 use App\Support\GenerationLimits;
@@ -141,6 +142,8 @@ class GenerationController extends Controller
             'step' => $row->step,
             'progress' => (int) $row->progress,
             'error' => $row->error_message,
+            // Service momentanément indisponible (crédit Mistral) : affiché comme une information, pas comme une erreur.
+            'unavailable' => $row->error_message === PodcastGenerator::MESSAGE_UNAVAILABLE,
             'generation_id' => $row->generation_id,
             'slug' => $row->slug,
             'url' => $row->generation_id ? EpisodeText::episodePath($row->slug, $row->generation_id, (string) $row->title) : null,

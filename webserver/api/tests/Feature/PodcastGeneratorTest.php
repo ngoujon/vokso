@@ -45,7 +45,7 @@ class PodcastGeneratorTest extends TestCase
      * @param  string  $narration  « {{system}} » y est remplacé par la consigne système reçue (test de fuite).
      * @param  array<string, list<string>>|string  $moderation  catégories signalées par fragment de texte, ou 'down' (indisponible).
      */
-    private function fakeAi(bool $imageFails = false, string $imageBytes = 'png', string $narration = 'Narration du podcast.', array|string $moderation = []): AiProviderFactory
+    private function fakeAi(bool $imageFails = false, string $imageBytes = 'png', string $narration = 'Narration du podcast.', array|string $moderation = [], string $imageError = 'quota image'): AiProviderFactory
     {
         self::$calls = ['text' => [], 'system' => [], 'speech' => [], 'expand' => [], 'moderation' => []];
 
@@ -79,9 +79,9 @@ class PodcastGeneratorTest extends TestCase
             }
         };
 
-        $image = new class($imageFails, $imageBytes) implements ImageGeneratorInterface
+        $image = new class($imageFails, $imageBytes, $imageError) implements ImageGeneratorInterface
         {
-            public function __construct(private bool $fails, private string $bytes) {}
+            public function __construct(private bool $fails, private string $bytes, private string $error) {}
 
             public function generateImage(string $prompt): string
             {
@@ -90,7 +90,7 @@ class PodcastGeneratorTest extends TestCase
 
             public function generateImageAsync(string $prompt): PromiseInterface
             {
-                return $this->fails ? Create::rejectionFor(new Exception('quota image')) : Create::promiseFor($this->bytes);
+                return $this->fails ? Create::rejectionFor(new Exception($this->error)) : Create::promiseFor($this->bytes);
             }
         };
 
@@ -361,6 +361,24 @@ class PodcastGeneratorTest extends TestCase
         $this->assertSame('error', $job->status);
         $this->assertStringContainsString('image', $job->error_message);
         $this->assertSame(0, Generation::count());
+        $this->getJson('/generation-status?id=job_2')->assertJsonPath('unavailable', false);
+    }
+
+    public function test_an_exhausted_mistral_credit_shows_a_friendly_message(): void
+    {
+        GenerationJob::create(['job_id' => 'job_quota', 'input' => 'Mars', 'status' => 'pending']);
+
+        $ai = $this->fakeAi(imageFails: true, imageError: 'Client error: `POST https://api.mistral.ai/v1/conversations` resulted in a `402 Payment Required` response');
+        (new PodcastGenerator($ai, $this->outputDir))->process('job_quota');
+
+        $job = GenerationJob::find('job_quota');
+        $this->assertSame('error', $job->status);
+        $this->assertSame(PodcastGenerator::MESSAGE_UNAVAILABLE, $job->error_message);
+
+        $this->getJson('/generation-status?id=job_quota')
+            ->assertOk()
+            ->assertJsonPath('unavailable', true)
+            ->assertJsonPath('error', PodcastGenerator::MESSAGE_UNAVAILABLE);
     }
 
     public function test_a_failing_image_falls_back_to_the_category_cover(): void

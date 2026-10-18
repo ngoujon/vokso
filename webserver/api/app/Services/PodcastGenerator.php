@@ -8,6 +8,7 @@ use App\Models\Generation;
 use App\Models\GenerationJob;
 use App\Models\Prompt;
 use App\Services\Ai\AiProviderFactory;
+use App\Support\AiQuota;
 use App\Support\CostEstimator;
 use App\Support\EpisodeFormat;
 use App\Support\EpisodeSlug;
@@ -43,6 +44,10 @@ class PodcastGenerator
     private const MESSAGE_REFUSED = 'Ce sujet ne peut pas être traité par Vokso.';
     private const MESSAGE_BLOCKED = 'La génération a été bloquée par nos protections. Reformulez le sujet et réessayez.';
     private const MESSAGE_HELD = 'Votre épisode est prêt, mais il doit être vérifié avant sa publication.';
+
+    // Crédit Mistral épuisé ou limite atteinte : pas une erreur du visiteur,
+    // le Studio l'affiche comme une simple information (voir site/index.html).
+    public const MESSAGE_UNAVAILABLE = 'Le Studio fait une petite pause : la création d\'épisodes sera de nouveau disponible très prochainement. En attendant, toute la discothèque reste à votre écoute !';
 
     private const MAX_INPUT_LENGTH = 300;
 
@@ -279,6 +284,18 @@ class PodcastGenerator
 
     private function failJob(string $jobId, string $message, Exception $e): void
     {
+        if (AiQuota::isExhausted($e)) {
+            Log::warning('Génération interrompue : crédit ou limite Mistral atteint', [
+                'service' => 'generation-worker',
+                'job_id' => $jobId,
+                'step' => $message,
+                'reason' => $e->getMessage(),
+            ]);
+            GenerationJob::whereKey($jobId)->update(['status' => 'error', 'error_message' => self::MESSAGE_UNAVAILABLE]);
+
+            return;
+        }
+
         Log::error($message, [
             'service' => 'generation-worker',
             'job_id' => $jobId,

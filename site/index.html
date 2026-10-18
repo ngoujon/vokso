@@ -139,6 +139,7 @@
   .studio-note { margin: 0.9rem 0 0; font-size: 0.85rem; color: var(--vk-ink-2); }
   .studio-error { margin: 0.9rem 0 0; color: var(--vk-danger); font-weight: 600; }
   .studio-error:empty { display: none; }
+  .studio-error.is-soft { padding: 0.8rem 1rem; border-radius: var(--vk-radius-sm); background: var(--vk-paper-2); color: var(--vk-ink-2); font-weight: 500; }
 
   .studio-progress ol { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 0.55rem; }
   .studio-progress li { display: flex; align-items: center; gap: 0.7rem; color: var(--vk-ink-3); }
@@ -689,7 +690,13 @@
   syncDuration();
   syncLevel();
 
-  function setError(msg) { $('studio-error').textContent = msg || ''; }
+  // soft : simple information (service momentanément indisponible), pas une erreur en rouge.
+  function setError(msg, soft) {
+    var el = $('studio-error');
+    el.textContent = msg || '';
+    el.classList.toggle('is-soft', !!soft);
+    el.setAttribute('role', soft ? 'status' : 'alert');
+  }
 
   var SUBJECT_PLACEHOLDER = $('studio-subject').placeholder;
 
@@ -848,7 +855,7 @@
           failures = 0;
           showProgress(job.step, job.progress);
           if (job.status === 'done') { clearInterval(timer); showResult(job); }
-          else if (job.status === 'error') { clearInterval(timer); resetStudio(); setError(job.error || 'La création a échoué. Réessayez dans un instant.'); }
+          else if (job.status === 'error') { clearInterval(timer); resetStudio(); setError(job.error || 'La création a échoué. Réessayez dans un instant.', job.unavailable); }
         })
         .catch(function (err) {
           if (++failures >= 3) { clearInterval(timer); resetStudio(); setError(err.message || 'La connexion a été perdue.'); }
