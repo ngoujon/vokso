@@ -19,17 +19,19 @@ Production : [vokso.fr](https://vokso.fr)
 | Dossier | Rôle | Technologies |
 | --- | --- | --- |
 | `site/` | Vitrine statique (racine du domaine), réécritures SEO (`site/.htaccess`) | HTML/CSS |
-| `webserver/src/` | Application web, servie sous `/app/` | React 18 + TypeScript (Create React App) |
+| `webserver/src/` | Application web servie sous `/app/` (connexion, espaces utilisateur et admin) : `pages/`, `components/`, `lib/` (API, session, utilitaires), styles dans `index.css` | React 18 + TypeScript (Create React App) |
 | `webserver/api/` | API servie sous `/api/`, pages épisode rendues côté serveur (`/podcast/...`), sitemap | Laravel 13 (PHP 8.3) |
 | `apache-config/` | Vhost Apache versionné, synchronisé à chaque déploiement | Apache 2.4 |
 | `SQL/` | Historique des migrations de la base de production (appliquées à la main) | MySQL |
 | `scripts/` | Déploiement, provisionnement du serveur, sauvegardes | Bash |
+| `mobile/` | Application Android/iOS (coquille qui charge le site) | Capacitor |
+| `docs/` | Déploiement, sauvegardes, n8n, audits, kit de marque (`docs/brand/`) | Markdown |
 
 ### Génération d'un podcast
 
 1. Le front envoie le sujet (`POST /api/generation`) ou un fichier audio (`POST /api/generation-audio`), sans compte.
 2. L'API vérifie les limites anti-abus (par adresse IP sur une heure et sur 24 h, plus un plafond global sur 24 h ; voir `App\Support\GenerationLimits`), crée un job et lance en arrière-plan `php artisan vokso:process-job {id}`.
-3. `App\Services\PodcastGenerator` enchaîne : transcription éventuelle → texte, titre et catégorie en parallèle → illustration et voix en parallèle → enregistrement.
+3. `App\Services\PodcastGenerator` enchaîne : transcription éventuelle → texte, titre et catégorie en parallèle → illustration et voix en parallèle → enregistrement. Il s'appuie sur `OutputStorage` (fichiers générés), `CategoryCatalog` (rubriques et couvertures) et les fournisseurs de `App\Services\Ai` (dont `MistralAgent` pour la recherche web et l'image).
 4. Le front suit la progression via `GET /api/generation-status?id=...`.
 
 Toutes les étapes d'IA passent par **Mistral AI** (texte avec recherche web, génération d'image, synthèse vocale Voxtral, transcription Voxtral). Le texte peut aussi passer par Ollama Cloud (`AI_TEXT_PROVIDER=ollama`).

@@ -9,7 +9,7 @@
   var STATIC = '/static';
   var $ = function (id) { return document.getElementById(id); };
 
-  // ---- Utilitaires (mêmes règles que webserver/src/utils/text.ts) ----------
+  // ---- Utilitaires (mêmes règles que App\Support\EpisodeText côté API) -----
   function cleanTitle(t) {
     return (t || '').replace(/(\*\*|__)(.*?)\1/g, '$2').replace(/[*_`#]/g, '').replace(/\s+/g, ' ').trim();
   }
@@ -313,6 +313,10 @@
     doc.head.querySelectorAll(sel).forEach(function (n) { document.head.appendChild(document.importNode(n, true)); });
   }
 
+  // Seuls les scripts inline des pages sont rejoués après une navigation
+  // douce (ceux qui ont un src, comme site.js, ne s'exécutent qu'une fois) :
+  // c'est pourquoi le code propre au Studio et à la discothèque reste dans
+  // leur page HTML plutôt que dans un fichier séparé.
   function swapBody(doc) {
     Array.prototype.slice.call(document.body.childNodes).forEach(function (n) { if (n !== deck) n.remove(); });
     var scripts = [];

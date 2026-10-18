@@ -10,7 +10,7 @@ RewriteEngine On
 
 # Domaine canonique fixe (vokso.fr, jamais www.vokso.fr) : les deux servaient
 # jusqu'ici le même contenu sans redirection (signal SEO dilué). Voir aussi
-# useCanonical.js (filet de sécurité côté JS, insuffisant seul pour un
+# webserver/src/lib/usePageMeta.ts (filet de sécurité côté JS, insuffisant seul pour un
 # crawler qui n'exécute pas le JS).
 RewriteCond %{HTTP_HOST} ^www\.vokso\.fr$ [NC]
 RewriteRule ^ https://vokso.fr%{REQUEST_URI} [L,R=301]
