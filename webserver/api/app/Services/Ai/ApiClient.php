@@ -18,6 +18,12 @@ class ApiClient
     private Client $client;
     private string $baseUrl;
 
+    /** Client de l'API Mistral, partagé par tous les fournisseurs Mistral. */
+    public static function mistral(array $config): self
+    {
+        return new self($config, 'MISTRAL_API_KEY', 'https://api.mistral.ai/v1');
+    }
+
     public function __construct(array $config, string $apiKeyEnvName, string $defaultBaseUrl)
     {
         $apiKey = (string) ($config['api_key'] ?? '');
@@ -60,10 +66,10 @@ class ApiClient
         );
     }
 
-    /** La promesse se résout avec le corps brut de la réponse. */
-    public function postRawAsync(string $path, array $options): PromiseInterface
+    /** Corps brut d'une ressource (ex. fichier produit par un agent) ; la promesse se résout avec les octets. */
+    public function getRawAsync(string $path): PromiseInterface
     {
-        return $this->client->postAsync($this->baseUrl.$path, $options)->then(
+        return $this->client->getAsync($this->baseUrl.$path)->then(
             fn (ResponseInterface $response) => (string) $response->getBody(),
             function ($reason) use ($path) {
                 throw new Exception('Appel API en échec ('.$path.') : '.$reason->getMessage().' '.$this->errorBody($reason));

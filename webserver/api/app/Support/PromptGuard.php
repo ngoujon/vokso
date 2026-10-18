@@ -20,6 +20,12 @@ use Illuminate\Support\Str;
  */
 final class PromptGuard
 {
+    /** Longueur maximale d'un sujet (saisi, transcrit ou envoyé par n8n). */
+    public const MAX_SUBJECT_LENGTH = 300;
+
+    /** Refus montré au visiteur quand son sujet ressemble à une consigne adressée au modèle. */
+    public const INJECTION_MESSAGE = 'Ce sujet ressemble à une consigne adressée à l\'IA : décrivez simplement le thème de l\'épisode.';
+
     /** Réponse exacte demandée au modèle quand il refuse un sujet. */
     public const REFUSAL_MARKER = 'REFUS_VOKSO';
 

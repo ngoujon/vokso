@@ -12,7 +12,7 @@ class MistralTranscriptionProvider implements TranscriberInterface
 
     public function __construct(array $config)
     {
-        $this->api = new ApiClient($config + ['timeout' => 600], 'MISTRAL_API_KEY', 'https://api.mistral.ai/v1');
+        $this->api = ApiClient::mistral($config + ['timeout' => 600]);
         $this->model = (string) (($config['transcription_model'] ?? '') ?: 'voxtral-mini-latest');
     }
 

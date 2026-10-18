@@ -20,8 +20,6 @@ use Illuminate\Support\Str;
  */
 class GenerationController extends Controller
 {
-    protected const MAX_INPUT_LENGTH = 300;
-    protected const INJECTION_REFUSAL = 'Ce sujet ressemble à une consigne adressée à l\'IA : décrivez simplement le thème de l\'épisode.';
     private const MAX_AUDIO_SIZE = 26214400; // 25 Mo
     private const ALLOWED_AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'ogg', 'webm', 'mp4', 'mpeg', 'mpga'];
 
@@ -34,11 +32,11 @@ class GenerationController extends Controller
 
         // Une seule valeur nettoyée sert à tous les appels IA et à la base.
         $userInput = $this->sanitizeInput($input);
-        if (mb_strlen($userInput) > self::MAX_INPUT_LENGTH) {
-            return $this->error('Le sujet ne doit pas dépasser '.self::MAX_INPUT_LENGTH.' caractères.', 400);
+        if (mb_strlen($userInput) > PromptGuard::MAX_SUBJECT_LENGTH) {
+            return $this->error('Le sujet ne doit pas dépasser '.PromptGuard::MAX_SUBJECT_LENGTH.' caractères.', 400);
         }
         if ($userInput === '' || PromptGuard::looksLikeInjection($userInput)) {
-            return $this->error($userInput === '' ? 'Valeur manquante' : self::INJECTION_REFUSAL, 400);
+            return $this->error($userInput === '' ? 'Valeur manquante' : PromptGuard::INJECTION_MESSAGE, 400);
         }
 
         [$minutes, $level, $formatError] = $this->format($request->json('duration'), $request->json('level'));
@@ -124,10 +122,7 @@ class GenerationController extends Controller
             return $this->error('Identifiant de suivi manquant', 400);
         }
 
-        $columns = ['j.status', 'j.step', 'j.progress', 'j.error_message', 'j.generation_id', 'g.slug', 'g.title', 'g.image_url', 'g.audio_url'];
-        if (EpisodeFormat::columnsReady()) {
-            $columns = array_merge($columns, ['g.duration_minutes', 'g.level']);
-        }
+        $columns = ['j.status', 'j.step', 'j.progress', 'j.error_message', 'j.generation_id', 'g.slug', 'g.title', 'g.image_url', 'g.audio_url', ...EpisodeFormat::columns()];
         $row = DB::table('generation_jobs as j')
             ->leftJoin('generations as g', 'g.generation_id', '=', 'j.generation_id')
             ->where('j.job_id', $jobId)
@@ -194,7 +189,7 @@ class GenerationController extends Controller
     ): string {
         $jobId = 'job_'.bin2hex(random_bytes(16));
 
-        $attributes = [
+        GenerationJob::create([
             'job_id' => $jobId,
             'user_id' => $userId,
             'source_type' => $sourceType,
@@ -203,11 +198,9 @@ class GenerationController extends Controller
             'progress' => 0,
             'input' => $input,
             'audio_path' => $audioPath,
-        ];
-        if (EpisodeFormat::columnsReady()) {
-            $attributes += ['duration_minutes' => $minutes, 'level' => $level];
-        }
-        GenerationJob::create($attributes);
+            'duration_minutes' => $minutes,
+            'level' => $level,
+        ]);
 
         return $jobId;
     }

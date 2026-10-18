@@ -28,11 +28,11 @@ class N8nController extends GenerationController
         }
 
         $subject = $this->sanitizeInput($input);
-        if (mb_strlen($subject) > self::MAX_INPUT_LENGTH) {
-            return $this->error('Le sujet ne doit pas dépasser '.self::MAX_INPUT_LENGTH.' caractères.', 422);
+        if (mb_strlen($subject) > PromptGuard::MAX_SUBJECT_LENGTH) {
+            return $this->error('Le sujet ne doit pas dépasser '.PromptGuard::MAX_SUBJECT_LENGTH.' caractères.', 422);
         }
         if (PromptGuard::looksLikeInjection($subject)) {
-            return $this->error(self::INJECTION_REFUSAL, 422);
+            return $this->error(PromptGuard::INJECTION_MESSAGE, 422);
         }
 
         [$minutes, $level, $formatError] = $this->format($request->json('duree', $request->json('duration')), $request->json('niveau', $request->json('level')), 422);

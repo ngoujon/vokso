@@ -63,7 +63,7 @@ class SeedPodcasts extends Command
         $failures = 0;
 
         $category = trim((string) $this->option('categorie'));
-        $categoryId = $category !== '' ? $generator->ensureCategory($category) : null;
+        $categoryId = $category !== '' ? $generator->categories->ensure($category) : null;
 
         foreach ($topics as $index => $topic) {
             $topic = trim((string) $topic);

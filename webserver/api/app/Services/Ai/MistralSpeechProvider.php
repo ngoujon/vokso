@@ -18,7 +18,7 @@ class MistralSpeechProvider implements SpeechSynthesizerInterface
 
     public function __construct(array $config)
     {
-        $this->api = new ApiClient($config + ['timeout' => 600], 'MISTRAL_API_KEY', 'https://api.mistral.ai/v1');
+        $this->api = ApiClient::mistral($config + ['timeout' => 600]);
         $this->model = (string) (($config['speech_model'] ?? '') ?: 'voxtral-mini-tts-latest');
         $this->voice = (string) (($config['speech_voice'] ?? '') ?: 'fr_marie_neutral');
     }

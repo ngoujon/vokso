@@ -24,7 +24,7 @@ class MistralModerationProvider implements ModeratorInterface
 
     public function __construct(array $config)
     {
-        $this->api = new ApiClient($config + ['timeout' => 60], 'MISTRAL_API_KEY', 'https://api.mistral.ai/v1');
+        $this->api = ApiClient::mistral($config + ['timeout' => 60]);
         $this->model = (string) (($config['moderation_model'] ?? '') ?: 'mistral-moderation-latest');
     }
 

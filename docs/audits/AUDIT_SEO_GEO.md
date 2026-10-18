@@ -35,7 +35,7 @@ côté serveur avec transcription et JSON-LD `PodcastEpisode`, sitemap dynamique
    `slug`, prompts `titre` et `keyword`, regroupement des catégories). L'ancien
    code fonctionne avec la nouvelle colonne.
 2. Déployer (push sur `production`).
-3. Remplir les slugs : `sudo -u www-data php artisan vokso:episode-slugs`
+3. Remplir les slugs (fait en octobre 2026 ; la commande ponctuelle `vokso:episode-slugs` a depuis été retirée)
    (dans `webserver/api`). Relançable sans effet de bord.
 
 ## Recommandations restantes

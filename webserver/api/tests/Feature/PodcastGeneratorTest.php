@@ -10,6 +10,7 @@ use App\Services\Ai\ImageGeneratorInterface;
 use App\Services\Ai\ModeratorInterface;
 use App\Services\Ai\SpeechSynthesizerInterface;
 use App\Services\Ai\TextGeneratorInterface;
+use App\Services\CategoryCatalog;
 use App\Services\PodcastGenerator;
 use App\Support\PromptGuard;
 use Exception;
@@ -251,15 +252,12 @@ class PodcastGeneratorTest extends TestCase
 
     public function test_multi_word_rubriques_are_recognised(): void
     {
-        $method = new \ReflectionMethod(PodcastGenerator::class, 'sanitizeCategory');
-        $generator = new PodcastGenerator($this->fakeAi(), $this->outputDir);
-
-        $this->assertSame('Nature et environnement', $method->invoke($generator, 'nature et environnement.'));
-        $this->assertSame('Culture et arts', $method->invoke($generator, 'Culture et Arts'));
-        $this->assertSame('Santé', $method->invoke($generator, 'sante'));
+        $this->assertSame('Nature et environnement', CategoryCatalog::rubriqueFor('nature et environnement.'));
+        $this->assertSame('Culture et arts', CategoryCatalog::rubriqueFor('Culture et Arts'));
+        $this->assertSame('Santé', CategoryCatalog::rubriqueFor('sante'));
         // Hors liste : jamais de nouvelle catégorie publique choisie par le modèle.
-        $this->assertSame(PodcastGenerator::DEFAULT_RUBRIQUE, $method->invoke($generator, 'Volcanologie'));
-        $this->assertSame(PodcastGenerator::DEFAULT_RUBRIQUE, $method->invoke($generator, 'Casino-en-ligne'));
+        $this->assertSame(CategoryCatalog::DEFAULT_RUBRIQUE, CategoryCatalog::rubriqueFor('Volcanologie'));
+        $this->assertSame(CategoryCatalog::DEFAULT_RUBRIQUE, CategoryCatalog::rubriqueFor('Casino-en-ligne'));
     }
 
     public function test_the_subject_is_sent_as_delimited_data_with_fixed_security_rules(): void
