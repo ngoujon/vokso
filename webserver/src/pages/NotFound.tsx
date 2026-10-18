@@ -1,13 +1,14 @@
 import React from 'react';
-import '../styles/globals.css';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
-import useDocumentMeta from '../hooks/useDocumentMeta';
+import usePageMeta from '../lib/usePageMeta';
 
+/** Page 404 de l'application (non canonique). */
 export default function NotFound() {
-  useDocumentMeta(
+  usePageMeta(
     'Page introuvable — Vokso',
-    "La page que vous cherchez n'existe pas ou plus."
+    "La page que vous cherchez n'existe pas ou plus.",
+    { canonical: false }
   );
 
   return (

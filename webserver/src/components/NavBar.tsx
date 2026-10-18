@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../lib/AuthContext';
 
 /**
  * En-tête commun à tout le site : même balisage que la vitrine (site/*.html)

@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { apiRequest, downloadText, errorMessage, triggerDownload } from '../api';
-import { useAuth } from '../AuthContext';
+import { apiRequest, errorMessage } from '../lib/api';
+import DashboardHeader from '../components/DashboardHeader';
+import EpisodeDownloads from '../components/EpisodeDownloads';
 import Footer from '../components/Footer';
 import SecuritySection from '../components/SecuritySection';
-import { staticFileUrl } from '../config';
-import useCanonical from '../hooks/useCanonical';
-import useDocumentMeta from '../hooks/useDocumentMeta';
-import type { AdminKpis, AdminUser, PodcastWithCosts, Role } from '../types';
-import { cleanTitle } from '../utils/text';
-import '../styles/globals.css';
-import '../styles/Dashboard.css';
+import usePageMeta from '../lib/usePageMeta';
+import type { AdminKpis, AdminUser, PodcastWithCosts, Role } from '../lib/types';
+import { cleanTitle } from '../lib/text';
+
+// Espace administrateur : sécurité du compte, indicateurs, comptes et suivi des podcasts.
 
 function KpiTile({ label, value, sub }: { label: string; value: React.ReactNode; sub?: string }) {
   return (
@@ -21,6 +20,7 @@ function KpiTile({ label, value, sub }: { label: string; value: React.ReactNode;
   );
 }
 
+/** Indicateurs d'activité et de coût (admin-kpis). */
 function KpiSection() {
   const [kpis, setKpis] = useState<AdminKpis | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +67,7 @@ function KpiSection() {
   );
 }
 
+/** Création des comptes, changement de rôle et (dés)activation. */
 function UsersSection() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -170,6 +171,7 @@ function UsersSection() {
   );
 }
 
+/** Liste paginée et filtrable de tous les épisodes, avec leur coût estimé. */
 function PodcastsSection() {
   const [podcasts, setPodcasts] = useState<PodcastWithCosts[]>([]);
   const [total, setTotal] = useState(0);
@@ -229,9 +231,7 @@ function PodcastsSection() {
               <td>{Number(p.cost_audio).toFixed(4)} $</td>
               <td><strong>{Number(p.cost_total).toFixed(4)} $</strong></td>
               <td className="data-table-actions">
-                <button onClick={() => triggerDownload(staticFileUrl('images', p.image_url), p.image_url, true)}>Image</button>
-                <button onClick={() => triggerDownload(staticFileUrl('audios', p.audio_url), p.audio_url, true)}>Audio</button>
-                <button onClick={() => downloadText(cleanTitle(p.title), p.description)}>Texte</button>
+                <EpisodeDownloads episode={p} compact />
               </td>
             </tr>
           ))}
@@ -248,24 +248,15 @@ function PodcastsSection() {
 }
 
 export default function AdminDashboard() {
-  useCanonical();
-  useDocumentMeta(
+  usePageMeta(
     'Administration — Vokso',
     "Espace d'administration Vokso : gestion des utilisateurs et suivi de l'activité."
   );
-  const { user, logout } = useAuth();
 
   return (
     <>
     <div className="container">
-      <div className="dashboard-header">
-        <h1>Espace administrateur</h1>
-        <div className="dashboard-header-actions">
-          <span>{user?.email}</span>
-          <a href="/">Accueil</a>
-          <button onClick={logout}>Déconnexion</button>
-        </div>
-      </div>
+      <DashboardHeader title="Espace administrateur" />
 
       <SecuritySection />
       <KpiSection />

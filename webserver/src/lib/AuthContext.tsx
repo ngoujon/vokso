@@ -2,6 +2,11 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import { apiRequest, tokenStorage } from './api';
 import type { User } from './types';
 
+/**
+ * Session de l'utilisateur : jeton stocké dans le navigateur, profil chargé
+ * via auth-me, et actions de compte (connexion, mot de passe, 2FA).
+ */
+
 interface AuthResponse {
   token: string;
   user: User;

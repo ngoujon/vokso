@@ -1,4 +1,10 @@
-import { config } from './config';
+/**
+ * Client HTTP de l'API Laravel (/api) : jeton d'authentification, appels
+ * JSON, téléchargements. Les URL de base viennent du build (.env du front),
+ * vides par défaut : l'API et les fichiers sont servis par le même domaine.
+ */
+const API_URL = process.env.REACT_APP_API_URL ?? '';
+const STATIC_URL = process.env.REACT_APP_STATIC_URL ?? '';
 
 const TOKEN_KEY = 'auth_token';
 
@@ -16,7 +22,7 @@ export class ApiError extends Error {
   }
 }
 
-export function authHeaders(): Record<string, string> {
+function authHeaders(): Record<string, string> {
   const token = tokenStorage.get();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
@@ -32,7 +38,7 @@ export function errorMessage(error: unknown, fallback = 'Une erreur est survenue
  */
 export async function apiRequest<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
   const isFormData = options.body instanceof FormData;
-  const response = await fetch(`${config.apiUrl}/${path}`, {
+  const response = await fetch(`${API_URL}/${path}`, {
     ...options,
     headers: {
       ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
@@ -50,7 +56,7 @@ export async function apiRequest<T = unknown>(path: string, options: RequestInit
 
 /** Téléchargement d'un fichier protégé : un simple <a href> n'enverrait pas le jeton. */
 export async function downloadAuthenticated(path: string, fileName: string): Promise<void> {
-  const response = await fetch(`${config.apiUrl}/${path}`, { headers: authHeaders() });
+  const response = await fetch(`${API_URL}/${path}`, { headers: authHeaders() });
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new ApiError(data.error || 'Téléchargement impossible.', data.code, response.status);
@@ -60,6 +66,7 @@ export async function downloadAuthenticated(path: string, fileName: string): Pro
   URL.revokeObjectURL(url);
 }
 
+/** Lance le téléchargement d'une URL via un lien temporaire. */
 export function triggerDownload(url: string, fileName: string, newTab = false): void {
   const link = document.createElement('a');
   link.href = url;
@@ -73,8 +80,14 @@ export function triggerDownload(url: string, fileName: string, newTab = false): 
   link.remove();
 }
 
+/** Télécharge un texte (ex. narration d'un épisode) en fichier .txt. */
 export function downloadText(title: string, text: string): void {
   const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
   triggerDownload(url, `${title || 'podcast'}.txt`);
   URL.revokeObjectURL(url);
+}
+
+/** URL publique d'un fichier généré (images/audios servis sous /static). */
+export function staticFileUrl(kind: 'images' | 'audios', fileName: string): string {
+  return `${STATIC_URL}/static/${kind}/${fileName}`;
 }

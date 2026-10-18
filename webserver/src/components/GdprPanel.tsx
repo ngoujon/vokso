@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiRequest, downloadAuthenticated, errorMessage } from '../../api';
-import { useAuth } from '../../AuthContext';
+import { apiRequest, downloadAuthenticated, errorMessage } from '../lib/api';
+import { useAuth } from '../lib/AuthContext';
 
 /** Droits RGPD exerçables depuis l'espace compte : accès/portabilité et effacement. */
+/** Droits RGPD de l'utilisateur : export de ses données et suppression du compte. */
 export default function GdprPanel() {
   const { logout } = useAuth();
   const navigate = useNavigate();

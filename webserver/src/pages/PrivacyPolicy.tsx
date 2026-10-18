@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import '../styles/globals.css';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
-import useCanonical from '../hooks/useCanonical';
-import useDocumentMeta from '../hooks/useDocumentMeta';
-import { optOutOfAudience } from '../utils/audience';
+import usePageMeta from '../lib/usePageMeta';
+import { optOutOfAudience } from '../lib/audience';
 
 // TODO (à compléter par l'éditeur du site) : identité du responsable du
 // traitement, introuvable dans le projet (aucune page de mentions légales).
@@ -12,8 +10,7 @@ const DATA_CONTROLLER = 'TODO : nom ou raison sociale, adresse et e-mail de cont
 
 export default function PrivacyPolicy() {
   const [optedOut, setOptedOut] = useState<null | boolean>(null);
-  useCanonical();
-  useDocumentMeta(
+  usePageMeta(
     'Politique de confidentialité — Vokso',
     'Comment Vokso collecte et traite vos données personnelles : contenus générés par IA, newsletter, données techniques, mesure d\'audience.'
   );

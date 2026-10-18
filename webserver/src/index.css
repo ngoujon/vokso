@@ -1,0 +1,556 @@
+/*
+ * Styles de l'application /app (connexion, espaces utilisateur et admin,
+ * contact, confidentialité). En-tête et pied de page viennent de
+ * /assets/site.css, partagé avec la vitrine.
+ *
+ * Sommaire : 1. jetons · 2. base · 3. composants · 4. formulaires et
+ * authentification · 5. tableaux de bord · 6. bandeau cookies
+ */
+
+/* 1. Jetons — design system « studio radio », mêmes valeurs que la vitrine
+   (site/assets/design-system.css, à garder synchronisés). Fond papier le
+   jour, studio sombre la nuit, jaune « ON AIR » pour l'action, toujours avec
+   un texte encre dessus (--on-primary) ; --primary-ink quand la couleur sert
+   de texte sur le fond papier. Polices Archivo et IBM Plex Mono,
+   auto-hébergées (déclarées dans public/index.html). */
+:root {
+  --primary-color: #f5c400;
+  --primary-light: #e2b300;
+  --primary-dark: #7a5a00;
+  --primary-ink: #7a5a00;
+  --on-primary: #17140f;
+  --background-color: #f3eee4;
+  --surface-color: #e9e2d4;
+  --card-bg: #fbf8f2;
+  --text-primary: #17140f;
+  --text-secondary: #5d5649;
+  --border-color: #d8cfbf;
+  --success-color: #2f7d4f;
+  --danger-color: #c4321c;
+  --input-bg: #fbf8f2;
+  --input-border: #d8cfbf;
+  --shadow-color: rgba(23, 20, 15, 0.08);
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 18px;
+  --radius-pill: 6px;
+  --font-sans: "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary-color: #ffd23f;
+    --primary-light: #ffdf6e;
+    --primary-dark: #ffd23f;
+    --primary-ink: #ffd23f;
+    --background-color: #14120e;
+    --surface-color: #1b1813;
+    --card-bg: #211d17;
+    --text-primary: #f1eadc;
+    --text-secondary: #b1a796;
+    --border-color: #342e25;
+    --success-color: #5fc58a;
+    --danger-color: #ff6b52;
+    --input-bg: #211d17;
+    --input-border: #3d362b;
+    --shadow-color: rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+}
+
+/* 2. Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--background-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--primary-ink);
+}
+
+code {
+  font-family: var(--font-mono);
+  background-color: var(--card-bg);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  color: var(--primary-dark);
+}
+
+h1 {
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1;
+  text-align: center;
+  font-weight: 800;
+  font-stretch: 72%;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  text-align: center;
+  font-weight: 800;
+  font-stretch: 80%;
+  letter-spacing: -0.01em;
+}
+
+section {
+  margin-bottom: 2.5rem;
+}
+
+section h2 {
+  margin-bottom: 1rem;
+}
+
+/* 3. Composants */
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.App .site-header {
+  margin-bottom: 2rem;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  min-width: 320px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+
+/* Bouton « Déconnexion » de la barre de navigation, aligné sur les liens. */
+.site-nav button.site-nav-link {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.site-nav button.site-nav-link:hover {
+  color: var(--text-primary);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background-color: transparent;
+  border: 1px solid var(--danger-color);
+  color: var(--danger-color);
+}
+
+.btn-danger:hover {
+  background-color: var(--danger-color);
+  color: #fff;
+}
+
+.error {
+  color: var(--danger-color);
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background-color: color-mix(in srgb, var(--danger-color) 10%, transparent);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--danger-color);
+}
+
+/* Petits boutons secondaires (en-têtes, actions de tableau, pagination). */
+.dashboard-header-actions button,
+.data-table-actions button,
+.pagination button,
+.podcast-card-actions button {
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg);
+  cursor: pointer;
+}
+
+/* Champs de saisie partagés par tous les formulaires. */
+.auth-form input,
+.auth-form textarea,
+.inline-form input,
+.inline-form select,
+.admin-search {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--input-border);
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+/* Boutons d'action principaux (jaune « ON AIR »). */
+.auth-form button,
+.inline-form button {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-pill);
+  border: none;
+  background-color: var(--primary-color);
+  color: var(--on-primary);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.auth-form button:hover,
+.inline-form button:hover {
+  background-color: var(--primary-light);
+  transform: translateY(-1px);
+}
+
+/* 4. Formulaires et authentification */
+.auth-card {
+  max-width: 420px;
+  margin: 3rem auto;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem;
+  box-shadow: 0 16px 40px var(--shadow-color);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.auth-form input,
+.auth-form textarea {
+  padding: 0.7rem 0.9rem;
+}
+
+.auth-form textarea {
+  resize: vertical;
+}
+
+.auth-form button {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+}
+
+.auth-error {
+  color: var(--danger-color);
+  font-size: 0.9rem;
+}
+
+.auth-back {
+  display: block;
+  text-align: center;
+  margin-top: 1rem;
+  color: var(--text-secondary);
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.admin-search {
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 1rem;
+}
+
+/* 5. Tableaux de bord (utilisateur et admin) */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.dashboard-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--text-secondary);
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.kpi-tile {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px var(--shadow-color);
+}
+
+.kpi-tile-label,
+.kpi-tile-sub {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.kpi-tile-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--primary-ink);
+}
+
+.top-categories {
+  margin-top: 1rem;
+}
+
+.top-categories ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.top-categories li {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.85rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  font-size: 0.9rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.data-table-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.data-table-actions button {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.podcast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.podcast-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.podcast-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px var(--shadow-color);
+}
+
+.podcast-card-image {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+
+.podcast-card-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.podcast-card-category {
+  font-size: 0.75rem;
+  color: var(--primary-ink);
+  text-transform: uppercase;
+}
+
+.podcast-card-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.podcast-card-audio {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.podcast-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.podcast-card-actions button {
+  flex: 1;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* 6. Bandeau de consentement aux cookies */
+.cookie-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--surface-color);
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-color);
+  box-shadow: 0 -2px 10px var(--shadow-color);
+}
+
+.cookie-banner__text {
+  margin: 0;
+  flex: 1 1 320px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.cookie-banner__text a {
+  color: var(--primary-ink);
+}
+
+.cookie-banner__actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.cookie-banner__btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cookie-banner__btn--primary {
+  background: var(--primary-color);
+  color: var(--on-primary);
+}
+
+.cookie-banner__btn--secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+/* Petits écrans */
+@media (max-width: 768px) {
+  .container {
+    min-width: 250px;
+    padding: 0 1rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cookie-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cookie-banner__actions {
+    justify-content: flex-end;
+  }
+}

@@ -1,3 +1,5 @@
+// Formes des réponses de l'API utilisées par l'application.
+
 export type Role = 'user' | 'admin';
 
 export interface User {
@@ -7,26 +9,6 @@ export interface User {
   status?: 'active' | 'disabled';
   must_change_password?: boolean;
   totp_enabled?: boolean;
-}
-
-/** Épisode publié, tel que renvoyé par /listing et /search. */
-export interface Episode {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string;
-  audio_url: string;
-  created_at: string;
-  category: string | null;
-  category_icon: string | null;
-}
-
-export interface Category {
-  id: number;
-  label: string;
-  icon: string | null;
-  cover_image: string | null;
-  podcast_count: number;
 }
 
 /** Podcast avec détail des coûts (espace utilisateur et admin). */
@@ -43,15 +25,6 @@ export interface PodcastWithCosts {
   cost_audio: string | number;
   cost_total: string | number;
   user_email?: string | null;
-}
-
-export type JobStep = 'queued' | 'transcription' | 'text' | 'media' | 'finalizing' | 'done';
-
-export interface JobStatus {
-  status: 'pending' | 'processing' | 'done' | 'error';
-  step: JobStep;
-  progress: number;
-  error: string | null;
 }
 
 export interface AdminKpis {

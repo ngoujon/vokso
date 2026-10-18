@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ConsentStatus, getConsentStatus, setConsentStatus } from '../consent/cookieConsent';
-import '../styles/CookieConsentBanner.css';
+import { ConsentStatus, getConsentStatus, setConsentStatus } from '../lib/consent';
 
+/** Bandeau de consentement aux cookies, affiché tant que le visiteur n'a pas choisi. */
 export default function CookieConsentBanner() {
   const [status, setStatus] = useState(() => getConsentStatus());
 

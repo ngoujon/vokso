@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
-import './styles/index.css';
+import './index.css';
 import App from './App';
 
 // Sans DSN, le SDK reste inactif : aucune configuration nécessaire en local.

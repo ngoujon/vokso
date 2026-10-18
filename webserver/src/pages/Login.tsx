@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ApiError, errorMessage } from '../api';
-import { useAuth } from '../AuthContext';
+import { ApiError, errorMessage } from '../lib/api';
+import { useAuth } from '../lib/AuthContext';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
-import useCanonical from '../hooks/useCanonical';
-import useDocumentMeta from '../hooks/useDocumentMeta';
-import '../styles/globals.css';
-import '../styles/Dashboard.css';
+import usePageMeta from '../lib/usePageMeta';
 
+/** Connexion e-mail / mot de passe, puis code TOTP si la double authentification est active. */
 export default function Login() {
-  useCanonical();
-  useDocumentMeta(
+  usePageMeta(
     'Connexion — Vokso',
     'Connexion à l\'espace d\'administration de Vokso.'
   );

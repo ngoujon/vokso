@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
-import useCanonical from '../hooks/useCanonical';
-import useDocumentMeta from '../hooks/useDocumentMeta';
-import { apiRequest, errorMessage } from '../api';
-import { trackConversion } from '../utils/audience';
-import '../styles/globals.css';
-import '../styles/Dashboard.css';
+import usePageMeta from '../lib/usePageMeta';
+import { apiRequest, errorMessage } from '../lib/api';
+import { trackConversion } from '../lib/audience';
 
+/** Formulaire de contact (protégé par captcha côté API). */
 export default function Contact() {
-  useCanonical();
-  useDocumentMeta(
+  usePageMeta(
     'Contact — Vokso',
     'Une question sur Vokso ? Écrivez-nous via ce formulaire, nous vous répondons rapidement.'
   );

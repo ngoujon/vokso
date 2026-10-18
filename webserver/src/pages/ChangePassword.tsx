@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { errorMessage } from '../api';
-import { useAuth } from '../AuthContext';
+import { errorMessage } from '../lib/api';
+import { useAuth } from '../lib/AuthContext';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
-import useCanonical from '../hooks/useCanonical';
-import useDocumentMeta from '../hooks/useDocumentMeta';
-import '../styles/globals.css';
-import '../styles/Dashboard.css';
+import usePageMeta from '../lib/usePageMeta';
 
+/** Changement de mot de passe, imposé à la première connexion d'un compte créé par un admin. */
 export default function ChangePassword() {
-  useCanonical();
-  useDocumentMeta('Changer le mot de passe — Vokso', 'Changez votre mot de passe Vokso.');
+  usePageMeta('Changer le mot de passe — Vokso', 'Changez votre mot de passe Vokso.');
   const { user, changePassword } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');

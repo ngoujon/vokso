@@ -9,8 +9,7 @@ import ChangePassword from './pages/ChangePassword';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import CookieConsentBanner from './components/CookieConsentBanner';
-import { AuthProvider } from './AuthContext';
-import './styles/App.css';
+import { AuthProvider } from './lib/AuthContext';
 
 /**
  * L'accueil (création d'un épisode, sélection, discothèque) vit désormais

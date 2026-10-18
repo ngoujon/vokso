@@ -1,20 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { apiRequest, downloadText, errorMessage, triggerDownload } from '../api';
-import { useAuth } from '../AuthContext';
-import { staticFileUrl } from '../config';
-import GdprPanel from '../components/account/GdprPanel';
+import { apiRequest, errorMessage, staticFileUrl } from '../lib/api';
+import DashboardHeader from '../components/DashboardHeader';
+import EpisodeDownloads from '../components/EpisodeDownloads';
+import GdprPanel from '../components/GdprPanel';
 import Footer from '../components/Footer';
-import useCanonical from '../hooks/useCanonical';
-import useDocumentMeta from '../hooks/useDocumentMeta';
-import type { PodcastWithCosts } from '../types';
-import { cleanTitle } from '../utils/text';
-import '../styles/globals.css';
-import '../styles/Dashboard.css';
+import usePageMeta from '../lib/usePageMeta';
+import type { PodcastWithCosts } from '../lib/types';
+import { cleanTitle } from '../lib/text';
 
+/** Espace utilisateur : données personnelles (RGPD) et épisodes créés avec ce compte. */
 export default function UserDashboard() {
-  useCanonical();
-  useDocumentMeta('Mon espace — Vokso', 'Retrouvez et gérez vos épisodes de podcast générés sur Vokso.');
-  const { user, logout } = useAuth();
+  usePageMeta('Mon espace — Vokso', 'Retrouvez et gérez vos épisodes de podcast générés sur Vokso.');
   const [podcasts, setPodcasts] = useState<PodcastWithCosts[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,14 +25,7 @@ export default function UserDashboard() {
   return (
     <>
     <div className="container">
-      <div className="dashboard-header">
-        <h1>Mon espace</h1>
-        <div className="dashboard-header-actions">
-          <span>{user?.email}</span>
-          <a href="/">Accueil</a>
-          <button onClick={logout}>Déconnexion</button>
-        </div>
-      </div>
+      <DashboardHeader title="Mon espace" />
 
       <section>
         <h2>Confidentialité et données personnelles</h2>
@@ -66,13 +55,7 @@ export default function UserDashboard() {
               <p className="podcast-card-date">{new Date(p.created_at).toLocaleString('fr-FR')}</p>
               <audio controls src={staticFileUrl('audios', p.audio_url)} className="podcast-card-audio" />
               <div className="podcast-card-actions">
-                <button onClick={() => triggerDownload(staticFileUrl('images', p.image_url), p.image_url, true)}>
-                  Télécharger l'image
-                </button>
-                <button onClick={() => triggerDownload(staticFileUrl('audios', p.audio_url), p.audio_url, true)}>
-                  Télécharger l'audio
-                </button>
-                <button onClick={() => downloadText(cleanTitle(p.title), p.description)}>Télécharger le texte</button>
+                <EpisodeDownloads episode={p} />
               </div>
             </div>
           </div>

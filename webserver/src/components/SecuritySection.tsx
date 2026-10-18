@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { errorMessage } from '../api';
-import { useAuth } from '../AuthContext';
+import { errorMessage } from '../lib/api';
+import { useAuth } from '../lib/AuthContext';
 
+/** Double authentification (TOTP) du compte : activation par QR code / secret, désactivation. */
 export default function SecuritySection() {
   const { user, setup2fa, enable2fa, disable2fa } = useAuth();
   const [setupData, setSetupData] = useState<{ secret: string } | null>(null);

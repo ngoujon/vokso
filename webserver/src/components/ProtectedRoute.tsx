@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../lib/AuthContext';
 
 interface Props {
   children: React.ReactElement;
@@ -8,6 +8,10 @@ interface Props {
   skipPasswordCheck?: boolean;
 }
 
+/**
+ * Garde des pages connectées : renvoie vers /login sans session, vers le
+ * changement de mot de passe s'il est imposé, et refuse /admin aux non-admins.
+ */
 export default function ProtectedRoute({ children, requireAdmin = false, skipPasswordCheck = false }: Props) {
   const { user, loading } = useAuth();
 
