@@ -133,6 +133,42 @@ class PodcastPageController extends Controller
         return $response;
     }
 
+    /** Transcription de l'épisode en PDF (bouton « Télécharger le texte » de la page). */
+    public function pdf(string $slug): Response
+    {
+        try {
+            $episode = $this->find('g.slug', $slug);
+        } catch (Throwable $e) {
+            report($e);
+            $episode = null;
+        }
+        if (! $episode) {
+            return $this->notFound();
+        }
+
+        $base = config('vokso.public_url');
+        $title = EpisodeText::cleanTitle((string) $episode->title) ?: 'Épisode Vokso';
+        $publishedAt = $episode->created_at ? strtotime((string) $episode->created_at) : null;
+        $html = view('podcast.pdf', [
+            'title' => $title,
+            'category' => trim((string) $episode->category),
+            'publishedHuman' => $publishedAt ? date('d/m/Y', $publishedAt) : '',
+            'canonical' => EpisodeText::episodeUrl($base, $episode->slug),
+            'text' => (string) $episode->text_content,
+        ])->render();
+
+        $dompdf = new \Dompdf\Dompdf(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false]);
+        $dompdf->loadHtml($html, 'UTF-8');
+        $dompdf->setPaper('A4');
+        $dompdf->render();
+
+        return response($dompdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$episode->slug.'.pdf"',
+            'Cache-Control' => 'public, max-age=3600',
+        ]);
+    }
+
     private function find(string $column, string $value): ?object
     {
         return DB::table('generations as g')

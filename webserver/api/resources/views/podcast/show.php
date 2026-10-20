@@ -6,6 +6,8 @@ $shareUrl = rawurlencode($canonical);
 $shareText = rawurlencode($title.' — un podcast Vokso');
 // Nom des fichiers téléchargés : dernier segment de l'URL de l'épisode (slug).
 $fileBase = basename((string) parse_url($canonical, PHP_URL_PATH)) ?: 'episode-vokso';
+// Le PDF n'existe que pour les épisodes à URL lisible (slug), voir PodcastPageController::pdf().
+$pdfUrl = preg_match('#^[a-z0-9-]+$#', $fileBase) ? '/api/podcast/'.$fileBase.'/pdf' : null;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -105,7 +107,26 @@ $fileBase = basename((string) parse_url($canonical, PHP_URL_PATH)) ?: 'episode-v
   .share .share-copy { background: var(--vk-ink); border-color: var(--vk-ink); color: var(--vk-paper); }
   .share .share-copy.is-done { background: var(--vk-success); border-color: var(--vk-success); color: #fff; }
   .share .share-icon { width: 2.6rem; padding: 0; justify-content: center; }
-  .downloads { margin-top: 2rem; }
+  /* Téléchargement : bouton jaune qui déplie la liste des fichiers. */
+  .downloads { display: flex; justify-content: center; margin: 1.6rem 0 0; }
+  .dl-menu { position: relative; }
+  .dl-menu summary { list-style: none; display: inline-flex; align-items: center; gap: 0.55rem; cursor: pointer; user-select: none; }
+  .dl-menu summary::-webkit-details-marker { display: none; }
+  .dl-menu summary svg { width: 1.15rem; height: 1.15rem; flex: none; }
+  .dl-menu .dl-caret { width: 1rem; height: 1rem; transition: transform 0.2s var(--vk-ease); }
+  .dl-menu[open] .dl-caret { transform: rotate(180deg); }
+  .dl-menu ul {
+    position: absolute; z-index: 20; top: calc(100% + 0.5rem); left: 50%; transform: translateX(-50%);
+    min-width: 17rem; margin: 0; padding: 0.4rem; list-style: none;
+    border: 1.5px solid var(--vk-ink); border-radius: var(--vk-radius); background: var(--vk-card); box-shadow: 6px 6px 0 var(--vk-signal);
+  }
+  .dl-menu li a {
+    display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.85rem; border-radius: var(--vk-radius-sm);
+    color: var(--vk-ink); text-decoration: none; font-weight: 600;
+  }
+  .dl-menu li a:hover, .dl-menu li a:focus-visible { background: color-mix(in srgb, var(--vk-signal) 30%, transparent); }
+  .dl-menu li svg { width: 1.2rem; height: 1.2rem; flex: none; }
+  .dl-menu li small { margin-left: 0.3rem; font: 600 0.7rem/1 var(--vk-mono); color: var(--vk-ink-2); letter-spacing: 0.06em; }
 
   /* Transcription : justifiée, avec césure douce pour éviter les grands blancs. */
   .transcript { margin-top: 3.2rem; padding-top: 2.2rem; border-top: 2px solid var(--vk-ink); }
@@ -185,19 +206,31 @@ $fileBase = basename((string) parse_url($canonical, PHP_URL_PATH)) ?: 'episode-v
     </div>
     <?php endif; ?>
 
-    <div class="share downloads" aria-label="Télécharger l'épisode">
-      <span class="vk-label share-label">Télécharger</span>
-      <?php if ($audioUrl): ?>
-      <a href="<?= $e(parse_url($audioUrl, PHP_URL_PATH)) ?>" download="<?= $e($fileBase) ?>.mp3">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-        L'audio (MP3)
-      </a>
-      <?php endif; ?>
-      <button type="button" id="download-text" data-file="<?= $e($fileBase) ?>.txt" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
-        Le texte (TXT)
-      </button>
+    <?php if ($audioUrl || $pdfUrl): ?>
+    <div class="downloads">
+      <details class="dl-menu" id="dl-menu">
+        <summary class="vk-btn vk-btn-signal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          Télécharger
+          <svg class="dl-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <ul>
+          <?php if ($audioUrl): ?>
+          <li><a href="<?= $e(parse_url($audioUrl, PHP_URL_PATH)) ?>" download="<?= $e($fileBase) ?>.mp3">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            <span>Télécharger l'audio <small>MP3</small></span>
+          </a></li>
+          <?php endif; ?>
+          <?php if ($pdfUrl): ?>
+          <li><a href="<?= $e($pdfUrl) ?>" download="<?= $e($fileBase) ?>.pdf">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
+            <span>Télécharger le texte <small>PDF</small></span>
+          </a></li>
+          <?php endif; ?>
+        </ul>
+      </details>
     </div>
+    <?php endif; ?>
 
     <div class="share" aria-label="Partager l'épisode">
       <span class="vk-label share-label">Partager l'épisode</span>
@@ -351,21 +384,13 @@ $fileBase = basename((string) parse_url($canonical, PHP_URL_PATH)) ?: 'episode-v
     update();
   }
 
-  // ---- Téléchargement du texte : titre + transcription, en fichier texte ----
-  var dl = $('download-text');
-  dl.hidden = false;
-  dl.addEventListener('click', function () {
-    var parts = [document.querySelector('.episode h1').textContent.trim(), ''];
-    document.querySelectorAll('.transcript p').forEach(function (p) { parts.push(p.textContent.trim(), ''); });
-    parts.push('Un podcast Vokso — ' + copy.getAttribute('data-url'));
-    var link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob(['﻿' + parts.join('\n')], { type: 'text/plain;charset=utf-8' }));
-    link.download = dl.getAttribute('data-file');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
-  });
+  // ---- Menu de téléchargement : se referme au choix d'un fichier ou au clic ailleurs.
+  var dlMenu = $('dl-menu');
+  if (dlMenu) {
+    dlMenu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { dlMenu.open = false; }); });
+    document.addEventListener('click', function (e) { if (dlMenu.open && !dlMenu.contains(e.target)) dlMenu.open = false; });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && dlMenu.open) { dlMenu.open = false; dlMenu.querySelector('summary').focus(); } });
+  }
 
   // ---- Partage ---------------------------------------------------------------
   var copy = $('share-copy');

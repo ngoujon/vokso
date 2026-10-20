@@ -89,6 +89,21 @@ class PublicPagesTest extends TestCase
         $this->get('/podcast/slug-inconnu')->assertNotFound();
     }
 
+    public function test_episode_transcript_downloads_as_pdf(): void
+    {
+        $this->publish('gen_abc', 'Les volcans', 'Science', 'on', 'les-volcans');
+
+        $this->get('/podcast/les-volcans')->assertSee('href="/api/podcast/les-volcans/pdf"', false);
+
+        $response = $this->get('/podcast/les-volcans/pdf')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('Content-Disposition', 'attachment; filename="les-volcans.pdf"');
+        $this->assertStringStartsWith('%PDF-', (string) $response->getContent());
+
+        $this->get('/podcast/slug-inconnu/pdf')->assertNotFound();
+    }
+
     public function test_legacy_episode_urls_redirect_permanently_to_the_slug(): void
     {
         $this->publish('gen_abc', 'Les volcans', null, 'on', 'les-volcans');

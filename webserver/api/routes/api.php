@@ -48,6 +48,7 @@ Route::middleware('n8n')->group(function () {
 });
 
 // Pages rendues côté serveur (SEO), réécrites par site/.htaccess.
+Route::get('podcast/{slug}/pdf', [PodcastPageController::class, 'pdf'])->where('slug', '[a-z0-9-]+');
 Route::get('podcast/{path}', [PodcastPageController::class, 'show'])->where('path', '.*');
 Route::get('discotheque/{slug}', [CategoryPageController::class, 'show'])->where('slug', '[a-z0-9-]+');
 Route::get('llms-full', [LlmsController::class, 'full']);
