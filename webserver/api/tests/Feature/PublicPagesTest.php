@@ -44,7 +44,8 @@ class PublicPagesTest extends TestCase
         $this->getJson('/listing?category=Science')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', 'gen_1');
 
         $this->getJson('/search?query=volcan')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('success', true);
-        $this->getJson('/search?query=vo')->assertOk()->assertJsonPath('success', false);
+        $this->getJson('/search?query=vo')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('success', true);
+        $this->getJson('/search?query=')->assertOk()->assertJsonPath('success', false);
         $this->getJson('/search?query=100%')->assertOk()->assertJsonCount(0, 'data');
 
         $this->getJson('/categories')->assertOk()->assertJsonCount(2, 'data');

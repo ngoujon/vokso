@@ -106,12 +106,25 @@
   .studio-input input:disabled { color: var(--vk-ink-2); background: color-mix(in srgb, var(--vk-signal) 8%, var(--vk-paper)); }
   .rec-bar { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.7rem; color: var(--vk-ink-2); font-size: 0.92rem; }
   .rec-bar strong { color: var(--vk-ink); font-family: var(--vk-mono); }
-  .rec-bar audio { flex: 1 1 220px; height: 2.4rem; }
-  .rec-clear {
-    padding: 0.35rem 0.8rem; border: 1px solid var(--vk-line); border-radius: 999px; background: none;
-    color: var(--vk-ink-2); font: 500 0.82rem/1.2 var(--vk-font); cursor: pointer;
+  .rec-player {
+    display: flex; align-items: center; gap: 0.75rem; flex: 1 1 280px; min-width: 0;
+    padding: 0.35rem 0.4rem 0.35rem 0.35rem; border: 1px solid var(--vk-line); border-radius: 999px; background: var(--vk-paper);
   }
-  .rec-clear:hover { border-color: var(--vk-ink); color: var(--vk-ink); }
+  .rec-player[hidden] { display: none; }
+  .rec-play, .rec-clear {
+    display: grid; place-items: center; flex: none; width: 2.4rem; height: 2.4rem; padding: 0;
+    border-radius: 50%; cursor: pointer; transition: background 0.2s var(--vk-ease), color 0.2s var(--vk-ease), border-color 0.2s var(--vk-ease);
+  }
+  .rec-play { border: 0; background: var(--vk-ink); color: var(--vk-paper); }
+  .rec-play:hover { background: var(--vk-signal); color: var(--vk-ink); }
+  .rec-play svg { width: 1.1rem; height: 1.1rem; }
+  .rec-play .ico-pause, .rec-play.is-playing .ico-play { display: none; }
+  .rec-play.is-playing .ico-pause { display: block; }
+  .rec-seek { flex: 1 1 auto; min-width: 0; margin: 0; accent-color: var(--vk-ink); cursor: pointer; }
+  .rec-ptime { flex: none; font-family: var(--vk-mono); font-size: 0.8rem; color: var(--vk-ink-2); font-variant-numeric: tabular-nums; }
+  .rec-clear { border: 1px solid transparent; background: none; color: var(--vk-ink-2); }
+  .rec-clear:hover { border-color: var(--vk-danger); color: var(--vk-danger); background: color-mix(in srgb, var(--vk-danger) 8%, transparent); }
+  .rec-clear svg { width: 1.15rem; height: 1.15rem; }
   .studio-options { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px dashed var(--vk-line); }
   .studio-options summary {
     display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.4rem 0.85rem; list-style: none; cursor: pointer;
@@ -296,8 +309,18 @@
         </div>
         <div class="rec-bar" id="rec-bar" role="status" hidden>
           <span id="rec-status"></span>
-          <audio id="rec-preview" controls hidden></audio>
-          <button type="button" class="rec-clear" id="rec-clear" hidden>Supprimer le message</button>
+          <div class="rec-player" id="rec-player" hidden>
+            <button type="button" class="rec-play" id="rec-play" aria-label="Écouter le message">
+              <svg class="ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+              <svg class="ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>
+            </button>
+            <input type="range" class="rec-seek" id="rec-seek" min="0" max="1000" step="1" value="0" aria-label="Position dans le message">
+            <span class="rec-ptime" id="rec-ptime">0:00 / 0:00</span>
+            <button type="button" class="rec-clear" id="rec-clear" aria-label="Supprimer le message" title="Supprimer le message">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7"/></svg>
+            </button>
+            <audio id="rec-preview" preload="metadata"></audio>
+          </div>
         </div>
         <div class="studio-ideas" id="studio-ideas">
           <span class="vk-label">Idées :</span>
@@ -445,7 +468,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16v10H4z"/><path d="m4 7 8 6 8-6"/></svg>
           Le bulletin Vokso
         </span>
-        <h2 class="display" id="bulletin-title">Restez<br>à l'écoute.</h2>
+        <h2 class="display" id="bulletin-title">Restez à l'écoute.</h2>
         <p>Un e-mail quand Vokso s'enrichit : une nouvelle voix, un nouveau format d'épisode, une nouvelle fonctionnalité. Rien d'autre.</p>
         <ul class="bulletin-points">
           <li>Les nouveautés avant tout le monde</li>
@@ -706,15 +729,50 @@
     recorded = null;
     mode = 'text';
     $('rec-bar').hidden = true;
-    $('rec-preview').hidden = true;
-    $('rec-preview').removeAttribute('src');
-    $('rec-clear').hidden = true;
+    resetRecPlayer();
+    $('rec-player').hidden = true;
     $('studio-ideas').hidden = false;
     $('studio-subject').disabled = false;
     $('studio-subject').placeholder = SUBJECT_PLACEHOLDER;
     $('rec-btn').setAttribute('aria-label', 'Dicter le sujet au micro');
   }
   $('rec-clear').addEventListener('click', function () { clearRecording(); $('studio-subject').focus(); });
+
+  // Lecteur du message vocal. Les enregistrements webm de Chrome n'annoncent pas
+  // leur durée (Infinity) : on se rabat alors sur la durée mesurée à l'enregistrement.
+  var recDuration = 0;
+  var recAudio = $('rec-preview');
+  function recTotal() { return isFinite(recAudio.duration) && recAudio.duration > 0 ? recAudio.duration : recDuration; }
+  function syncRecPlayer() {
+    var total = recTotal();
+    var cur = Math.min(recAudio.currentTime, total || recAudio.currentTime);
+    $('rec-seek').value = total ? Math.round(cur / total * 1000) : 0;
+    $('rec-ptime').textContent = V.fmt(cur) + ' / ' + V.fmt(total);
+  }
+  function setRecPlaying(on) {
+    $('rec-play').classList.toggle('is-playing', on);
+    $('rec-play').setAttribute('aria-label', on ? 'Mettre en pause' : 'Écouter le message');
+  }
+  function resetRecPlayer() {
+    recAudio.pause();
+    recAudio.removeAttribute('src');
+    recAudio.load();
+    setRecPlaying(false);
+    $('rec-seek').value = 0;
+  }
+  $('rec-play').addEventListener('click', function () {
+    if (recAudio.paused) recAudio.play().catch(function () {}); else recAudio.pause();
+  });
+  $('rec-seek').addEventListener('input', function () {
+    var total = recTotal();
+    if (total) recAudio.currentTime = $('rec-seek').value / 1000 * total;
+    syncRecPlayer();
+  });
+  recAudio.addEventListener('play', function () { setRecPlaying(true); });
+  recAudio.addEventListener('pause', function () { setRecPlaying(false); });
+  recAudio.addEventListener('ended', function () { setRecPlaying(false); recAudio.currentTime = 0; syncRecPlayer(); });
+  recAudio.addEventListener('timeupdate', syncRecPlayer);
+  recAudio.addEventListener('loadedmetadata', syncRecPlayer);
 
   // Idées tirées au hasard à chaque visite (les quatre du HTML servent sans JS).
   var IDEAS = [
@@ -776,13 +834,14 @@
         var type = recorder.mimeType || 'audio/webm';
         recorded = new File([new Blob(chunks, { type: type })], 'message-' + Date.now() + '.' + extensionFor(type), { type: type });
         mode = 'audio';
-        $('rec-preview').src = URL.createObjectURL(recorded);
-        $('rec-preview').hidden = false;
-        $('rec-clear').hidden = false;
+        recDuration = (Date.now() - recStart) / 1000;
+        recAudio.src = URL.createObjectURL(recorded);
+        $('rec-player').hidden = false;
+        syncRecPlayer();
         $('rec-btn').classList.remove('is-recording');
         $('rec-btn').setAttribute('aria-label', 'Recommencer la dictée');
         $('studio-subject').placeholder = 'Message vocal enregistré';
-        $('rec-status').textContent = 'Message vocal prêt :';
+        $('rec-status').textContent = 'Message vocal prêt';
       };
       recorder.start();
       recStart = Date.now();
@@ -792,8 +851,8 @@
       $('studio-subject').placeholder = 'Je vous écoute…';
       $('studio-ideas').hidden = true;
       $('rec-bar').hidden = false;
-      $('rec-preview').hidden = true;
-      $('rec-clear').hidden = true;
+      resetRecPlayer();
+      $('rec-player').hidden = true;
       $('rec-btn').classList.add('is-recording');
       $('rec-btn').setAttribute('aria-label', 'Arrêter la dictée');
       $('rec-status').innerHTML = 'Dictez votre sujet… <strong id="rec-time">0:00</strong> / 2:00 — touchez le carré pour arrêter.';

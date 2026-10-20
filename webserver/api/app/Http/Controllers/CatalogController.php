@@ -42,10 +42,10 @@ class CatalogController extends Controller
         $search = $request->query('query');
         $search = is_string($search) ? trim($search) : '';
 
-        if (mb_strlen($search) < 3) {
+        if ($search === '') {
             return response()->json([
                 'success' => false,
-                'message' => 'Le texte de recherche doit contenir au moins 3 caractères.',
+                'message' => 'Le texte de recherche est vide.',
             ]);
         }
 
