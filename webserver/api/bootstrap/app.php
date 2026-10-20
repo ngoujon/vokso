@@ -10,6 +10,11 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Sentry\Laravel\Integration;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+
+// En prod, le durcissement du serveur interdit la mémoire exécutable : le JIT de
+// PCRE échoue et chaque preg_*() émet un avertissement, que Laravel transforme
+// en erreur 500. Sans JIT, les expressions régulières marchent normalement.
+ini_set('pcre.jit', '0');
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
