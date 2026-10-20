@@ -49,6 +49,7 @@
     <div class="site-footer-bottom">
       <p>© <span data-year>2026</span> Vokso — podcasts générés par IA, hébergés en Europe.</p>
       <p>Texte, image et voix : Mistral AI · Émis depuis l'Union européenne</p>
+      <p>Site internet réalisé par <a href="https://qwebty.com" target="_blank" rel="noopener">Qwebty</a></p>
     </div>
   </div>
 </footer>

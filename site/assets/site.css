@@ -154,6 +154,8 @@
 }
 .site-footer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.6rem 2rem; margin-top: 2rem; font-size: 0.85rem; color: color-mix(in srgb, var(--vk-on-console) 60%, transparent); }
 .site-footer-bottom p { margin: 0; }
+.site-footer-bottom a { color: inherit; text-decoration: underline; text-underline-offset: 0.2em; }
+.site-footer-bottom a:hover { color: var(--vk-signal); }
 @media (max-width: 900px) { .site-footer-top { grid-template-columns: repeat(3, minmax(0, 1fr)); } .site-footer-about { grid-column: 1 / -1; } }
 @media (max-width: 560px) { .site-footer-top { grid-template-columns: 1fr 1fr; } }
 
