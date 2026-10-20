@@ -4,6 +4,8 @@ $e = fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 $paragraphs = array_values(array_filter(array_map('trim', preg_split('/\R+/u', $text) ?: []), fn ($p) => $p !== ''));
 $shareUrl = rawurlencode($canonical);
 $shareText = rawurlencode($title.' — un podcast Vokso');
+// Nom des fichiers téléchargés : dernier segment de l'URL de l'épisode (slug).
+$fileBase = basename((string) parse_url($canonical, PHP_URL_PATH)) ?: 'episode-vokso';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -103,6 +105,7 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
   .share .share-copy { background: var(--vk-ink); border-color: var(--vk-ink); color: var(--vk-paper); }
   .share .share-copy.is-done { background: var(--vk-success); border-color: var(--vk-success); color: #fff; }
   .share .share-icon { width: 2.6rem; padding: 0; justify-content: center; }
+  .downloads { margin-top: 2rem; }
 
   /* Transcription : justifiée, avec césure douce pour éviter les grands blancs. */
   .transcript { margin-top: 3.2rem; padding-top: 2.2rem; border-top: 2px solid var(--vk-ink); }
@@ -181,6 +184,20 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
       </div>
     </div>
     <?php endif; ?>
+
+    <div class="share downloads" aria-label="Télécharger l'épisode">
+      <span class="vk-label share-label">Télécharger</span>
+      <?php if ($audioUrl): ?>
+      <a href="<?= $e(parse_url($audioUrl, PHP_URL_PATH)) ?>" download="<?= $e($fileBase) ?>.mp3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        L'audio (MP3)
+      </a>
+      <?php endif; ?>
+      <button type="button" id="download-text" data-file="<?= $e($fileBase) ?>.txt" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
+        Le texte (TXT)
+      </button>
+    </div>
 
     <div class="share" aria-label="Partager l'épisode">
       <span class="vk-label share-label">Partager l'épisode</span>
@@ -333,6 +350,22 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
     showRate();
     update();
   }
+
+  // ---- Téléchargement du texte : titre + transcription, en fichier texte ----
+  var dl = $('download-text');
+  dl.hidden = false;
+  dl.addEventListener('click', function () {
+    var parts = [document.querySelector('.episode h1').textContent.trim(), ''];
+    document.querySelectorAll('.transcript p').forEach(function (p) { parts.push(p.textContent.trim(), ''); });
+    parts.push('Un podcast Vokso — ' + copy.getAttribute('data-url'));
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob(['﻿' + parts.join('\n')], { type: 'text/plain;charset=utf-8' }));
+    link.download = dl.getAttribute('data-file');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
+  });
 
   // ---- Partage ---------------------------------------------------------------
   var copy = $('share-copy');
