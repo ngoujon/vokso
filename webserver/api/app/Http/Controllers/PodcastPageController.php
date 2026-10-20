@@ -157,7 +157,17 @@ class PodcastPageController extends Controller
             'text' => (string) $episode->text_content,
         ])->render();
 
-        $dompdf = new \Dompdf\Dompdf(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false]);
+        // dompdf met en cache les métriques des polices : hors de vendor/, que www-data ne peut pas écrire en prod.
+        $cache = sys_get_temp_dir().'/vokso-dompdf';
+        if (! is_dir($cache)) {
+            @mkdir($cache, 0775, true);
+        }
+        $dompdf = new \Dompdf\Dompdf([
+            'defaultFont' => 'DejaVu Sans',
+            'isRemoteEnabled' => false,
+            'fontCache' => $cache,
+            'tempDir' => $cache,
+        ]);
         $dompdf->loadHtml($html, 'UTF-8');
         $dompdf->setPaper('A4');
         $dompdf->render();
