@@ -57,7 +57,7 @@ $shareText = rawurlencode($title.' — un podcast Vokso');
   .related-cat { font-size: 0.8rem; color: var(--vk-ink-2); }
   .episode-cat { display: inline-block; text-decoration: none; padding: 0.3rem 0.7rem; border-radius: var(--vk-radius-sm); background: var(--vk-signal); color: var(--vk-on-signal); }
   .episode-cat:hover { background: var(--vk-signal-hover); }
-  .episode h1 { margin: 1.1rem auto 0; max-width: 22ch; font-size: clamp(2.1rem, 5.5vw, 3.6rem); line-height: 0.98; text-wrap: balance; }
+  .episode h1 { margin: 1.1rem 0 0; font-size: clamp(1.9rem, 4.5vw, 3rem); line-height: 1; text-wrap: balance; }
   .episode-meta { margin: 1rem 0 0; color: var(--vk-ink-2); font-size: 0.95rem; }
   .episode-cover { width: min(440px, 100%); margin: 2.2rem auto 0; aspect-ratio: 1; border-radius: var(--vk-radius); overflow: hidden; box-shadow: 0 30px 60px -30px rgba(23, 20, 15, 0.6); background: var(--vk-paper-2); }
   .episode-cover img { width: 100%; height: 100%; object-fit: cover; }
