@@ -137,6 +137,7 @@
 .site-footer-pitch { margin: 1.1rem 0 1.3rem; max-width: 34ch; color: color-mix(in srgb, var(--vk-on-console) 72%, transparent); }
 .site-footer-badges { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .site-footer-badges span {
+  white-space: nowrap;
   padding: 0.3rem 0.6rem; border: 1px solid color-mix(in srgb, var(--vk-on-console) 25%, transparent); border-radius: var(--vk-radius-sm);
   font-family: var(--vk-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
   color: color-mix(in srgb, var(--vk-on-console) 80%, transparent);
