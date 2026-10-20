@@ -157,8 +157,9 @@ class PodcastPageController extends Controller
             'text' => (string) $episode->text_content,
         ])->render();
 
-        // dompdf met en cache les métriques des polices : hors de vendor/, que www-data ne peut pas écrire en prod.
-        $cache = sys_get_temp_dir().'/vokso-dompdf';
+        // dompdf met en cache les métriques des polices : dans storage/ (inscriptible
+        // par www-data), pas dans vendor/ ni /tmp, refusés en prod.
+        $cache = storage_path('framework/cache/dompdf');
         if (! is_dir($cache)) {
             @mkdir($cache, 0775, true);
         }
