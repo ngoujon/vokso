@@ -8,6 +8,12 @@ on:
     types: [completed]
     branches: [production]
 
+# Un seul déploiement à la fois : deux deploy.sh en parallèle se marchent
+# dessus (npm ci échoue en ENOTEMPTY sur node_modules).
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: Déploie sur le serveur de production
