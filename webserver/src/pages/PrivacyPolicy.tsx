@@ -4,9 +4,10 @@ import Footer from '../components/Footer';
 import usePageMeta from '../lib/usePageMeta';
 import { optOutOfAudience } from '../lib/audience';
 
-// TODO (à compléter par l'éditeur du site) : identité du responsable du
-// traitement, introuvable dans le projet (aucune page de mentions légales).
-const DATA_CONTROLLER = 'TODO : nom ou raison sociale, adresse et e-mail de contact du responsable du traitement';
+// Responsable du traitement : l'éditeur du site, joignable par le formulaire de contact.
+const DATA_CONTROLLER = (
+  <>Nicolas GOUJON, éditeur du site, joignable via le <a href="/app/contact">formulaire de contact</a></>
+);
 
 export default function PrivacyPolicy() {
   const [optedOut, setOptedOut] = useState<null | boolean>(null);
@@ -26,7 +27,7 @@ export default function PrivacyPolicy() {
         utilisez le site, pourquoi, et avec qui elles sont partagées.
       </p>
       <p>
-        <strong>Responsable du traitement</strong> : <mark>{DATA_CONTROLLER}</mark>.
+        <strong>Responsable du traitement</strong> : {DATA_CONTROLLER}.
       </p>
 
       <h2>1. Données collectées</h2>
@@ -126,7 +127,7 @@ export default function PrivacyPolicy() {
         sont conservées 25 mois au maximum.
       </p>
       <ul>
-        <li><strong>Responsable du traitement</strong> : <mark>{DATA_CONTROLLER}</mark>.</li>
+        <li><strong>Responsable du traitement</strong> : {DATA_CONTROLLER}.</li>
         <li><strong>Finalité</strong> : mesure d'audience du site.</li>
         <li>
           <strong>Base légale</strong> : intérêt légitime de l'éditeur à mesurer la fréquentation de son site pour
