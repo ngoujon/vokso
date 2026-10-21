@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS `podcast_events` (
     PRIMARY KEY (`id`),
     KEY `podcast_events_type_created` (`type`, `created_at`),
     KEY `podcast_events_generation` (`generation_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `cookie_consents` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -35,4 +35,4 @@ CREATE TABLE IF NOT EXISTS `cookie_consents` (
     PRIMARY KEY (`id`),
     KEY `cookie_consents_created` (`created_at`),
     KEY `cookie_consents_consent_id` (`consent_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
