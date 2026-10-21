@@ -153,8 +153,8 @@ $pdfUrl = preg_match('#^[a-z0-9-]+$#', $fileBase) ? '/api/podcast/'.$fileBase.'/
   }
 </style>
 <script>document.documentElement.classList.add('js');</script>
-<!-- Mesure d'audience SEO Monitor (auto-hébergée, exemptée de consentement : voir la politique de confidentialité). -->
-<script defer src="https://vps-3962b7dc.vps.ovh.net/seo-monitor/p/s.js" data-site="6ByocZFJ" data-mode="cookie"></script>
+<!-- Bandeau cookies et mesure d'audience (identifiant persistant seulement après accord) : voir /assets/consent.js. -->
+<script defer src="/assets/consent.js?v=20261021"></script>
 </head>
 <body class="vk-page">
 
@@ -216,7 +216,7 @@ $pdfUrl = preg_match('#^[a-z0-9-]+$#', $fileBase) ? '/api/podcast/'.$fileBase.'/
         </summary>
         <ul>
           <?php if ($audioUrl): ?>
-          <li><a href="<?= $e(parse_url($audioUrl, PHP_URL_PATH)) ?>" download="<?= $e($fileBase) ?>.mp3">
+          <li><a href="<?= $e(parse_url($audioUrl, PHP_URL_PATH)) ?>" download="<?= $e($fileBase) ?>.mp3" data-track-download data-ep-id="<?= $e($episodeId) ?>">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
             <span>Télécharger l'audio <small>MP3</small></span>
           </a></li>
@@ -288,7 +288,7 @@ $pdfUrl = preg_match('#^[a-z0-9-]+$#', $fileBase) ? '/api/podcast/'.$fileBase.'/
 
 <?php include __DIR__.'/../partials/site-footer.php'; ?>
 
-<script src="/assets/site.js?v=20261012"></script>
+<script src="/assets/site.js?v=20261021"></script>
 <script>
 (function () {
   'use strict';

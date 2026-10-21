@@ -37,6 +37,47 @@ export interface AdminKpis {
   top_categories: { label: string; total: number }[];
 }
 
+export interface StatsDay {
+  date: string;
+  generations: number;
+  errors: number;
+  cost: number;
+  plays: number;
+  downloads_audio: number;
+  downloads_pdf: number;
+}
+
+export interface StatsTotals {
+  generations: number;
+  cost: number;
+  errors: number;
+  error_rate: number;
+  plays: number;
+  downloads: number;
+}
+
+export type AiBudgetUsage = Record<string, Record<'hourly' | 'daily', { used: number; max: number }>>;
+
+export interface AdminStats {
+  days: number;
+  events_ready: boolean;
+  series: StatsDay[];
+  current: StatsTotals;
+  previous: StatsTotals;
+  all_time: { plays: number; downloads: number };
+  top_episodes: { generation_id: string; title: string; slug: string | null; plays: number; downloads: number }[];
+  ai_budget: AiBudgetUsage;
+}
+
+export interface ConsentSummary {
+  ready: boolean;
+  days: number;
+  accepted: number;
+  refused: number;
+  total: number;
+  latest: { created_at: string; consent_id: string; choice: 'accepted' | 'refused'; banner_version: string; page: string | null }[];
+}
+
 export interface AdminUser {
   id: number;
   email: string;

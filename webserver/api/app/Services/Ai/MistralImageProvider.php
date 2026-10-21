@@ -20,7 +20,8 @@ class MistralImageProvider implements ImageGeneratorInterface
 
     public function __construct(array $config)
     {
-        $this->agent = new MistralAgent($config, (string) ($config['image_model'] ?? 'mistral-medium-latest'), [
+        // Chaque conversation (y compris la seconde tentative) compte comme une image (AiBudget).
+        $this->agent = new MistralAgent(['budget_kind' => 'image'] + $config,(string) ($config['image_model'] ?? 'mistral-medium-latest'), [
             'name' => 'vokso-image-generator',
             'description' => 'Génère la vignette d\'un podcast à partir d\'un extrait de son texte.',
             'instructions' => 'Tu es l\'illustrateur d\'un podcast. À chaque message, tu génères exactement une image '

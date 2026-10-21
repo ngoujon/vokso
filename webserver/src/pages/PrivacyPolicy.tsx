@@ -36,6 +36,8 @@ export default function PrivacyPolicy() {
         <li><strong>Newsletter</strong> : votre adresse e-mail, si vous choisissez de vous y inscrire.</li>
         <li><strong>Données techniques</strong> : adresse IP, conservée le temps nécessaire (de l'ordre de 24 heures) pour limiter le nombre de générations et de requêtes et prévenir les abus (le service est gratuit et sans inscription).</li>
         <li><strong>Mesure d'audience</strong> : statistiques de fréquentation anonymes, détaillées dans la section 7 ci-dessous.</li>
+        <li><strong>Écoutes et téléchargements</strong> : nombre d'écoutes et de téléchargements de chaque épisode, sans aucune donnée sur l'auditeur (ni IP, ni identifiant).</li>
+        <li><strong>Choix sur les cookies</strong> : votre choix dans le bandeau, sa date, un identifiant aléatoire, la version du bandeau, la page, votre navigateur et une empreinte irréversible de votre adresse IP (jamais l'adresse elle-même), conservés comme preuve de votre consentement.</li>
       </ul>
 
       <h2>2. Services utilisés pour traiter vos données</h2>
@@ -74,7 +76,8 @@ export default function PrivacyPolicy() {
       <p>
         Les épisodes générés restent publiés tant que le service existe ; vous pouvez demander le retrait
         d'un épisode à tout moment via le formulaire de contact. Les adresses IP utilisées pour la limitation
-        des requêtes sont effacées dès qu'elles ne servent plus à ce calcul (de l'ordre de 24 heures).
+        des requêtes sont effacées dès qu'elles ne servent plus à ce calcul (de l'ordre de 24 heures). La preuve
+        de vos choix sur les cookies est conservée 5 ans, durée pendant laquelle elle peut être exigée.
       </p>
 
       <h2>5. Vos droits</h2>
@@ -85,16 +88,29 @@ export default function PrivacyPolicy() {
 
       <h2>6. Cookies et traceurs</h2>
       <p>
-        Le site utilise les cookies ou jetons techniques strictement nécessaires à votre connexion
-        (maintien de la session), ainsi qu'un traceur de mesure d'audience exempté de consentement :
+        Le site utilise des éléments strictement nécessaires, déposés sans consentement, et un seul traceur
+        soumis à votre accord :
       </p>
       <ul>
         <li>
-          <strong>sm_vid</strong> (stockage local du navigateur) : identifiant aléatoire de mesure d'audience,
-          conservé 13 mois au maximum, exempté de consentement (voir la section 7).
+          <strong>vokso_consent</strong> (stockage local, nécessaire) : mémorise votre choix dans le bandeau
+          cookies pendant 6 mois, puis le bandeau vous est de nouveau présenté.
+        </li>
+        <li>
+          <strong>auth_token</strong> (stockage local, nécessaire) : maintien de la session de l'administrateur,
+          uniquement sur l'espace d'administration.
+        </li>
+        <li>
+          <strong>sm_vid</strong> (stockage local, <em>soumis à votre accord</em>) : identifiant aléatoire de mesure
+          d'audience permettant de reconnaître les visites répétées, conservé 13 mois au maximum. Il n'est déposé
+          que si vous cliquez sur « Tout accepter », et il est effacé si vous retirez votre accord.
         </li>
       </ul>
-      <p>Aucun cookie publicitaire ni traceur d'un service tiers n'est déposé.</p>
+      <p>
+        Aucun cookie publicitaire ni traceur d'un service tiers n'est déposé. Refuser est aussi simple qu'accepter,
+        et vous pouvez modifier votre choix à tout moment :{' '}
+        <a href="#cookies" data-consent-open>gérer les cookies</a>.
+      </p>
 
       <h2 id="mesure-audience">7. Mesure d'audience</h2>
       <p>
@@ -103,7 +119,8 @@ export default function PrivacyPolicy() {
         d'appareil). Ces données servent uniquement au bon fonctionnement et à l'amélioration du site.
       </p>
       <p>
-        Un identifiant aléatoire est conservé dans votre navigateur pendant 13 mois au maximum. Votre adresse IP
+        Sans votre accord, la mesure fonctionne sans rien stocker dans votre navigateur. Avec votre accord, un
+        identifiant aléatoire y est conservé pendant 13 mois au maximum. Votre adresse IP
         n'est jamais enregistrée : elle sert uniquement, de manière éphémère, à déduire un pays et une ville
         approximatifs. Les données ne sont ni recoupées avec d'autres traitements, ni transmises à des tiers, et
         sont conservées 25 mois au maximum.
@@ -112,9 +129,9 @@ export default function PrivacyPolicy() {
         <li><strong>Responsable du traitement</strong> : <mark>{DATA_CONTROLLER}</mark>.</li>
         <li><strong>Finalité</strong> : mesure d'audience du site.</li>
         <li>
-          <strong>Base légale</strong> : intérêt légitime de l'éditeur à mesurer la fréquentation de son site ;
-          traitement exempté de consentement au titre de l'article 82 de la loi Informatique et Libertés et des
-          lignes directrices de la CNIL relatives aux cookies et autres traceurs.
+          <strong>Base légale</strong> : intérêt légitime de l'éditeur à mesurer la fréquentation de son site pour
+          la mesure sans identifiant ; votre consentement (article 82 de la loi Informatique et Libertés) pour
+          l'identifiant sm_vid stocké dans votre navigateur.
         </li>
         <li>
           <strong>Données collectées</strong> : pages vues, provenance des visites, durée de consultation,
@@ -136,8 +153,7 @@ export default function PrivacyPolicy() {
         </li>
       </ul>
       <p>
-        Conformément aux lignes directrices de la CNIL, ce traitement est exempté de consentement. Vous pouvez
-        néanmoins vous y opposer à tout moment :{' '}
+        Vous pouvez aussi vous opposer à toute mesure de vos visites, avec ou sans identifiant :{' '}
         {optedOut === null ? (
           <a
             href="#mesure-audience"

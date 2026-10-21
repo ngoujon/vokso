@@ -30,6 +30,35 @@ return [
         'global_daily' => max(0, (int) env('GENERATION_GLOBAL_DAILY_LIMIT', 150)),
     ],
 
+    /*
+     * Garde-fou de dépense IA (App\Support\AiBudget) : nombre maximum d'appels
+     * payants par type, sur 1 h et 24 h glissantes, tous appelants confondus
+     * (site, n8n, commandes, scripts). 0 = pas de plafond. Une image coûte
+     * environ 0,10 $ : 40 images / 24 h plafonnent ce poste à ~4 $ par jour.
+     */
+    'ai_budget' => [
+        'image' => [
+            'hourly' => (int) env('AI_BUDGET_IMAGE_HOURLY', 12),
+            'daily' => (int) env('AI_BUDGET_IMAGE_DAILY', 40),
+        ],
+        'text' => [
+            'hourly' => (int) env('AI_BUDGET_TEXT_HOURLY', 150),
+            'daily' => (int) env('AI_BUDGET_TEXT_DAILY', 600),
+        ],
+        'speech' => [
+            'hourly' => (int) env('AI_BUDGET_SPEECH_HOURLY', 150),
+            'daily' => (int) env('AI_BUDGET_SPEECH_DAILY', 600),
+        ],
+        'transcription' => [
+            'hourly' => (int) env('AI_BUDGET_TRANSCRIPTION_HOURLY', 20),
+            'daily' => (int) env('AI_BUDGET_TRANSCRIPTION_DAILY', 60),
+        ],
+        'moderation' => [
+            'hourly' => (int) env('AI_BUDGET_MODERATION_HOURLY', 300),
+            'daily' => (int) env('AI_BUDGET_MODERATION_DAILY', 1200),
+        ],
+    ],
+
     // Jeton anti-spam invisible du formulaire de contact (CaptchaService).
     'captcha_secret' => (string) env('CAPTCHA_SECRET', ''),
 

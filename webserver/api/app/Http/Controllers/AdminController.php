@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Support\PasswordPolicy;
+use App\Support\AiBudget;
+use App\Support\Stats;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -56,6 +57,95 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Séries quotidiennes et totaux sur une période (7 à 365 jours) :
+     * générations, échecs, coût, écoutes et téléchargements, comparés à la
+     * période précédente de même durée ; épisodes les plus écoutés ; état du
+     * garde-fou de dépense IA.
+     */
+    public function stats(Request $request): JsonResponse
+    {
+        $days = min(365, max(7, (int) $request->query('days', 30)));
+        $start = now()->subDays($days - 1)->startOfDay();
+        $previousStart = $start->copy()->subDays($days);
+
+        $daily = fn ($query, string $column = 'created_at') => $query
+            ->where($column, '>=', $start->format('Y-m-d H:i:s'))
+            ->groupBy(DB::raw("DATE($column)"))
+            ->pluck('total', 'day');
+
+        $generations = $daily(DB::table('generations')->where('statut', 'on')->selectRaw('DATE(created_at) AS day, COUNT(*) AS total'));
+        $costs = $daily(DB::table('generations')->where('statut', 'on')->selectRaw('DATE(created_at) AS day, SUM(cost_total) AS total'));
+        $errors = $daily(DB::table('generation_jobs')->where('status', 'error')->selectRaw('DATE(created_at) AS day, COUNT(*) AS total'));
+
+        $events = [];
+        $eventsReady = Stats::ready('podcast_events');
+        foreach (Stats::EVENT_TYPES as $type) {
+            $events[$type] = $eventsReady
+                ? $daily(DB::table('podcast_events')->where('type', $type)->selectRaw('DATE(created_at) AS day, COUNT(*) AS total'))
+                : collect();
+        }
+
+        $series = [];
+        for ($day = $start->copy(); $day->lte(now()); $day->addDay()) {
+            $key = $day->format('Y-m-d');
+            $series[] = [
+                'date' => $key,
+                'generations' => (int) ($generations[$key] ?? 0),
+                'errors' => (int) ($errors[$key] ?? 0),
+                'cost' => round((float) ($costs[$key] ?? 0), 4),
+                'plays' => (int) ($events['play'][$key] ?? 0),
+                'downloads_audio' => (int) ($events['download_audio'][$key] ?? 0),
+                'downloads_pdf' => (int) ($events['download_pdf'][$key] ?? 0),
+            ];
+        }
+
+        $totals = function ($from, $to) use ($eventsReady) {
+            $between = fn ($query) => $query->where('created_at', '>=', $from->format('Y-m-d H:i:s'))->where('created_at', '<', $to->format('Y-m-d H:i:s'));
+            $eventCount = fn (array $types) => $eventsReady ? $between(DB::table('podcast_events')->whereIn('type', $types))->count() : 0;
+            $published = $between(DB::table('generations')->where('statut', 'on'));
+            $jobs = $between(DB::table('generation_jobs'))->count();
+            $failed = $between(DB::table('generation_jobs')->where('status', 'error'))->count();
+
+            return [
+                'generations' => (clone $published)->count(),
+                'cost' => round((float) (clone $published)->sum('cost_total'), 4),
+                'errors' => $failed,
+                'error_rate' => $jobs > 0 ? round($failed / $jobs * 100, 1) : 0,
+                'plays' => $eventCount(['play']),
+                'downloads' => $eventCount(['download_audio', 'download_pdf']),
+            ];
+        };
+
+        $topEpisodes = $eventsReady
+            ? DB::table('podcast_events as e')
+                ->join('generations as g', 'g.generation_id', '=', 'e.generation_id')
+                ->where('e.created_at', '>=', $start->format('Y-m-d H:i:s'))
+                ->groupBy('e.generation_id', 'g.title', 'g.slug')
+                ->orderByDesc('plays')
+                ->limit(10)
+                ->get([
+                    'e.generation_id', 'g.title', 'g.slug',
+                    DB::raw("SUM(CASE WHEN e.type = 'play' THEN 1 ELSE 0 END) AS plays"),
+                    DB::raw("SUM(CASE WHEN e.type <> 'play' THEN 1 ELSE 0 END) AS downloads"),
+                ])
+            : [];
+
+        return response()->json([
+            'days' => $days,
+            'events_ready' => $eventsReady,
+            'series' => $series,
+            'current' => $totals($start, now()->addSecond()),
+            'previous' => $totals($previousStart, $start),
+            'all_time' => [
+                'plays' => $eventsReady ? DB::table('podcast_events')->where('type', 'play')->count() : 0,
+                'downloads' => $eventsReady ? DB::table('podcast_events')->where('type', '<>', 'play')->count() : 0,
+            ],
+            'top_episodes' => $topEpisodes,
+            'ai_budget' => AiBudget::usage(),
+        ]);
+    }
+
     public function users(): JsonResponse
     {
         $users = DB::table('users as u')
@@ -68,41 +158,7 @@ class AdminController extends Controller
         return response()->json(['data' => $users]);
     }
 
-    public function createUser(Request $request): JsonResponse
-    {
-        $email = $request->json('email');
-        $email = is_string($email) ? trim(strtolower($email)) : '';
-        $password = $request->json('password');
-        $password = is_string($password) ? $password : '';
-        $role = in_array($request->json('role', 'user'), ['user', 'admin'], true) ? $request->json('role', 'user') : 'user';
-
-        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return $this->error('Email invalide.', 400);
-        }
-
-        $policyError = PasswordPolicy::validate($password);
-        if ($policyError !== null) {
-            return $this->error($policyError, 400);
-        }
-
-        if (User::where('email', $email)->exists()) {
-            return $this->error('Un compte existe déjà avec cet email.', 409);
-        }
-
-        // Mot de passe choisi par l'admin et communiqué hors bande : son
-        // changement est imposé à la première connexion.
-        $user = User::create([
-            'email' => $email,
-            'password_hash' => password_hash($password, PASSWORD_BCRYPT),
-            'role' => $role,
-            'status' => 'active',
-            'must_change_password' => true,
-        ]);
-
-        return response()->json(['id' => $user->id, 'email' => $email, 'role' => $role], 201);
-    }
-
-    /** Mise à jour du rôle et/ou du statut d'un autre compte. */
+    /** Désactivation / réactivation d'un autre compte (un seul compte peut se connecter : voir vokso:sole-admin). */
     public function updateUser(Request $request): JsonResponse
     {
         $id = (int) $request->json('id', 0);
@@ -114,9 +170,6 @@ class AdminController extends Controller
         }
 
         $changes = [];
-        if (in_array($request->json('role'), ['user', 'admin'], true)) {
-            $changes['role'] = $request->json('role');
-        }
         if (in_array($request->json('status'), ['active', 'disabled'], true)) {
             $changes['status'] = $request->json('status');
         }

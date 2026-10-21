@@ -4,7 +4,9 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CategoryPageController;
+use App\Http\Controllers\ConsentController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\GdprController;
 use App\Http\Controllers\GenerationController;
 use App\Http\Controllers\HomeController;
@@ -37,6 +39,10 @@ Route::get('generation-status', [GenerationController::class, 'status']);
 Route::get('contact-challenge', [ContactController::class, 'challenge']);
 Route::post('contact', [ContactController::class, 'send']);
 Route::post('newsletter', [ContactController::class, 'subscribeNewsletter']);
+
+// Mesure anonyme des écoutes / téléchargements, et preuve des choix du bandeau cookies.
+Route::post('podcast-event', [EventController::class, 'store']);
+Route::post('consent', [ConsentController::class, 'store']);
 
 Route::post('auth-login', [AuthController::class, 'login']);
 Route::post('auth-logout', [AuthController::class, 'logout']);
@@ -75,10 +81,12 @@ Route::middleware('auth.token')->group(function () {
             Route::post('auth-2fa-disable', [AuthController::class, 'twoFactorDisable']);
 
             Route::get('admin-kpis', [AdminController::class, 'kpis']);
+            Route::get('admin-stats', [AdminController::class, 'stats']);
             Route::get('admin-users', [AdminController::class, 'users']);
-            Route::post('admin-users', [AdminController::class, 'createUser']);
             Route::patch('admin-users', [AdminController::class, 'updateUser']);
             Route::get('admin-podcasts', [AdminController::class, 'podcasts']);
+            Route::get('admin-consents', [ConsentController::class, 'summary']);
+            Route::get('admin-consents-export', [ConsentController::class, 'export']);
         });
     });
 });

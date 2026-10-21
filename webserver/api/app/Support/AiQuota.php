@@ -7,7 +7,7 @@ use Throwable;
 /**
  * Reconnaît un échec dû au crédit ou aux limites du compte Mistral (402
  * Payment Required, 429 Too Many Requests, solde épuisé) plutôt qu'à une
- * vraie panne : le visiteur n'y peut rien et le service reviendra seul, une
+ * vraie panne, ou à un plafond de dépense interne (AiBudget) : le visiteur n'y peut rien et le service reviendra seul, une
  * fois le crédit rechargé ou la limite levée.
  *
  * Les fournisseurs (ApiClient, agents Mistral) recopient le message Guzzle
@@ -21,6 +21,9 @@ final class AiQuota
     public static function isExhausted(Throwable $e): bool
     {
         for ($current = $e; $current !== null; $current = $current->getPrevious()) {
+            if ($current instanceof AiBudgetExceeded) {
+                return true;
+            }
             if (preg_match(self::PATTERN, $current->getMessage()) === 1) {
                 return true;
             }

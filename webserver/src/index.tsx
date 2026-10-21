@@ -13,11 +13,15 @@ if (process.env.REACT_APP_SENTRY_DSN) {
   });
 }
 
+// L'administration est servie à l'adresse /admin (réécrite vers le build par
+// site/.htaccess), hors du préfixe /app des autres pages.
+const basename = window.location.pathname.startsWith('/admin') ? '' : process.env.PUBLIC_URL;
+
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
   <React.StrictMode>
     <Sentry.ErrorBoundary fallback={<p>Une erreur est survenue.</p>}>
-      <BrowserRouter basename={process.env.PUBLIC_URL}>
+      <BrowserRouter basename={basename}>
         <App />
       </BrowserRouter>
     </Sentry.ErrorBoundary>

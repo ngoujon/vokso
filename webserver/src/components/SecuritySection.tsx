@@ -61,7 +61,7 @@ export default function SecuritySection() {
 
   return (
     <section>
-      <h2>Sécurité du compte</h2>
+      <h2>Double authentification (2FA)</h2>
       {error && <p className="auth-error">{error}</p>}
       {info && <p>{info}</p>}
 

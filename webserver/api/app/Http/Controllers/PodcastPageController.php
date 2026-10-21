@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\EpisodeFormat;
 use App\Support\EpisodeText;
+use App\Support\Stats;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -172,6 +173,8 @@ class PodcastPageController extends Controller
         $dompdf->loadHtml($html, 'UTF-8');
         $dompdf->setPaper('A4');
         $dompdf->render();
+
+        Stats::recordEvent((string) $episode->id, 'download_pdf');
 
         return response($dompdf->output(), 200, [
             'Content-Type' => 'application/pdf',

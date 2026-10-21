@@ -27,6 +27,10 @@ RewriteRule ^discotheque/([a-z0-9-]+)/?$ /api/discotheque/$1 [PT,L]
 # Index complet des épisodes pour les assistants IA (voir LlmsController).
 RewriteRule ^llms-full\.txt$ /api/llms-full [PT,L]
 
+# Administration à l'adresse /admin : sert l'application React (build sous
+# /app), qui détecte ce chemin et y affiche connexion puis tableau de bord.
+RewriteRule ^admin/?$ /app/index.html [PT,L]
+
 # Pages de la vitrine servies sans extension (fichiers .html de site/).
 RewriteRule ^discotheque/?$ /discotheque.html [L]
 RewriteRule ^comment-ca-marche/?$ /comment-ca-marche.html [L]

@@ -182,6 +182,33 @@
     document.body.classList.toggle('has-deck', !!current);
   }
 
+  // ---- Statistiques anonymes d'écoute / téléchargement (EventController) -----
+  // Une écoute = première lecture d'un épisode dans la page ; aucune donnée
+  // sur le visiteur n'est envoyée.
+  var counted = {};
+  function trackEvent(id, type) {
+    if (!id) return;
+    try {
+      fetch('/api/podcast-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ generation_id: id, type: type }),
+        keepalive: true,
+        credentials: 'omit'
+      })['catch'](function () {});
+    } catch (e) { /* mesure indisponible */ }
+  }
+  audio.addEventListener('play', function () {
+    if (current && !counted[current.id]) {
+      counted[current.id] = true;
+      trackEvent(current.id, 'play');
+    }
+  });
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[data-track-download]');
+    if (a) trackEvent(a.getAttribute('data-ep-id'), 'download_audio');
+  });
+
   // play() rejette sa promesse si une pause l'interrompt : rien à signaler.
   function play() { var p = audio.play(); if (p && p.catch) p.catch(function () {}); }
 
@@ -318,7 +345,8 @@
   // c'est pourquoi le code propre au Studio et à la discothèque reste dans
   // leur page HTML plutôt que dans un fichier séparé.
   function swapBody(doc) {
-    Array.prototype.slice.call(document.body.childNodes).forEach(function (n) { if (n !== deck) n.remove(); });
+    // Le lecteur et le bandeau cookies (consent.js) survivent à la navigation.
+    Array.prototype.slice.call(document.body.childNodes).forEach(function (n) { if (n !== deck && n.id !== 'vk-consent') n.remove(); });
     var scripts = [];
     Array.prototype.slice.call(doc.body.childNodes).forEach(function (n) {
       if (n.nodeName === 'SCRIPT') { if (!n.src) scripts.push(n.textContent); return; }

@@ -2,8 +2,11 @@
 
 namespace App\Services\Ai;
 
+use App\Support\AiBudget;
+use App\Support\AiBudgetExceeded;
 use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -42,10 +45,31 @@ class ApiClient
             $clientConfig['handler'] = $config['handler'];
         }
         $this->client = new Client($clientConfig);
+        // Un handler injecté (tests) ne coûte rien : pas de garde-fou à compter.
+        $this->metered = ! isset($config['handler']);
+        $this->budgetKind = isset($config['budget_kind']) ? (string) $config['budget_kind'] : null;
+    }
+
+    private bool $metered;
+    private ?string $budgetKind;
+
+    /** Garde-fou de dépense (AiBudget) : chaque POST est un appel payant. */
+    private function meter(string $path): void
+    {
+        if (! $this->metered) {
+            return;
+        }
+        AiBudget::consume(match (true) {
+            str_starts_with($path, '/audio/speech') => 'speech',
+            str_starts_with($path, '/audio/transcriptions') => 'transcription',
+            str_starts_with($path, '/moderations') => 'moderation',
+            default => $this->budgetKind ?? 'text',
+        });
     }
 
     public function postJson(string $path, array $payload): array
     {
+        $this->meter($path);
         try {
             $response = $this->client->post($this->baseUrl.$path, ['json' => $payload]);
         } catch (GuzzleException $e) {
@@ -58,6 +82,12 @@ class ApiClient
     /** La promesse se résout avec le tableau décodé. */
     public function postJsonAsync(string $path, array $payload): PromiseInterface
     {
+        try {
+            $this->meter($path);
+        } catch (AiBudgetExceeded $e) {
+            return Create::rejectionFor($e);
+        }
+
         return $this->client->postAsync($this->baseUrl.$path, ['json' => $payload])->then(
             fn (ResponseInterface $response) => $this->decode($response, $path),
             function ($reason) use ($path) {
@@ -79,6 +109,7 @@ class ApiClient
 
     public function postMultipart(string $path, array $multipart): array
     {
+        $this->meter($path);
         try {
             $response = $this->client->post($this->baseUrl.$path, ['multipart' => $multipart]);
         } catch (GuzzleException $e) {

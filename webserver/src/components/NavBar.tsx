@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 
 /**
@@ -50,9 +49,7 @@ export default function NavBar() {
           <a className="site-nav-link" href="/comment-ca-marche">Comment ça marche ?</a>
           {user && (
             <>
-              <Link className="site-nav-link" to={user.role === 'admin' ? '/admin' : '/dashboard'}>
-                {user.role === 'admin' ? 'Espace admin' : 'Mon espace'}
-              </Link>
+              <a className="site-nav-link" href="/admin">Espace admin</a>
               <button type="button" className="site-nav-link" onClick={logout}>Déconnexion</button>
             </>
           )}

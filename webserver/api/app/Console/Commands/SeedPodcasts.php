@@ -33,6 +33,8 @@ class SeedPodcasts extends Command
 
     protected $description = 'Génère une série d\'épisodes variés pour alimenter le catalogue';
 
+    private const MAX_FAILURES = 3;
+
     private const DEFAULT_TOPICS = [
         "L'histoire secrète du croissant, de Vienne à Paris",
         'Pourquoi les chats ronronnent-ils ?',
@@ -101,6 +103,11 @@ class SeedPodcasts extends Command
             } else {
                 $failures++;
                 $this->error("$label : échec ({$job->error_message}).");
+                // Coupe-circuit : crédit / plafond IA atteint, ou échecs en série.
+                if ($job->error_message === PodcastGenerator::MESSAGE_UNAVAILABLE || $failures >= self::MAX_FAILURES) {
+                    $this->error('Arrêt : plafond IA atteint ou trop d\'échecs, les sujets restants ne sont pas lancés.');
+                    break;
+                }
             }
         }
 

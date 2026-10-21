@@ -41,7 +41,8 @@
         <ul>
           <li><a href="/app/contact">Contact</a></li>
           <li><a href="/app/politique-de-confidentialite">Confidentialité</a></li>
-          <li><a href="/app/admin">Administration</a></li>
+          <li><a href="#" data-consent-open>Gérer les cookies</a></li>
+          <li><a href="/admin">Administration</a></li>
         </ul>
       </nav>
     </div>

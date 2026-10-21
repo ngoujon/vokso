@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { BrandMark } from './NavBar';
+import { reopenConsent } from '../lib/consent';
 
 /** Pied de page commun à tout le site (même balisage que la vitrine, voir /assets/site.css). */
 export default function Footer() {
@@ -38,9 +38,11 @@ export default function Footer() {
           <nav className="site-footer-col" aria-label="Vokso">
             <p className="site-footer-title">Vokso</p>
             <ul>
-              <li><Link to="/contact">Contact</Link></li>
-              <li><Link to="/politique-de-confidentialite">Confidentialité</Link></li>
-              <li><Link to="/admin">Administration</Link></li>
+              {/* Liens absolus : l'administration (/admin) vit hors du préfixe /app. */}
+              <li><a href="/app/contact">Contact</a></li>
+              <li><a href="/app/politique-de-confidentialite">Confidentialité</a></li>
+              <li><button type="button" className="site-footer-link" onClick={reopenConsent}>Gérer les cookies</button></li>
+              <li><a href="/admin">Administration</a></li>
             </ul>
           </nav>
         </div>

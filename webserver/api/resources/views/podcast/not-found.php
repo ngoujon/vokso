@@ -19,8 +19,8 @@
   .lost p { color: var(--vk-ink-2); margin: 1rem auto 2rem; max-width: 46ch; }
   .lost .cta { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
 </style>
-<!-- Mesure d'audience SEO Monitor (auto-hébergée, exemptée de consentement : voir la politique de confidentialité). -->
-<script defer src="https://vps-3962b7dc.vps.ovh.net/seo-monitor/p/s.js" data-site="6ByocZFJ" data-mode="cookie"></script>
+<!-- Bandeau cookies et mesure d'audience (identifiant persistant seulement après accord) : voir /assets/consent.js. -->
+<script defer src="/assets/consent.js?v=20261021"></script>
 </head>
 <body class="vk-page">
 
@@ -102,7 +102,8 @@
         <ul>
           <li><a href="/app/contact">Contact</a></li>
           <li><a href="/app/politique-de-confidentialite">Confidentialité</a></li>
-          <li><a href="/app/admin">Administration</a></li>
+          <li><a href="#" data-consent-open>Gérer les cookies</a></li>
+          <li><a href="/admin">Administration</a></li>
         </ul>
       </nav>
     </div>
@@ -115,6 +116,6 @@
   </div>
 </footer>
 
-<script src="/assets/site.js?v=20261012"></script>
+<script src="/assets/site.js?v=20261021"></script>
 </body>
 </html>

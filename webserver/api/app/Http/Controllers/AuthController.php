@@ -35,6 +35,11 @@ class AuthController extends Controller
             return $this->error('Ce compte est désactivé.', 403);
         }
 
+        // Seule l'administration est accessible par connexion (voir vokso:sole-admin).
+        if (! $user->isAdmin()) {
+            return $this->error('Accès réservé à l\'administrateur.', 403);
+        }
+
         // 2FA TOTP pour les admins qui l'ont activée.
         if ($user->isAdmin() && $user->totp_enabled) {
             $code = (string) $request->json('totp_code', '');
