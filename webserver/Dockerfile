@@ -1,6 +1,10 @@
 # Image de développement local (docker-compose.yml) : même pile que la
 # production (Apache + PHP 8.3 + extensions requises par l'API Laravel).
-FROM php:8.3-apache
+# Version épinglée : 8.3.36 corrige php2shell (CVE-2026-109618 / CVE-2026-109619).
+FROM php:8.3.36-apache
+
+# Mitigation php2shell : la progression d'upload en session est le vecteur connu.
+RUN echo "session.upload_progress.enabled=Off" > /usr/local/etc/php/conf.d/zz-php2shell.ini
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libzip-dev \
