@@ -31,16 +31,10 @@ final class MistralAgent
     }
 
     /** Démarre une conversation ; la promesse se résout avec la réponse décodée (clé « outputs »). */
-    /** @param  array  $completionArgs  arguments du chat completion pour cette conversation (ex. parallel_tool_calls) */
-    public function converseAsync(string $inputs, array $completionArgs = []): PromiseInterface
+    public function converseAsync(string $inputs): PromiseInterface
     {
         // id() reste synchrone : un aller-retour de plus, au tout premier appel seulement.
-        $payload = ['agent_id' => $this->id(), 'inputs' => $inputs];
-        if ($completionArgs !== []) {
-            $payload['completion_args'] = $completionArgs;
-        }
-
-        return $this->api->postJsonAsync('/conversations', $payload);
+        return $this->api->postJsonAsync('/conversations', ['agent_id' => $this->id(), 'inputs' => $inputs]);
     }
 
     /** Contenu brut d'un fichier produit par un outil de l'agent (API Files), après $delayMs éventuel. */

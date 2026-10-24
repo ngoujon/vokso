@@ -86,9 +86,9 @@ class MistralImageProvider implements ImageGeneratorInterface
 
     private function requestFileIdAsync(string $prompt, int $attempt = 1): PromiseInterface
     {
-        // Un seul appel d'outil à la fois (argument du chat completion,
-        // accepté par les conversations) en plus de la consigne écrite.
-        $converse = $this->agent->converseAsync($prompt."\n\n".self::SINGLE_CALL, ['parallel_tool_calls' => false])
+        // Consigne écrite seulement : une conversation avec un agent refuse
+        // completion_args (422 « can't contain the following fields »).
+        $converse = $this->agent->converseAsync($prompt."\n\n".self::SINGLE_CALL)
             ->otherwise(function ($reason) {
                 $message = $reason instanceof Throwable ? $reason->getMessage() : (string) $reason;
                 if ($this->metered && str_contains($message, 'image_generation rate limit')) {

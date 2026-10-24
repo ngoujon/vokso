@@ -109,9 +109,9 @@ class MistralImageProviderTest extends TestCase
             $this->assertStringContainsString('rate limit', $e->getMessage());
         }
         $this->assertCount(1, $history);
-        // Un seul appel d'outil demandé, par l'argument et par la consigne.
+        // Un seul appel d'outil demandé par la consigne ; pas de completion_args (refusé avec un agent).
         $body = json_decode((string) $history[0]['request']->getBody(), true);
-        $this->assertFalse($body['completion_args']['parallel_tool_calls']);
+        $this->assertArrayNotHasKey('completion_args', $body);
         $this->assertStringContainsString('une seule fois', $body['inputs']);
     }
 
