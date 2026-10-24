@@ -898,10 +898,12 @@
   });
 
   // ---- Suivi : étapes, barre et temps restant ------------------------------
-  // La barre avance chaque seconde au prorata du temps attendu (durée réelle
-  // des dernières créations, fournie par l'API), sans jamais dépasser le début
-  // de l'étape suivante : elle ne fige pas pendant l'écriture, la plus longue,
-  // et ne prétend pas avoir fini avant le serveur.
+  // Le serveur donne un point de départ (début de l'étape, ou morceaux de voix
+  // déjà enregistrés). Depuis ce point, la barre avance chaque seconde vers le
+  // début de l'étape suivante, vite puis de plus en plus lentement, à un rythme
+  // tiré de la durée attendue (dernières créations, fournie par l'API) : elle
+  // ne fige jamais, même si une étape traîne, et ne prétend pas avoir fini
+  // avant le serveur.
   var track = null;
   var PAGE_TITLE = document.title;
 
@@ -941,14 +943,33 @@
     return 'Environ ' + min + (min > 1 ? ' minutes restantes' : ' minute restante');
   }
 
+  // Plafond d'une étape : juste avant le début de la suivante.
+  function stepCeil(step) {
+    var idx = STEP_ORDER.indexOf(step);
+    var next = STEP_START[STEP_ORDER[Math.min(idx + 1, STEP_ORDER.length - 1)]] || 100;
+    return Math.min(next - 1, 97);
+  }
+
+  function trackElapsed() {
+    return track.elapsed + (Date.now() - track.at) / 1000;
+  }
+
   function renderTime() {
     if (!track) return;
-    var elapsed = track.elapsed + (Date.now() - track.at) / 1000;
+    var elapsed = trackElapsed();
     var estimate = track.estimate || track.fallback;
-    var idx = STEP_ORDER.indexOf(track.step);
-    var next = STEP_START[STEP_ORDER[Math.min(idx + 1, STEP_ORDER.length - 1)]] || 100;
-    var timed = Math.min(elapsed / estimate * 100, next - 1, 97);
-    var pct = Math.max(4, STEP_START[track.step] || 0, timed);
+    var ceil = stepCeil(track.step);
+    var span = ceil - track.base;
+    var pct = track.base;
+    if (span > 0) {
+      // Courbe t / (t + tau) : environ 75 % du chemin au bout du temps
+      // attendu pour ce morceau, puis toujours un peu plus, sans l'atteindre.
+      var tau = Math.max(4, estimate * span / 100 / 3);
+      var t = Math.max(0, elapsed - track.baseAt);
+      pct = track.base + span * t / (t + tau);
+    }
+    track.shown = Math.max(track.shown, 4, pct);
+    pct = track.shown;
     $('studio-bar').style.width = pct + '%';
     $('studio-elapsed').textContent = V.fmt(elapsed) + ' écoulées';
     $('studio-remaining').textContent = remainingLabel(estimate - elapsed, elapsed > estimate * 1.1);
@@ -958,7 +979,7 @@
   function startTracking(minutes) {
     stopTracking();
     // Estimation provisoire, remplacée dès la première réponse de l'API.
-    track = { step: 'queued', elapsed: 0, at: Date.now(), estimate: 0, fallback: 45 + 16 * minutes + (mode === 'audio' ? 15 : 0) };
+    track = { step: 'queued', elapsed: 0, at: Date.now(), estimate: 0, fallback: 45 + 16 * minutes + (mode === 'audio' ? 15 : 0), base: 0, baseAt: 0, shown: 0 };
     var progress = $('studio-progress');
     progress.classList.remove('is-done', 'is-failed');
     $('studio-retry').hidden = true;
@@ -973,6 +994,13 @@
     if (STEP_ORDER.indexOf(job.step) > STEP_ORDER.indexOf(track.step)) track.step = job.step;
     if (typeof job.elapsed === 'number') { track.elapsed = job.elapsed; track.at = Date.now(); }
     if (job.estimate) track.estimate = job.estimate;
+    // Nouveau point de départ quand le serveur annonce mieux (étape suivante,
+    // morceau de voix terminé) : la courbe repart de là, sans jamais reculer.
+    var floor = Math.min(Math.max(STEP_START[track.step] || 0, job.progress || 0), stepCeil(track.step));
+    if (floor > track.base) {
+      track.base = Math.max(floor, Math.min(track.shown, stepCeil(track.step)));
+      track.baseAt = trackElapsed();
+    }
     showProgress(track.step);
     renderTime();
   }

@@ -50,6 +50,23 @@ final class AiBudget
         }
     }
 
+    /**
+     * Compte après coup des appels déjà facturés (ex. images enchaînées par
+     * un agent dans une seule conversation) : rien à bloquer, mais les
+     * appels suivants verront le plafond atteint.
+     */
+    public static function record(string $kind, int $count): void
+    {
+        $kind = in_array($kind, self::KINDS, true) ? $kind : 'text';
+        for ($i = 0; $i < $count; $i++) {
+            foreach (['hourly' => 3600, 'daily' => 86400] as $period => $seconds) {
+                if ((int) config("vokso.ai_budget.$kind.$period", 0) > 0) {
+                    (new RateLimiter(1, $seconds))->hit(self::KEY, self::route($kind, $period));
+                }
+            }
+        }
+    }
+
     /** Appels comptés et plafonds, pour l'administration. */
     public static function usage(): array
     {

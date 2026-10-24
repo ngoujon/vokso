@@ -97,9 +97,10 @@ class ApiClient
     }
 
     /** Corps brut d'une ressource (ex. fichier produit par un agent) ; la promesse se résout avec les octets. */
-    public function getRawAsync(string $path): PromiseInterface
+    /** $delayMs retarde l'envoi sans bloquer les autres requêtes en cours (nouvelle tentative). */
+    public function getRawAsync(string $path, int $delayMs = 0): PromiseInterface
     {
-        return $this->client->getAsync($this->baseUrl.$path)->then(
+        return $this->client->getAsync($this->baseUrl.$path, $delayMs > 0 ? ['delay' => $delayMs] : [])->then(
             fn (ResponseInterface $response) => (string) $response->getBody(),
             function ($reason) use ($path) {
                 throw new Exception('Appel API en échec ('.$path.') : '.$reason->getMessage().' '.$this->errorBody($reason));

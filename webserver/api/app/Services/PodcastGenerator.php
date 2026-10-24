@@ -128,7 +128,7 @@ class PodcastGenerator
         // généré, jamais l'une de l'autre, donc autant les lancer de front.
         $this->updateJob($jobId, 'processing', 'media', 46);
         try {
-            [$imageContent, $audioContent, $audioExtension, $imageError] = $this->generateImageAndAudio($generatedText);
+            [$imageContent, $audioContent, $audioExtension, $imageError] = $this->generateImageAndAudio($jobId, $generatedText);
 
             if ($imageContent !== null) {
                 $imageFileName = $this->storage->storeImage('image', $imageContent);
@@ -385,7 +385,7 @@ class PodcastGenerator
      *
      * @return array{0: ?string, 1: string, 2: string, 3: ?Exception} [image binaire, audio binaire, extension audio, erreur image]
      */
-    private function generateImageAndAudio(string $generatedText): array
+    private function generateImageAndAudio(string $jobId, string $generatedText): array
     {
         $imagePrompt = str_replace('###REPLACE###', $this->imagePromptExcerpt($generatedText), Prompt::content('image'));
         $synthesizer = $this->ai->speechSynthesizer();
@@ -393,6 +393,24 @@ class PodcastGenerator
         $promises = ['image' => $this->ai->imageGenerator()->generateImageAsync($imagePrompt)];
         foreach (SpeechAudio::chunks($generatedText) as $i => $chunk) {
             $promises['audio' . $i] = $synthesizer->synthesizeAsync($chunk);
+        }
+
+        // Chaque pièce terminée (pochette ou morceau de voix) fait avancer le
+        // suivi de 46 à 90 % : le visiteur voit l'étape progresser au lieu
+        // d'attendre la dernière réponse. Un échec d'écriture du suivi ne doit
+        // pas faire échouer la génération.
+        $total = count($promises);
+        $finished = 0;
+        foreach ($promises as $key => $promise) {
+            $promises[$key] = $promise->then(function ($value) use ($jobId, $total, &$finished) {
+                $finished++;
+                try {
+                    $this->updateJob($jobId, 'processing', 'media', 46 + intdiv(44 * $finished, $total));
+                } catch (Exception) {
+                }
+
+                return $value;
+            });
         }
         $results = PromiseUtils::settle($promises)->wait();
 
