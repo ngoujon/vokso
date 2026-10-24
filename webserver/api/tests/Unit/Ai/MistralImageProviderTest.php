@@ -12,6 +12,8 @@ use PHPUnit\Framework\TestCase;
 
 class MistralImageProviderTest extends TestCase
 {
+    private array $history = [];
+
     public function testConstructorRejectsMissingApiKey(): void
     {
         $this->expectException(Exception::class);
@@ -21,137 +23,110 @@ class MistralImageProviderTest extends TestCase
 
     private function providerWithMockedResponses(array $responses, array $extraConfig = []): MistralImageProvider
     {
+        $this->history = [];
         $handlerStack = HandlerStack::create(new MockHandler($responses));
+        $handlerStack->push(Middleware::history($this->history));
+
         return new MistralImageProvider(array_merge(
-            ['api_key' => 'mistral-test', 'handler' => $handlerStack],
+            ['api_key' => 'mistral-test', 'handler' => $handlerStack, 'image_agent_id' => 'agent-preexistant', 'image_retry_delay_ms' => 0],
             $extraConfig
         ));
     }
 
-    public function testGenerateImageAsyncCreatesAgentThenDownloadsFile(): void
+    /** Corps server-sent events d'une conversation en flux. */
+    private static function sse(array ...$events): Response
+    {
+        $body = '';
+        foreach ($events as $event) {
+            $body .= 'event: '.($event['type'] ?? 'message')."\ndata: ".json_encode($event)."\n\n";
+        }
+
+        return new Response(200, ['Content-Type' => 'text/event-stream'], $body);
+    }
+
+    private static function started(): array
+    {
+        return ['type' => 'conversation.response.started', 'conversation_id' => 'conv_1'];
+    }
+
+    /** Résultat de l'outil tel que renvoyé en octobre 2026 : URL signée, « & » échappés. */
+    private static function urlDone(string $url = 'https://blob.example/image.jpg?se=1&amp;sig=a%2Bb'): array
+    {
+        return ['type' => 'tool.execution.done', 'name' => 'image_generation', 'info' => ['result' => json_encode(['url' => $url])]];
+    }
+
+    public function testDownloadsImageFromToolResultUrlAndStopsAtFirstCall(): void
     {
         $provider = $this->providerWithMockedResponses([
-            new Response(200, [], json_encode(['id' => 'agent-123'])),
-            new Response(200, [], json_encode([
-                'outputs' => [
-                    [
-                        'type' => 'message.output',
-                        'content' => [
-                            ['type' => 'text', 'text' => 'Voici votre image.'],
-                            ['type' => 'tool_file', 'file_id' => 'file-456', 'file_type' => 'png'],
-                        ],
-                    ],
-                ],
-            ])),
+            self::sse(self::started(), ['type' => 'tool.execution.started', 'arguments' => '{"prompt": "abeille"}'], self::urlDone(), self::urlDone()),
             new Response(200, [], 'binary-image'),
         ]);
 
-        $result = $provider->generateImageAsync('un prompt')->wait();
-
-        $this->assertSame('binary-image', $result);
+        $this->assertSame('binary-image', $provider->generateImageAsync('un prompt')->wait());
+        $this->assertCount(2, $this->history);
+        $conversation = $this->history[0]['request'];
+        $body = json_decode((string) $conversation->getBody(), true);
+        $this->assertTrue($body['stream']);
+        $this->assertArrayNotHasKey('completion_args', $body);
+        $this->assertStringContainsString('une seule fois', $body['inputs']);
+        // URL signée décodée, et jamais la clé API envoyée hors de Mistral.
+        $download = $this->history[1]['request'];
+        $this->assertSame('https://blob.example/image.jpg?se=1&sig=a%2Bb', (string) $download->getUri());
+        $this->assertFalse($download->hasHeader('Authorization'));
     }
 
-    public function testGenerateImageAsyncReusesConfiguredAgentId(): void
+    public function testReadsHistoryWhenToolResultIsNotInTheEvent(): void
     {
         $provider = $this->providerWithMockedResponses([
-            new Response(200, [], json_encode([
-                'outputs' => [
-                    ['type' => 'tool_file', 'file_id' => 'file-789'],
-                ],
-            ])),
+            self::sse(self::started(), ['type' => 'tool.execution.done', 'name' => 'image_generation']),
+            new Response(200, [], json_encode(['entries' => [
+                ['type' => 'message.input', 'content' => 'un prompt'],
+                ['type' => 'tool.execution', 'arguments' => '{"prompt": "x"}', 'info' => ['result' => json_encode(['url' => 'https://blob.example/h.jpg'])]],
+            ]])),
+            new Response(200, [], 'binary-history'),
+        ]);
+
+        $this->assertSame('binary-history', $provider->generateImageAsync('un prompt')->wait());
+        $this->assertStringEndsWith('/conversations/conv_1/history', $this->history[1]['request']->getUri()->getPath());
+    }
+
+    public function testStillAcceptsLegacyToolFileAndRetriesNotReadyFile(): void
+    {
+        $provider = $this->providerWithMockedResponses([
+            self::sse(self::started(), ['type' => 'message.output.delta', 'content' => [['type' => 'tool_file', 'file_id' => 'file-1']]]),
+            new Response(404, [], json_encode(['detail' => 'Not found'])),
+            new Response(200, [], 'binary-file'),
+        ]);
+
+        $this->assertSame('binary-file', $provider->generateImageAsync('un prompt')->wait());
+    }
+
+    public function testCreatesAgentWhenNoIdIsConfigured(): void
+    {
+        $provider = $this->providerWithMockedResponses([
+            new Response(200, [], json_encode(['id' => 'agent-123'])),
+            self::sse(self::started(), self::urlDone('https://blob.example/a.jpg')),
             new Response(200, [], 'binary-image-2'),
-        ], ['image_agent_id' => 'agent-preexistant']);
+        ], ['image_agent_id' => null]);
 
-        $result = $provider->generateImageAsync('un prompt')->wait();
-
-        $this->assertSame('binary-image-2', $result);
+        $this->assertSame('binary-image-2', $provider->generateImageAsync('un prompt')->wait());
     }
 
-    public function testGenerateImageAsyncRetriesWhenAgentAnswersWithTextOnly(): void
+    public function testRetriesOnceWhenAgentAnswersWithTextOnly(): void
     {
-        $textOnly = json_encode(['outputs' => [
-            ['type' => 'message.output', 'content' => [['type' => 'text', 'text' => 'Je ne peux pas.']]],
-        ]]);
         $provider = $this->providerWithMockedResponses([
-            new Response(200, [], $textOnly),
-            new Response(200, [], json_encode(['outputs' => [['type' => 'tool_file', 'file_id' => 'file-1']]])),
+            self::sse(self::started(), ['type' => 'message.output.delta', 'content' => 'Je ne peux pas.']),
+            self::sse(self::started(), self::urlDone('https://blob.example/b.jpg')),
             new Response(200, [], 'binary-image-3'),
-        ], ['image_agent_id' => 'agent-preexistant']);
+        ]);
 
         $this->assertSame('binary-image-3', $provider->generateImageAsync('un prompt')->wait());
     }
 
-    public function testGenerateImageAsyncRetriesDownloadWhenFileIsNotReady(): void
+    public function testRejectsWithAgentReplyWhenNoImageTwice(): void
     {
-        $provider = $this->providerWithMockedResponses([
-            new Response(200, [], json_encode(['outputs' => [['type' => 'tool_file', 'file_id' => 'file-1']]])),
-            new Response(404, [], json_encode(['detail' => 'Not found'])),
-            new Response(200, [], 'binary-image-4'),
-        ], ['image_agent_id' => 'agent-preexistant', 'image_retry_delay_ms' => 0]);
-
-        $this->assertSame('binary-image-4', $provider->generateImageAsync('un prompt')->wait());
-    }
-
-    public function testGenerateImageAsyncNeverRetriesImageRateLimit(): void
-    {
-        $history = [];
-        $stack = HandlerStack::create(new MockHandler([
-            new Response(429, [], json_encode(['detail' => 'image_generation rate limit reached.'])),
-            new Response(200, [], json_encode(['outputs' => [['type' => 'tool_file', 'file_id' => 'file-1']]])),
-        ]));
-        $stack->push(Middleware::history($history));
-        $provider = new MistralImageProvider(['api_key' => 'mistral-test', 'handler' => $stack, 'image_agent_id' => 'agent-preexistant']);
-
-        try {
-            $provider->generateImageAsync('un prompt')->wait();
-            $this->fail('Une exception était attendue.');
-        } catch (Exception $e) {
-            $this->assertStringContainsString('rate limit', $e->getMessage());
-        }
-        $this->assertCount(1, $history);
-        // Un seul appel d'outil demandé par la consigne ; pas de completion_args (refusé avec un agent).
-        $body = json_decode((string) $history[0]['request']->getBody(), true);
-        $this->assertArrayNotHasKey('completion_args', $body);
-        $this->assertStringContainsString('une seule fois', $body['inputs']);
-    }
-
-    public function testGenerateImageAsyncDoesNotStartNewConversationAfterPaidToolCalls(): void
-    {
-        $execution = ['type' => 'tool.execution', 'name' => 'image_generation'];
-        // Une seule réponse en file : une seconde conversation ferait échouer le MockHandler autrement.
-        $provider = $this->providerWithMockedResponses([
-            new Response(200, [], json_encode(['outputs' => [$execution, $execution, $execution]])),
-        ], ['image_agent_id' => 'agent-preexistant']);
-
-        try {
-            $provider->generateImageAsync('un prompt')->wait();
-            $this->fail('Une exception était attendue.');
-        } catch (Exception $e) {
-            $this->assertStringContainsString('outil appelé 3 fois', $e->getMessage());
-        }
-    }
-
-    public function testGenerateImageAsyncFindsFileIdOutsideToolFileChunk(): void
-    {
-        $provider = $this->providerWithMockedResponses([
-            new Response(200, [], json_encode(['outputs' => [
-                ['type' => 'message.output', 'content' => [['type' => 'image_file', 'file_id' => 'file-9']]],
-            ]])),
-            new Response(200, [], 'binary-image-5'),
-        ], ['image_agent_id' => 'agent-preexistant']);
-
-        $this->assertSame('binary-image-5', $provider->generateImageAsync('un prompt')->wait());
-    }
-
-    public function testGenerateImageAsyncRejectsWithAgentReplyWhenNoToolFileTwice(): void
-    {
-        $textOnly = json_encode(['outputs' => [
-            ['type' => 'message.output', 'content' => [['type' => 'text', 'text' => 'Je ne peux pas.']]],
-        ]]);
-        $provider = $this->providerWithMockedResponses([
-            new Response(200, [], $textOnly),
-            new Response(200, [], $textOnly),
-        ], ['image_agent_id' => 'agent-preexistant']);
+        $textOnly = fn () => self::sse(self::started(), ['type' => 'message.output.delta', 'content' => 'Je ne peux pas.']);
+        $provider = $this->providerWithMockedResponses([$textOnly(), $textOnly()]);
 
         try {
             $provider->generateImageAsync('un prompt')->wait();
@@ -160,5 +135,35 @@ class MistralImageProviderTest extends TestCase
             $this->assertStringContainsString('aucune image', $e->getMessage());
             $this->assertStringContainsString('Je ne peux pas.', $e->getMessage());
         }
+    }
+
+    public function testStopsAfterSecondPaidCallWithoutConversationId(): void
+    {
+        $done = ['type' => 'tool.execution.done', 'name' => 'image_generation'];
+        // Une seule réponse en file : ni seconde conversation ni lecture d'historique.
+        $provider = $this->providerWithMockedResponses([self::sse($done, $done, $done, $done)]);
+
+        try {
+            $provider->generateImageAsync('un prompt')->wait();
+            $this->fail('Une exception était attendue.');
+        } catch (Exception $e) {
+            $this->assertStringContainsString('outil appelé 2 fois', $e->getMessage());
+        }
+    }
+
+    public function testNeverRetriesImageRateLimit(): void
+    {
+        $provider = $this->providerWithMockedResponses([
+            new Response(429, [], json_encode(['detail' => 'image_generation rate limit reached.'])),
+            self::sse(self::started(), self::urlDone()),
+        ]);
+
+        try {
+            $provider->generateImageAsync('un prompt')->wait();
+            $this->fail('Une exception était attendue.');
+        } catch (Exception $e) {
+            $this->assertStringContainsString('rate limit', $e->getMessage());
+        }
+        $this->assertCount(1, $this->history);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Services\Ai;
 
 use Exception;
 use GuzzleHttp\Promise\PromiseInterface;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Agent Mistral (API bêta Agents + Conversations), partagé par la narration
@@ -35,6 +36,26 @@ final class MistralAgent
     {
         // id() reste synchrone : un aller-retour de plus, au tout premier appel seulement.
         return $this->api->postJsonAsync('/conversations', ['agent_id' => $this->id(), 'inputs' => $inputs]);
+    }
+
+    /** Démarre une conversation en flux (server-sent events), lu au fil de l'eau par l'appelant. */
+    public function converseStream(string $inputs): StreamInterface
+    {
+        return $this->api->postStream('/conversations', ['agent_id' => $this->id(), 'inputs' => $inputs, 'stream' => true]);
+    }
+
+    /** Entrées d'une conversation (message, appels d'outils et leurs résultats). */
+    public function history(string $conversationId): array
+    {
+        $data = json_decode($this->api->getRawAsync('/conversations/'.rawurlencode($conversationId).'/history')->wait(), true);
+
+        return is_array($data) ? ($data['entries'] ?? $data) : [];
+    }
+
+    /** Fichier hébergé hors de l'API (URL signée renvoyée par un outil). */
+    public function download(string $url): string
+    {
+        return $this->api->download($url);
     }
 
     /** Contenu brut d'un fichier produit par un outil de l'agent (API Files), après $delayMs éventuel. */

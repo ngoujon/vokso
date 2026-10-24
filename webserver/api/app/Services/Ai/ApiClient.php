@@ -11,6 +11,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Client HTTP JSON authentifié par clé API (Bearer), partagé par les
@@ -45,13 +46,41 @@ class ApiClient
             $clientConfig['handler'] = $config['handler'];
         }
         $this->client = new Client($clientConfig);
+        // Fichiers hébergés hors de l'API (URL signée) : jamais la clé API.
+        unset($clientConfig['headers']);
+        $this->external = new Client($clientConfig);
         // Un handler injecté (tests) ne coûte rien : pas de garde-fou à compter.
         $this->metered = ! isset($config['handler']);
         $this->budgetKind = isset($config['budget_kind']) ? (string) $config['budget_kind'] : null;
     }
 
+    private Client $external;
     private bool $metered;
     private ?string $budgetKind;
+
+    /**
+     * POST en flux (server-sent events) : le corps est lu au fil de l'eau
+     * et l'appelant peut couper la connexion dès qu'il a ce qu'il attend.
+     */
+    public function postStream(string $path, array $payload): StreamInterface
+    {
+        $this->meter($path);
+        try {
+            return $this->client->post($this->baseUrl.$path, ['json' => $payload, 'stream' => true])->getBody();
+        } catch (GuzzleException $e) {
+            throw new Exception('Appel API en échec ('.$path.') : '.$e->getMessage().' '.$this->errorBody($e));
+        }
+    }
+
+    /** Contenu d'une URL publique ou signée (ex. image produite par un outil), sans authentification. */
+    public function download(string $url): string
+    {
+        try {
+            return (string) $this->external->get($url)->getBody();
+        } catch (GuzzleException $e) {
+            throw new Exception('Téléchargement en échec : '.$e->getMessage());
+        }
+    }
 
     /** Garde-fou de dépense (AiBudget) : chaque POST est un appel payant. */
     private function meter(string $path): void
