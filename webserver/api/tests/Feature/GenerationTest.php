@@ -24,6 +24,28 @@ class GenerationTest extends TestCase
             ->assertJsonPath('progress', 0);
     }
 
+    public function test_status_reports_elapsed_time_and_an_estimate_from_recent_episodes(): void
+    {
+        foreach ([100, 120, 300] as $i => $seconds) {
+            $done = GenerationJob::create(['job_id' => 'job_done_'.$i, 'source_type' => 'text', 'status' => 'done', 'duration_minutes' => 5]);
+            $done->forceFill(['created_at' => now()->subSeconds($seconds + 600), 'updated_at' => now()->subSeconds(600)])->saveQuietly();
+        }
+        $running = GenerationJob::create(['job_id' => 'job_running', 'source_type' => 'text', 'status' => 'processing', 'step' => 'text', 'progress' => 12, 'duration_minutes' => 5]);
+        $running->forceFill(['created_at' => now()->subSeconds(30)])->saveQuietly();
+
+        $response = $this->getJson('/generation-status?id=job_running')->assertOk();
+        $this->assertSame(120, $response->json('estimate'));
+        $this->assertEqualsWithDelta(30, $response->json('elapsed'), 2);
+
+        // Sans historique pour ce format : estimation par défaut.
+        GenerationJob::create(['job_id' => 'job_long', 'source_type' => 'text', 'status' => 'processing', 'duration_minutes' => 15]);
+        $this->getJson('/generation-status?id=job_long')->assertJsonPath('estimate', 45 + 16 * 15);
+
+        $this->getJson('/generation-status?id=job_done_0')
+            ->assertJsonPath('estimate', null)
+            ->assertJsonPath('elapsed', null);
+    }
+
     public function test_generation_is_attached_to_a_logged_in_user(): void
     {
         $user = $this->createUser();

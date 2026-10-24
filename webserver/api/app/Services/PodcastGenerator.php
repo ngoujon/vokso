@@ -84,6 +84,7 @@ class PodcastGenerator
         // Contrôle du sujet avant tout appel payant. Si la modération est
         // indisponible, la génération continue mais l'épisode n'est pas
         // publié sans vérification.
+        $this->updateJob($jobId, 'processing', 'check', 8);
         $needsReview = false;
         $userInput = PromptGuard::normalize($userInput);
         try {
@@ -100,10 +101,11 @@ class PodcastGenerator
         // d'entrée (pas l'un de l'autre) : les lancer en parallèle via des
         // promesses Guzzle économise des allers-retours réseau par rapport à
         // des appels séquentiels.
-        $this->updateJob($jobId, 'processing', 'text', 10);
+        $this->updateJob($jobId, 'processing', 'text', 12);
         try {
-            [$generatedText, $categoryKeyword, $title] = $this->generateTextCategoryAndTitle($userInput, $minutes, $level);
+            [$generatedText, $categoryKeyword, $title] = $this->generateTextCategoryAndTitle($jobId, $userInput, $minutes, $level);
             // Avant l'image et la voix : un épisode refusé ne coûte que le texte.
+            $this->updateJob($jobId, 'processing', 'review', 42);
             if (! $this->passesModeration($title."\n\n".$generatedText, self::MESSAGE_BLOCKED, 'épisode')) {
                 $needsReview = true;
             }
@@ -124,7 +126,7 @@ class PodcastGenerator
 
         // Idem pour l'image et l'audio : toutes deux ne dépendent que du texte
         // généré, jamais l'une de l'autre, donc autant les lancer de front.
-        $this->updateJob($jobId, 'processing', 'media', 45);
+        $this->updateJob($jobId, 'processing', 'media', 46);
         try {
             [$imageContent, $audioContent, $audioExtension, $imageError] = $this->generateImageAndAudio($generatedText);
 
@@ -150,11 +152,13 @@ class PodcastGenerator
             $audioFileName = $this->storage->store('audios', 'audio_'.OutputStorage::timestamp().'.'.$audioExtension, $audioContent);
             $costAudio = CostEstimator::speechCost($generatedText);
         } catch (Exception $e) {
-            $this->failJob($jobId, $e->getMessage(), $e);
+            // Message affiché au visiteur : la réponse brute du fournisseur
+            // (détail technique) reste dans le journal.
+            $this->failJob($jobId, 'La pochette ou la voix n\'a pas pu être créée (image ou audio). Réessayez dans un instant.', $e);
             return;
         }
 
-        $this->updateJob($jobId, 'processing', 'finalizing', 90);
+        $this->updateJob($jobId, 'processing', 'finalizing', 94);
         $generationId = 'gen_'.uniqid();
         Generation::create([
             'generation_id' => $generationId,
@@ -293,7 +297,7 @@ class PodcastGenerator
      *
      * @return array{0: string, 1: string, 2: string} [texte généré, mot-clé de catégorie, titre]
      */
-    private function generateTextCategoryAndTitle(string $userInput, int $minutes, int $level): array
+    private function generateTextCategoryAndTitle(string $jobId, string $userInput, int $minutes, int $level): array
     {
         $injectionPrompt = $this->requirePrompt('injection');
         // Jeton témoin propre à ce job : s'il ressort dans un texte, les
@@ -338,6 +342,7 @@ class PodcastGenerator
         }
         if (EpisodeFormat::isTooShort($text, $minutes)) {
             // Une seule relance : au pire, l'épisode est un peu plus court que prévu.
+            $this->updateJob($jobId, 'processing', 'lengthen', 30);
             try {
                 $longer = $this->ai->researchTextGenerator()->generateText(
                     $systemPrompt,

@@ -6,10 +6,12 @@ use App\Models\GenerationJob;
 use App\Services\PodcastGenerator;
 use App\Support\EpisodeFormat;
 use App\Support\EpisodeText;
+use App\Support\GenerationEstimate;
 use App\Support\GenerationLimits;
 use App\Support\PromptGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -122,7 +124,10 @@ class GenerationController extends Controller
             return $this->error('Identifiant de suivi manquant', 400);
         }
 
-        $columns = ['j.status', 'j.step', 'j.progress', 'j.error_message', 'j.generation_id', 'g.slug', 'g.title', 'g.image_url', 'g.audio_url', ...EpisodeFormat::columns()];
+        $columns = [
+            'j.status', 'j.step', 'j.progress', 'j.error_message', 'j.generation_id', 'j.source_type', 'j.created_at',
+            'j.duration_minutes as job_minutes', 'g.slug', 'g.title', 'g.image_url', 'g.audio_url', ...EpisodeFormat::columns(),
+        ];
         $row = DB::table('generation_jobs as j')
             ->leftJoin('generations as g', 'g.generation_id', '=', 'j.generation_id')
             ->where('j.job_id', $jobId)
@@ -132,10 +137,16 @@ class GenerationController extends Controller
             return $this->error('Suivi introuvable', 404);
         }
 
+        // Temps écoulé mesuré côté serveur (indépendant de l'horloge du
+        // visiteur) et durée attendue, pour afficher le temps restant.
+        $running = ! in_array($row->status, ['done', 'error'], true);
+
         return response()->json([
             'status' => $row->status,
             'step' => $row->step,
             'progress' => (int) $row->progress,
+            'elapsed' => $running ? max(0, now()->getTimestamp() - Carbon::parse($row->created_at)->getTimestamp()) : null,
+            'estimate' => $running ? GenerationEstimate::seconds($row->job_minutes, (string) $row->source_type) : null,
             'error' => $row->error_message,
             // Service momentanément indisponible (crédit Mistral) : affiché comme une information, pas comme une erreur.
             'unavailable' => $row->error_message === PodcastGenerator::MESSAGE_UNAVAILABLE,

@@ -154,15 +154,35 @@
   .studio-error.is-soft { padding: 0.8rem 1rem; border-radius: var(--vk-radius-sm); background: var(--vk-paper-2); color: var(--vk-ink-2); font-weight: 500; }
 
   .studio-progress ol { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 0.55rem; }
-  .studio-progress li { display: flex; align-items: center; gap: 0.7rem; color: var(--vk-ink-3); }
-  .studio-progress li::before { content: ""; width: 0.75rem; height: 0.75rem; border-radius: 50%; border: 2px solid currentColor; flex: none; }
+  .studio-progress li { display: grid; grid-template-columns: 0.75rem minmax(0, 1fr); column-gap: 0.7rem; align-items: center; color: var(--vk-ink-3); }
+  .studio-progress li::before { content: ""; width: 0.75rem; height: 0.75rem; border-radius: 50%; border: 2px solid currentColor; box-sizing: border-box; }
+  .studio-progress li small { grid-column: 2; display: none; margin-top: 0.15rem; font-size: 0.84rem; font-weight: 400; color: var(--vk-ink-2); }
   .studio-progress li.is-active { color: var(--vk-ink); font-weight: 600; }
+  .studio-progress li.is-active small, .studio-progress li.is-failed small { display: block; }
   .studio-progress li.is-active::before { background: var(--vk-signal); border-color: var(--vk-signal); animation: vk-lamp 1.2s ease-in-out infinite; }
   .studio-progress li.is-done { color: var(--vk-ink-2); }
   .studio-progress li.is-done::before { background: var(--vk-ink-2); border-color: var(--vk-ink-2); }
+  .studio-progress li.is-failed { color: var(--vk-danger); font-weight: 600; }
+  .studio-progress li.is-failed::before { background: var(--vk-danger); border-color: var(--vk-danger); }
   .studio-bar { height: 6px; border-radius: 3px; background: var(--vk-paper-2); overflow: hidden; }
-  .studio-bar span { display: block; height: 100%; width: 0; background: var(--vk-signal); transition: width 0.6s var(--vk-ease); }
+  .studio-bar span { display: block; height: 100%; width: 0; background: var(--vk-signal); transition: width 1s linear; }
+  .studio-progress.is-done .studio-bar span { transition: width 0.5s var(--vk-ease); }
+  .studio-progress.is-failed .studio-bar span { background: var(--vk-ink-3); }
+  .studio-time { display: flex; justify-content: space-between; gap: 1rem; margin: 0.5rem 0 0; font: 500 0.8rem/1.3 var(--vk-mono); color: var(--vk-ink-3); }
+  .studio-time:empty, .studio-progress.is-done .studio-time, .studio-progress.is-failed .studio-time { display: none; }
   .studio-wait { margin: 0.8rem 0 0; font-size: 0.88rem; color: var(--vk-ink-2); }
+  .studio-wait:empty { display: none; }
+  /* Pendant l'attente, l'étape est déjà décrite dans la liste : le texte ne sert qu'aux lecteurs d'écran. */
+  .studio-progress:not(.is-done) .studio-wait { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .studio-progress.is-done .studio-wait { color: var(--vk-ink); font-weight: 600; }
+  #studio-retry { margin-top: 1rem; }
+  #result-title:focus { outline: none; }
+  .studio-result.is-entering { animation: vk-result-in 0.45s var(--vk-ease) both; }
+  @keyframes vk-result-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .studio-bar span { transition: none; }
+    .studio-result.is-entering { animation: none; }
+  }
 
   .studio-result { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 1rem; align-items: center; }
   .studio-result img { width: 7rem; height: 7rem; object-fit: cover; border-radius: var(--vk-radius-sm); }
@@ -361,13 +381,16 @@
 
       <div class="studio-progress" id="studio-progress" hidden>
         <ol>
-          <li data-step="transcription" hidden>Écoute de votre message</li>
-          <li data-step="text">Écriture du texte</li>
-          <li data-step="media">Pochette et enregistrement de la voix</li>
-          <li data-step="finalizing">Mise en ligne</li>
+          <li data-step="transcription" hidden><span>Écoute de votre message</span><small>Votre message vocal est retranscrit en texte.</small></li>
+          <li data-step="check"><span>Vérification du sujet</span><small>On s'assure que le sujet peut être traité.</small></li>
+          <li data-step="text"><span>Recherche et écriture</span><small data-default="L'IA se documente sur le web et rédige le récit. C'est l'étape la plus longue." data-lengthen="Le récit est un peu court pour la durée choisie : il est complété.">L'IA se documente sur le web et rédige le récit. C'est l'étape la plus longue.</small></li>
+          <li data-step="review"><span>Relecture</span><small>Le texte est relu par nos protections avant d'être enregistré.</small></li>
+          <li data-step="media"><span>Pochette et enregistrement de la voix</span><small>La voix enregistre le récit pendant que la pochette est dessinée.</small></li>
+          <li data-step="finalizing"><span>Mise en ligne</span><small>L'épisode rejoint la discothèque.</small></li>
         </ol>
         <div class="studio-bar"><span id="studio-bar"></span></div>
-        <p class="studio-wait" role="status" id="studio-wait">Votre épisode est en préparation, cela prend en général une à deux minutes.</p>
+        <p class="studio-time" id="studio-time" aria-hidden="true"><span id="studio-elapsed">0:00</span><span id="studio-remaining"></span></p>
+        <p class="studio-wait" role="status" id="studio-wait"></p>
       </div>
 
       <div class="studio-result" id="studio-result" hidden>
@@ -384,6 +407,7 @@
       </div>
 
       <p class="studio-error" id="studio-error" role="alert"></p>
+      <button type="button" class="vk-btn" id="studio-retry" hidden>Modifier le sujet et réessayer</button>
     </div>
 
     <aside class="tuner" id="tuner" aria-label="Épisode à l'antenne">
@@ -676,7 +700,11 @@
   var mode = 'text';
   var recorder = null, chunks = [], recorded = null, recTimer = null, recStart = 0;
   var MAX_REC_MS = 120000;
-  var STEP_ORDER = ['queued', 'transcription', 'text', 'media', 'finalizing', 'done'];
+  // Étapes envoyées par l'API, dans l'ordre, avec leur progression de départ
+  // (voir PodcastGenerator). "lengthen" s'affiche sur la ligne "text".
+  var STEP_ORDER = ['queued', 'transcription', 'check', 'text', 'lengthen', 'review', 'media', 'finalizing', 'done'];
+  var STEP_START = { queued: 0, transcription: 5, check: 8, text: 12, lengthen: 30, review: 42, media: 46, finalizing: 94, done: 100 };
+  var STEP_LINE = { queued: 'check', lengthen: 'text' };
 
   // ---- Format : durée et niveau -------------------------------------------
   var LEVELS = {
@@ -869,27 +897,147 @@
     });
   });
 
-  function showProgress(step, progress) {
-    $('studio-progress').hidden = false;
-    var idx = STEP_ORDER.indexOf(step);
-    document.querySelectorAll('.studio-progress li').forEach(function (li) {
+  // ---- Suivi : étapes, barre et temps restant ------------------------------
+  // La barre avance chaque seconde au prorata du temps attendu (durée réelle
+  // des dernières créations, fournie par l'API), sans jamais dépasser le début
+  // de l'étape suivante : elle ne fige pas pendant l'écriture, la plus longue,
+  // et ne prétend pas avoir fini avant le serveur.
+  var track = null;
+  var PAGE_TITLE = document.title;
+
+  function stepLine(step) {
+    if (step === 'queued' && mode === 'audio') return 'transcription';
+    return STEP_LINE[step] || step;
+  }
+
+  function showProgress(step) {
+    var progress = $('studio-progress');
+    progress.hidden = false;
+    var line = stepLine(step);
+    var lineIdx = STEP_ORDER.indexOf(line);
+    var changed = false;
+    progress.querySelectorAll('li').forEach(function (li) {
       var i = STEP_ORDER.indexOf(li.getAttribute('data-step'));
-      li.classList.toggle('is-active', i === idx || (idx <= 0 && i === STEP_ORDER.indexOf(mode === 'audio' ? 'transcription' : 'text')));
-      li.classList.toggle('is-done', idx > i);
+      var active = i === lineIdx;
+      if (active && !li.classList.contains('is-active')) changed = true;
+      li.classList.toggle('is-active', active);
+      li.classList.toggle('is-done', i < lineIdx);
+      li.classList.remove('is-failed');
     });
-    $('studio-bar').style.width = Math.max(4, progress || 0) + '%';
+    var note = progress.querySelector('[data-step="text"] small');
+    note.textContent = note.getAttribute(step === 'lengthen' ? 'data-lengthen' : 'data-default');
+    // Annonce (lecteurs d'écran) seulement au changement d'étape, pas à chaque seconde.
+    if (changed) {
+      var current = progress.querySelector('li.is-active');
+      $('studio-wait').textContent = current ? current.querySelector('span').textContent + ' : ' + current.querySelector('small').textContent : '';
+    }
+  }
+
+  function remainingLabel(left, over) {
+    if (over) return 'Un peu plus long que d\'habitude, on termine…';
+    if (left <= 15) return 'Encore quelques secondes';
+    if (left < 60) return 'Moins d\'une minute restante';
+    var min = Math.round(left / 60);
+    return 'Environ ' + min + (min > 1 ? ' minutes restantes' : ' minute restante');
+  }
+
+  function renderTime() {
+    if (!track) return;
+    var elapsed = track.elapsed + (Date.now() - track.at) / 1000;
+    var estimate = track.estimate || track.fallback;
+    var idx = STEP_ORDER.indexOf(track.step);
+    var next = STEP_START[STEP_ORDER[Math.min(idx + 1, STEP_ORDER.length - 1)]] || 100;
+    var timed = Math.min(elapsed / estimate * 100, next - 1, 97);
+    var pct = Math.max(4, STEP_START[track.step] || 0, timed);
+    $('studio-bar').style.width = pct + '%';
+    $('studio-elapsed').textContent = V.fmt(elapsed) + ' écoulées';
+    $('studio-remaining').textContent = remainingLabel(estimate - elapsed, elapsed > estimate * 1.1);
+    if (document.hidden) document.title = '(' + Math.round(pct) + ' %) ' + PAGE_TITLE;
+  }
+
+  function startTracking(minutes) {
+    stopTracking();
+    // Estimation provisoire, remplacée dès la première réponse de l'API.
+    track = { step: 'queued', elapsed: 0, at: Date.now(), estimate: 0, fallback: 45 + 16 * minutes + (mode === 'audio' ? 15 : 0) };
+    var progress = $('studio-progress');
+    progress.classList.remove('is-done', 'is-failed');
+    $('studio-retry').hidden = true;
+    $('studio-wait').textContent = '';
+    showProgress('queued');
+    renderTime();
+    track.tick = setInterval(renderTime, 1000);
+  }
+
+  function updateTracking(job) {
+    if (!track) return;
+    if (STEP_ORDER.indexOf(job.step) > STEP_ORDER.indexOf(track.step)) track.step = job.step;
+    if (typeof job.elapsed === 'number') { track.elapsed = job.elapsed; track.at = Date.now(); }
+    if (job.estimate) track.estimate = job.estimate;
+    showProgress(track.step);
+    renderTime();
+  }
+
+  function stopTracking() {
+    if (track) clearInterval(track.tick);
+    track = null;
+  }
+
+  function restoreTitle() { document.title = PAGE_TITLE; }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && !track) restoreTitle(); });
+  V.onLeave(function () { stopTracking(); restoreTitle(); });
+
+  // Fin réussie : toutes les étapes cochées, barre pleine, un court instant
+  // « C'est prêt » avant l'épisode, plutôt qu'un changement d'écran brutal.
+  function finishProgress(job) {
+    stopTracking();
+    var progress = $('studio-progress');
+    progress.classList.add('is-done');
+    progress.querySelectorAll('li').forEach(function (li) { li.classList.remove('is-active'); li.classList.add('is-done'); });
+    $('studio-bar').style.width = '100%';
+    $('studio-wait').textContent = 'C\'est prêt ! Voici votre épisode.';
+    if (document.hidden) document.title = '✓ Épisode prêt · ' + PAGE_TITLE;
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(function () { showResult(job); }, reduced ? 300 : 1100);
+  }
+
+  // Échec : l'étape en cause reste visible, avec le message et un bouton pour
+  // revenir au formulaire (le sujet saisi est conservé).
+  function failProgress(message, soft) {
+    var step = track ? track.step : 'queued';
+    stopTracking();
+    restoreTitle();
+    var progress = $('studio-progress');
+    progress.classList.add('is-failed');
+    var failed = progress.querySelector('[data-step="' + stepLine(step) + '"]');
+    progress.querySelectorAll('li').forEach(function (li) { li.classList.remove('is-active'); });
+    if (failed && !soft) failed.classList.add('is-failed');
+    $('studio-wait').textContent = '';
+    setError(message, soft);
+    $('studio-retry').hidden = false;
+    $('studio-retry').focus({ preventScroll: true });
   }
 
   function resetStudio() {
+    stopTracking();
+    restoreTitle();
+    $('studio-retry').hidden = true;
     $('studio-form').hidden = false;
     $('studio-progress').hidden = true;
     $('studio-result').hidden = true;
   }
+  $('studio-retry').addEventListener('click', function () {
+    setError('');
+    resetStudio();
+    if (mode === 'text') $('studio-subject').focus();
+  });
 
   function showResult(job) {
     var ep = { id: job.generation_id, slug: job.slug, title: job.title, image_url: job.image, audio_url: job.audio };
     $('studio-progress').hidden = true;
     $('studio-result').hidden = false;
+    $('studio-result').classList.remove('is-entering');
+    void $('studio-result').offsetWidth;
+    $('studio-result').classList.add('is-entering');
     $('studio-result').setAttribute('data-ep', ep.id);
     // Conversion SEO Monitor : format demandé uniquement, aucune donnée personnelle.
     if (window.seoMonitor) window.seoMonitor.track('Épisode créé', { duree: job.duration_minutes || '', niveau: job.level || '' });
@@ -903,6 +1051,8 @@
     btn.addEventListener('click', function () { V.toggle(ep); });
     slot.appendChild(btn);
     V.syncButtons();
+    $('result-title').setAttribute('tabindex', '-1');
+    $('result-title').focus({ preventScroll: true });
   }
 
   function poll(jobId) {
@@ -913,12 +1063,12 @@
         .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Suivi impossible'); return d; }); })
         .then(function (job) {
           failures = 0;
-          showProgress(job.step, job.progress);
-          if (job.status === 'done') { clearInterval(timer); showResult(job); }
-          else if (job.status === 'error') { clearInterval(timer); resetStudio(); setError(job.error || 'La création a échoué. Réessayez dans un instant.', job.unavailable); }
+          if (job.status === 'done') { clearInterval(timer); finishProgress(job); }
+          else if (job.status === 'error') { clearInterval(timer); failProgress(job.error || 'La création a échoué. Réessayez dans un instant.', job.unavailable); }
+          else updateTracking(job);
         })
         .catch(function (err) {
-          if (++failures >= 3) { clearInterval(timer); resetStudio(); setError(err.message || 'La connexion a été perdue.'); }
+          if (++failures >= 3) { clearInterval(timer); failProgress(err.message || 'La connexion a été perdue.'); }
         });
     }, 2000);
   }
@@ -948,10 +1098,7 @@
     }
     $('studio-form').hidden = true;
     $('studio-progress').querySelector('[data-step="transcription"]').hidden = mode !== 'audio';
-    $('studio-wait').textContent = duration > 6
-      ? 'Votre épisode est en préparation. Un format long demande un peu plus de temps : comptez quelques minutes.'
-      : 'Votre épisode est en préparation, cela prend en général une à deux minutes.';
-    showProgress('queued', 0);
+    startTracking(Number(duration));
     request
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || 'La création a échoué.'); return d; }); })
       .then(function (d) { poll(d.job_id); })
