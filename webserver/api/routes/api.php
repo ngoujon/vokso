@@ -9,6 +9,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GdprController;
 use App\Http\Controllers\GenerationController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LlmsController;
 use App\Http\Controllers\N8nController;
@@ -27,6 +28,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index']);
 Route::get('home', [HomeController::class, 'index']);
 Route::post('ping', [HomeController::class, 'ping']);
+// Supervision : GET/HEAD uniquement, réponse minimale (voir HealthController).
+Route::get('health', [HealthController::class, 'show']);
 
 Route::get('listing', [CatalogController::class, 'latest']);
 Route::get('search', [CatalogController::class, 'search']);

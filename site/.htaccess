@@ -38,3 +38,7 @@ RewriteRule ^comment-ca-marche/?$ /comment-ca-marche.html [L]
 # Sitemap généré dynamiquement à partir des épisodes publiés (voir
 # SitemapController), au lieu d'un fichier statique figé sur la page d'accueil.
 RewriteRule ^sitemap\.xml$ /api/sitemap [PT,L]
+
+# Sonde de supervision publique (voir HealthController) : chemin exact
+# uniquement, GET/HEAD, réponse {"status":"ok"} sans aucun détail.
+RewriteRule ^health$ /api/health [PT,L]
