@@ -1,10 +1,11 @@
 # Tout le contenu public est ouvert aux moteurs de recherche et aux
-# assistants IA (GEO) ; seules les pages d'administration sont exclues.
+# assistants IA (GEO). Les pages d'administration et de connexion ne sont
+# PAS bloquées ici : elles portent l'en-tête "X-Robots-Tag: noindex, nofollow"
+# (apache-config/vokso.conf), que les robots doivent pouvoir lire. Un
+# Disallow les empêchait de voir ce noindex (alertes GSC « Indexée malgré le
+# blocage par le fichier robots.txt »).
 User-agent: *
 Allow: /
-Disallow: /app/admin
-Disallow: /admin
-Disallow: /app/login
 
 # Robots d'IA explicitement autorisés (recherche et citation des épisodes).
 User-agent: GPTBot
@@ -20,8 +21,5 @@ User-agent: Google-Extended
 User-agent: Applebot-Extended
 User-agent: CCBot
 Allow: /
-Disallow: /app/admin
-Disallow: /admin
-Disallow: /app/login
 
 Sitemap: https://vokso.fr/sitemap.xml

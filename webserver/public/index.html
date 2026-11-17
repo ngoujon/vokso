@@ -16,6 +16,18 @@
     <link rel="stylesheet" href="/assets/design-system.css?v=20261004" />
     <link rel="stylesheet" href="/assets/site.css?v=20261005c" />
     <title>Vokso</title>
+    <!-- Même coquille pour toutes les routes : seules /app/contact et
+         /app/politique-de-confidentialite sont publiques. Ailleurs (/admin,
+         /app/login…), noindex en complément de l'en-tête X-Robots-Tag posé par
+         Apache (apache-config/vokso.conf). -->
+    <script>
+      if (!/^\/app\/(contact|politique-de-confidentialite)\/?$/.test(location.pathname)) {
+        var robots = document.createElement('meta');
+        robots.name = 'robots';
+        robots.content = 'noindex, nofollow';
+        document.head.appendChild(robots);
+      }
+    </script>
     <!-- Bandeau cookies et mesure d'audience (identifiant persistant seulement après accord) : voir /assets/consent.js. -->
     <script defer src="/assets/consent.js?v=20261021"></script>
   </head>

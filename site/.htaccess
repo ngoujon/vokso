@@ -15,6 +15,17 @@ RewriteEngine On
 RewriteCond %{HTTP_HOST} ^www\.vokso\.fr$ [NC]
 RewriteRule ^ https://vokso.fr%{REQUEST_URI} [L,R=301]
 
+# Anciennes URL d'épisode relevées en 404 dans Google Search Console
+# (docs/audits/vokso-gsc-urls.md) : épisodes supprimés puis recréés sous un
+# autre identifiant, ou slug tronqué. Redirection vers l'épisode actuel.
+RewriteRule ^podcast/gen_6ab2918d862ad-jupiter-la-geante-mysterieuse/?$ https://vokso.fr/podcast/jupiter-la-geante-qui-fascine-le-systeme-solaire [R=301,L]
+RewriteRule ^podcast/gen_6ab2931c9df2c-decouvrez-les-secrets-de-saturne/?$ https://vokso.fr/podcast/saturne-et-ses-anneaux-un-mystere-celeste [R=301,L]
+RewriteRule ^podcast/independance-de-l-ouganda-le-9-octobre-1962-et-la-construction-d-une-/?$ https://vokso.fr/podcast/independance-de-l-ouganda-le-9-octobre-1962-et-la-construction-d-une-nation [R=301,L]
+
+# /podcast seul n'a jamais été une page : le catalogue des épisodes est la
+# discothèque.
+RewriteRule ^podcast/?$ https://vokso.fr/discotheque [R=301,L]
+
 # Épisode public rendu côté serveur (voir PodcastPageController) :
 # /podcast/{slug} -> /api/podcast/{slug}. Les anciennes URL
 # /podcast/{generation_id}-{titre} (ex. "gen_6ab267b302f6d-jupiter") passent
